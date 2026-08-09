@@ -80,7 +80,7 @@
         <File path="tn_vdp_v3_v9958/src/sdram.v" type="file.verilog" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/v9958_top.v" type="file.verilog" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/vram.v" type="file.verilog" enable="1"/>
-        <File path="top.v" type="file.verilog" enable="1"/>
+        <File path="top_BeebDock.v" type="file.verilog" enable="1"/>
         <File path="G80A/T80s.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/g80a.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/t80.vhd" type="file.vhdl" enable="1"/>
@@ -95,7 +95,7 @@
         <File path="src/ocm/lpf.vhd" type="file.vhdl" enable="1"/>
         <File path="src/ocm/scc_wave2.vhd" type="file.vhdl" enable="1"/>
         <File path="src/ocm/swioports.vhd" type="file.vhdl" enable="1"/>
-        <File path="src/usb/usb_keyboard_msx.vhd" type="file.vhdl" enable="1"/>
+        <File path="src/usb/ps2_keyboard_msx.vhd" type="file.vhdl" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/ram.vhd" type="file.vhdl" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/vdp/vdp.vhd" type="file.vhdl" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/vdp/vdp_colordec.vhd" type="file.vhdl" enable="1"/>
@@ -116,7 +116,7 @@
         <File path="tn_vdp_v3_v9958/src/vdp/vdp_vga.vhd" type="file.vhdl" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/vdp/vdp_wait_control.vhd" type="file.vhdl" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/vdp/vencode.vhd" type="file.vhdl" enable="1"/>
-        <File path="tang20k.cst" type="file.cst" enable="1"/>
-        <File path="tang20k.sdc" type="file.sdc" enable="1"/>
+        <File path="tang20kBeebDock.cst" type="file.cst" enable="1"/>
+        <File path="tang20kBeebDock.sdc" type="file.sdc" enable="1"/>
     </FileList>
 </Project>
