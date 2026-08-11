@@ -599,10 +599,11 @@ wire [7:0] mapper_read_data =
                      ( megarom_req == 1) ? ff_rom_dout :
                      //( slot3_req_r == 1) ? 8'hff :
                  `endif
-                `ifdef ENABLE_SOUND
+                 `ifdef ENABLE_SOUND
                      //( scc_req3_r == 1 ) ? scc_dout:
                      ( megaram_req == 1 ) ? megaram_dout:
-                `endif
+                 `endif
+                     ( cpu_sdram_req == 1 ) ? cpu_sdram_dout :
                      //( slot0_req_r == 1 || slot3_req_r == 1) ? 8'hff :
                 `ifdef ENABLE_CONFIG
                      ( config_req == 1 && config_ok == 1) ? config_dout :
@@ -756,6 +757,27 @@ wire [7:0] mapper_read_data =
         .DO         (cpu_dout),
         .Data_Reverse (bus_data_reverse)
     );
+
+        // 24bitアドレスラッパー（CPU側）
+        wire [23:0] cpu_sdram_addr;
+        wire cpu_sdram_req;
+        wire cpu_sdram_write;
+        wire [7:0] cpu_sdram_dout;
+        msxnano_24bit_wrapper msx24_wrapper (
+            .clk(clk_27m),
+            .rst_n(bus_reset_n),
+            .t80_addr(bus_addr),
+            .t80_data_out(cpu_dout),
+            .t80_mreq_n(bus_mreq_n),
+            .t80_iorq_n(bus_iorq_n),
+            .t80_rd_n(bus_rd_n),
+            .t80_wr_n(bus_wr_n),
+            .sdram_addr(cpu_sdram_addr)
+        );
+
+        // CPU SDRAM request: memory access (MREQ active), not IO, not mapper/megaram
+        assign cpu_sdram_req = (bus_mreq_n == 0 && bus_iorq_n == 1 && (bus_rd_n == 0 || bus_wr_n == 0) && ~mapper_req && ~megaram_req) ? 1'b1 : 1'b0;
+        assign cpu_sdram_write = (bus_wr_n == 0) ? 1'b1 : 1'b0;
 
     //assign led[5:1] = cpu_din[5:1];
 
@@ -1129,6 +1151,12 @@ memory_ctrl mem1 (
     .mapper_dout(mapper_dout),
     .megaram_dout(megaram_dout),
     .vram_dout(VrmDbi2),
+
+        // CPU 24-bit SDRAM path
+        .cpu_sdram_req(cpu_sdram_req),
+        .cpu_sdram_write(cpu_sdram_write),
+        .cpu_sdram_addr(cpu_sdram_addr),
+        .cpu_sdram_dout(cpu_sdram_dout),
 
     .O_sdram_clk(O_sdram_clk),
     .O_sdram_cke(O_sdram_cke),

@@ -40,6 +40,7 @@
         <File path="jtopl/jtopll_mmr.v" type="file.verilog" enable="1"/>
         <File path="jtopl/jtopll_reg.v" type="file.verilog" enable="1"/>
         <File path="jtopl/jtopll_reg_ch.v" type="file.verilog" enable="1"/>
+        <File path="msxnano_24bit_wrapper.v" type="file.verilog" enable="1"/>
         <File path="pulse_min_max/pulse_max.v" type="file.verilog" enable="1"/>
         <File path="pulse_min_max/pulse_min.v" type="file.verilog" enable="1"/>
         <File path="src/bios_msx2p.v" type="file.verilog" enable="1"/>

@@ -7,6 +7,12 @@ module memory_ctrl (
 	input wire video_dhclk,
 	input wire video_dlclk,
 
+    // CPU 24-bit SDRAM path (from wrapper)
+    input wire cpu_sdram_req,
+    input wire cpu_sdram_write,
+    input wire [23:0] cpu_sdram_addr,
+
+
 	input wire [7:0] mapper_din,
     input wire mapper_req,
     input wire mapper_write,
@@ -22,6 +28,7 @@ module memory_ctrl (
 	output reg [7:0] mapper_dout,
     output reg [7:0] megaram_dout,
 	output reg [15:0] vram_dout,
+    output reg [7:0] cpu_sdram_dout,
 
     // Magic ports for SDRAM to be inferred
     output wire O_sdram_clk,
@@ -79,7 +86,7 @@ module memory_ctrl (
             case ( sdram_seq )
                 3'd0 : begin
                     sdram_write <= 0;
-                    if  ( ( mapper_req == 1 || megaram_req == 1 ) && ( video_dlclk == 1 && video_dhclk == 1 ) ) begin
+                    if  ( ( mapper_req == 1 || megaram_req == 1 || cpu_sdram_req == 1 ) && ( video_dlclk == 1 && video_dhclk == 1 ) ) begin
                         sdram_seq <= 3'd1;
                     end
                 end
@@ -93,13 +100,21 @@ module memory_ctrl (
     `endif
                         sdram_write <= mapper_write;
                     end
-                    else begin
+                    else if ( megaram_req == 1 ) begin
     `ifndef SDRAM_32
                         sdram_addr <= { 2'b10, megaram_addr[19:0] };
     `else
                         sdram_addr <= { 3'b10, megaram_addr[20:0] };
     `endif
                         sdram_write <= megaram_write;
+                    end
+                    else if ( cpu_sdram_req == 1 ) begin
+    `ifndef SDRAM_32
+                        sdram_addr <= cpu_sdram_addr[21:0];
+    `else
+                        sdram_addr <= cpu_sdram_addr[22:0];
+    `endif
+                        sdram_write <= cpu_sdram_write;
                     end
                     sdram_seq <= 3'd2;
                 end
@@ -116,13 +131,16 @@ module memory_ctrl (
                     if ( mapper_req == 1 ) begin
                         mapper_dout <= RamDbi;
                     end
-                    else begin
+                    else if ( megaram_req == 1 ) begin
                         megaram_dout <= RamDbi;
+                    end
+                    else if ( cpu_sdram_req == 1 ) begin
+                        cpu_sdram_dout <= RamDbi;
                     end
                     sdram_seq <= 3'd4;
                 end
                 3'd4 : begin
-                    if ( mapper_req == 0 && megaram_req == 0 ) begin
+                    if ( mapper_req == 0 && megaram_req == 0 && cpu_sdram_req == 0 ) begin
                         sdram_seq <= 3'd0;
                     end
                 end
