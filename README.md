@@ -28,7 +28,7 @@ This Board  for Tang Nano 20K project is BBC-Micro Board by  [hoglet67](https://
 
 Slot map has been updated to improve compatibility without requiring changes.
 
-![Slot map](/pics/mapa_slots4.png)
+![mapa_slots4](D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\msxnano-24bit\pics\mapa_slots4.png)
 
 Mapper and megaram can be relocated to slots 1 or 2 using config menu.
 

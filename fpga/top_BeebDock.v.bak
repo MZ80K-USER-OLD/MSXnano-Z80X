@@ -1165,6 +1165,7 @@ memory_ctrl mem1 (
     assign psgBc1 = ( bus_addr[7:3]== 5'b10100 && ((iorq_rd_n==0 && bus_addr[1]== 1) || (bus_addr[1]==0 && iorq_wr_n==0 && bus_addr[0]==0))) ? 1 : 0; // I/O:A0-A2h / PSG(AY-3-8910) bc1 = 1 when writing A0 or reading A2
     assign psgPA =8'h00;
     reg psgPB = 8'hff;
+    reg psgPB = 8'hff;
 
     wire clk_enable_1m8;
     reg clk_1m8_prev;
@@ -1911,6 +1912,16 @@ fpga_companion fpga_companion_inst
     // ws2812_color =>  ws2812_color
 );
 
+//usb_keyboard_msx usb_keyboard_msx
+//    (
+//        .CLK (clk_27m),
+//        .RESET (~bus_reset_n),
+//
+//        .keyboard (keyboard),
+//        .A (keyboard_addr),
+//        .DO (keyboard_data),
+//        .FN (function_keys)
+//    );
 
 ps2_keyboard_msx ps2_keyboard_msx
     (
