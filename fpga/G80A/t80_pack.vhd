@@ -90,6 +90,7 @@ package T80_Pack is
         DInst       : in std_logic_vector(7 downto 0);
         DI          : in std_logic_vector(7 downto 0);
         DO          : out std_logic_vector(7 downto 0);
+        mode24      : out std_logic_vector(1 downto 0);
         MC          : out std_logic_vector(2 downto 0);
         TS          : out std_logic_vector(2 downto 0);
         IntCycle_n  : out std_logic;

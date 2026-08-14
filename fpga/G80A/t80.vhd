@@ -103,6 +103,7 @@ entity T80 is
         DInst       : in std_logic_vector(7 downto 0);
         DI          : in std_logic_vector(7 downto 0);
         DO          : out std_logic_vector(7 downto 0);
+        mode24      : out std_logic_vector(1 downto 0);
         MC          : out std_logic_vector(2 downto 0);
         TS          : out std_logic_vector(2 downto 0);
         IntCycle_n  : out std_logic;
@@ -161,6 +162,7 @@ architecture rtl of T80 is
     signal NMI_s            : std_logic;
     signal INT_s            : std_logic;
     signal IStatus          : std_logic_vector(1 downto 0);
+    signal mode24_r         : std_logic_vector(1 downto 0);
 
     signal DI_Reg           : std_logic_vector(7 downto 0);
     signal T_Res            : std_logic;
@@ -361,6 +363,7 @@ begin
             IStatus <= "00";
             MCycles <= "000";
             DO <= "00000000";
+            mode24_r <= "00";
 
             ACC <= (others => '1');
             F <= (others => '1');
@@ -669,6 +672,15 @@ begin
             end if;
 
             if T_Res = '1' then
+                    if ISet = "10" then
+                        case IR is
+                        when x"90" => mode24_r <= "00";
+                        when x"91" => mode24_r <= "01";
+                        when x"92" => mode24_r <= "10";
+                        when others => null;
+                        end case;
+                    end if;
+
                 Read_To_Reg_r(3 downto 0) <= Set_BusA_To;
                 Read_To_Reg_r(4) <= Read_To_Reg;
                 if Read_To_Acc = '1' then
@@ -938,6 +950,7 @@ begin
 
     MC <= std_logic_vector(MCycle);
     TS <= std_logic_vector(TState);
+    mode24 <= mode24_r;
     DI_Reg <= DI;
     HALT_n <= not Halt_FF;
     BUSAK_n <= not BusAck;

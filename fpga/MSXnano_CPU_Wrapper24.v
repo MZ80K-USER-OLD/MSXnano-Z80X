@@ -22,6 +22,7 @@ module MSXnano_CPU_Wrapper24 #(
     output wire        update_addr,
     input  wire [7:0]  DI,
     output wire [7:0]  DO,
+    output wire [1:0]  mode24,
     output wire        Data_Reverse
 );
 
@@ -54,6 +55,7 @@ module MSXnano_CPU_Wrapper24 #(
         .update_addr  (update_addr),
         .DI           (DI),
         .DO           (DO),
+        .mode24       (mode24),
         .Data_Reverse (Data_Reverse)
     );
 

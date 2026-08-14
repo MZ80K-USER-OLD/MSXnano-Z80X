@@ -92,6 +92,7 @@ entity G80a is
 		update_addr	: out std_logic;
         DI           : in std_logic_vector(7 downto 0);
         DO           : out std_logic_vector(7 downto 0);
+        mode24       : out std_logic_vector(1 downto 0);
         Data_Reverse: out std_logic
     );
 end G80a;
@@ -177,6 +178,7 @@ begin
             DInst => DI,
             DI => DI_Reg,
             DO => DO,
+            mode24 => mode24,
             MC => MCycle,
             TS => TState,
             IntCycle_n => IntCycle_n);
