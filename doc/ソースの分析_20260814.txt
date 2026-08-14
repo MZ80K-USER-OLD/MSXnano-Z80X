@@ -1,0 +1,409 @@
+To Do リストを更新しました
+
+現在開いている `top.v` を起点に、トップ階層の信号経路、クロック／リセット、主要なメモリ・映像・音源ブロックを確認します。まず構成と近傍の実装を絞って読み、推測ではなく「この設計が何をしているか」を整理します。
+
+Search complete: トップ構成を調査
+
+Searched for files matching `**/fpga/**/*.v`, 85 matches
+
+Searched for regex `module top|top module` (`**/fpga/**`), 8 results
+
+Searched for regex `Z80|msxnano|MSXNano` (`**/fpga/**`), 486 results
+
+Searched for regex `VDP|PSG|FM|keyboard|USB|debug_uart` (`**/fpga/**`), 835 results
+
+Searched for regex `clock|clk|reset|rst|system_clock` (`**/fpga/**`), 1482 results
+
+Searched for text `vdp` (`**/fpga/**`), 751 results
+
+Searched for regex `Z80|MSXNano|MSXnano` (`**/fpga/**`), 335 results
+
+Searched for regex `PSG|FM|keyboard|USB|debug_uart` (`**/fpga/**`), 949 results
+
+Searched for regex `vdp4|U_VDP_VGA|VDP` (`**/fpga/**`), 659 results
+
+Searched for regex `psg1|YM2149|logo_fm` (`**/fpga/**`), 833 results
+
+Searched for regex `keyboard_bra|USB keyboard|fpga_companion|ps2_keyboard` (`**/fpga/**`), 997 results
+
+トップ階層の前半から、設計の中心が「外部 Beeb バス」ではなく、内部生成した MSX2P 相当システムを HDMI／SDRAM／入力デバイスへ接続する構成だと見えてきました。次に `top.v` の後半で、CPU・メモリ・VDP・音声・出力の実際の接続を確認し、未接続やビルド上の注意点を切り分けます。
+
+Read , lines 240 to 620
+
+Read , lines 621 to 1050
+
+Read 
+
+Read 
+
+後半の接続から、CPU は `G80a` が内部生成した 3.6 MHz 相当のイネーブルで動き、I/O デコードを通じて VDP・PSG・PPI・RTC・SD／Flash を選択する構造だと確認できました。ここでは特に、現在編集している `top.v` と実際の Gowin プロジェクトが参照する `top_BeebDock.v` の差分、そして音声・SDRAM経路を最後まで確認します。
+
+Read , lines 1000 to 1450
+
+Read , lines 1451 to 1900
+
+Searched for regex `audio_sample|YM2149|jtopl|fpga_companion|ps2_keyboard|sd_reader|memory_controller|VrmDbi2|config_enable|flash_wait_n` (`**/fpga/top.v`), 69 results
+
+Searched for regex `top_BeebDock|top.v|top` (`**/fpga/build.tcl`), 38 results
+
+Checked , no problems found
+
+Read , lines 1880 to 1951
+
+Read , lines 65 to 123
+
+Read 
+
+**概要**
+
+現在のソースは、Tang Nano 20K Dock 上で動作する独立型の MSX2+ FPGA コアです。README に記載されている通り、主な機能は Z80、V9958、MSX2+ BIOS、SD カード、4 MB Mapper、2 MB MegaRAM/SCC、RTC、PSG、OPLL、USB／PS2 キーボードです。`README.md`
+
+大きな信号経路は次の構成です。
+
+```text
+27 MHz 外部クロック
+        |
+        v
+   CLK_108P
+        |
+   +----+------------------+
+   |                       |
+ 108 MHz                54 MHz / 27 MHz
+   |                       |
+   |                       +--> Z80 G80a
+   |                       +--> I/O デコード
+   |                       +--> PSG / OPLL / SCC
+   |                       +--> SD / Flash
+   |
+  クロックイネーブル生成
+        |
+      3.6 MHz 相当
+        |
+        v
+       Z80
+        |
+        +--> BIOS / SubROM / ロゴ ROM
+        +--> Mapper / MegaRAM
+        +--> V9958
+        +--> PSG / OPLL
+        +--> RTC
+        +--> PPI / キーボード
+```
+
+**1. トップ階層とビルド対象**
+
+現在開いている `top.v` は、`module top` として以下を持っています。
+
+- 27 MHz 外部クロック
+- `s1` / `s2` リセット・デバッグ入力
+- M0S／BL616 との SPI 接続
+- HDMI 差動出力
+- SPI Flash
+- MicroSD
+- UART
+- 32-bit SDRAM
+- PS/2 キーボード
+
+一方、プロジェクトファイルとビルドスクリプトには注意が必要です。
+
+- `MSXNanoTang20KBeebDock.gprj` は `top_BeebDock.v` を登録している
+- `build.tcl` は `top.v` を登録している
+- `build.tcl` は `tang20k.cst` と `tang20k.sdc` を参照しているが、現在の構成には `tang20kBeebDock.cst` と `tang20kBeebDock.sdc` がある
+- `.gprj` と `build.tcl` で使用するトップファイルおよび制約ファイルが一致していない
+
+したがって、Gowin IDE から `.gprj` をビルドする場合と、`build.tcl` からビルドする場合で、別のソース／制約が使われる可能性があります。現在のソースを正しく評価するなら、まずビルド入口を一本化する必要があります。
+
+**2. クロックとリセット**
+
+`top.v:93-242` では、27 MHz 入力から `CLK_108P` で 108 MHz を生成しています。
+
+- `clk_108m`: 108 MHz
+- `clk_54m`: 54 MHz
+- `clk_27m`: 27 MHz
+- `clk_3m6_internal`: 108 MHz を 30 分周して生成した約 3.6 MHz
+
+Z80 自体は 54 MHz クロックで動作し、`clk_enable_3m6_54` と `clk_falling_3m6_54` をクロックイネーブルとして利用しています。`top.v:650-760`
+
+リセットは次の条件です。
+
+```verilog
+assign ex_bus_reset_n = ~s1 && clock_locked;
+wire bus_reset_n = ex_bus_reset_n;
+```
+
+さらに `reset1_n`、`reset2_n`、`reset3_n` を約 2^21 サイクルの遅延で順番に解除しています。`top.v:293-365`
+
+目的としては、PLL ロック後に周辺回路を段階的に起動する構成です。ただし、リセット同期については複数クロックドメインにまたがっています。
+
+- `bus_reset_n`: PLL ロック信号と `s1` から直接生成
+- 27 MHz、54 MHz、108 MHz の各ドメインで使用
+- 一部は非同期リセット、一部は同期的に扱われている
+
+実機で起動不安定や低温時の初期化不良がある場合、まずこのリセット分配を確認するのがよさそうです。
+
+**3. Z80 と MSX バス**
+
+Z80 は `top.v:727-760` の `G80a` です。
+
+```verilog
+G80a #(
+    .Mode(0),
+    .IOWait(1)
+) cpu1 (
+    .RESET_n(...),
+    .CLK_n(clk_54m),
+    .clk_enable(...),
+    ...
+);
+```
+
+`Mode(0)` なので通常の Z80 モードです。CPU のバス信号は内部の以下の信号に出ています。
+
+- `bus_addr`
+- `cpu_din`
+- `cpu_dout`
+- `bus_mreq_n`
+- `bus_iorq_n`
+- `bus_rd_n`
+- `bus_wr_n`
+- `bus_m1_n`
+- `bus_rfsh_n`
+
+外部 Beeb バス用と思われる信号も存在しますが、現在のトップでは多くがコメントアウトされています。例えば、外部からの `ex_bus_wait_n`、`ex_bus_int_n`、`ex_bus_clk_3m6`、`ex_bus_data` は入力として使われず、内部で固定値または内部生成信号に置き換えられています。
+
+つまり、現在の `top.v` は外部 Z80／Beeb バスを受ける構成ではなく、FPGA 内部の Z80 が MSX システム全体を実行するスタンドアロン構成です。
+
+**4. MSX スロットと ROM**
+
+`top.v:800-1010` では、PPI ポート A の値を使って MSX のプライマリスロットをデコードしています。
+
+- 64 KB 空間を 4 ページに分割
+- PPI ポート A の 2-bit ごとにページのスロットを選択
+- Expanded Slot 3 のサブスロットも `exp_slotx` で管理
+- `FFFFh` へのアクセスで Expanded Slot レジスタを更新
+
+ROM 系は以下です。
+
+- `bios_msx2p`
+- `subrom_msx2p`
+- `logo_fm`
+
+BIOS はプライマリスロット 0、SubROM とロゴ ROM は設定された Expanded Slot 経由で選択されます。`top.v:944-1000`
+
+**5. V9958 と映像出力**
+
+V9958 は `top.v:1004-1055` の `v9958_top` で接続されています。
+
+I/O アドレスは次の条件です。
+
+```verilog
+bus_addr[7:2] == 6'b100110
+```
+
+これは `98h` から `9Bh` の VDP ポートに対応します。
+
+VDP の主な接続は以下です。
+
+- CPU データ入力／出力: `vdp_dout`, `cpu_dout`
+- VDP 割り込み: `vdp_int`
+- VRAM アドレス: `VdpAdr`
+- VRAM 書き込み制御: `WeVdp_n`
+- VRAM データ: `VrmDbo`, `VrmDbi2`
+- HDMI 差動出力: `data_p/n`, `clk_p/n`
+- スキャンライン制御: `config_enable_scanlines`
+
+V9958 内部は、古い ESE-VDP 系の VHDL コアと HDMI/TMDS 出力ロジックを組み合わせた構成です。`vdp.vhd` は CPU インターフェース、VDP レジスタ、描画タイミング、VRAM アクセスをまとめたコアです。`vdp_vga.vhd` にはラインバッファによる二重バッファ処理があり、映像出力のタイミング調整を行います。
+
+**6. SDRAM**
+
+Mapper、MegaRAM、VDP VRAM は `top.v:1105-1145` の `memory_ctrl` に集約されています。
+
+用途は次の通りです。
+
+- Mapper: 最大 4 MB
+- MegaRAM／SCC メモリ
+- V9958 VRAM
+- SDRAM データバス: 32-bit
+- SDRAM DQM: 4-bit
+
+```verilog
+memory_ctrl mem1 (
+    .mapper_req(mapper_req),
+    .megaram_req(megaram_req),
+    .vram_write(~WeVdp_n),
+    .vram_addr(VdpAdr),
+    ...
+);
+```
+
+`SDRAM_32` が定義されているため、Mapper レジスタは 8-bit 全体を使っています。`top.v:1060-1110`
+
+**7. Mapper と MegaRAM**
+
+Mapper のページレジスタは `mapper_reg0` から `mapper_reg3` です。
+
+```verilog
+assign mapper_addr =
+    page0 ? {mapper_reg0, bus_addr[13:0]} :
+    page1 ? {mapper_reg1, bus_addr[13:0]} :
+    page2 ? {mapper_reg2, bus_addr[13:0]} :
+            {mapper_reg3, bus_addr[13:0]};
+```
+
+初期値は次のページ構成です。
+
+```text
+mapper_reg0 = 03h
+mapper_reg1 = 02h
+mapper_reg2 = 01h
+mapper_reg3 = 00h
+```
+
+Mapper はデフォルトで Slot 3 側に配置され、設定により Slot 1／2 側にも移動できます。
+
+MegaRAM／SCC は `megaram_scc` と `scc_wave2` の二系統に分かれています。
+
+- SCC 音源レジスタ領域
+- MegaRAM データ領域
+- Ghost SCC の有効／無効
+- Slot 3／Slot 1・2 配置
+- 線形アドレスモード
+
+この部分は `top.v:1230-1335` が中心です。
+
+**8. 音源**
+
+`ENABLE_SOUND` により、次の音源が有効になります。
+
+- YM2149 PSG
+- YM2413 OPLL
+- SCC
+- PSG フィルタ
+
+PSG の I/O は `A0h` から `A2h` です。`top.v:1160-1225`
+
+OPLL は `7Ch`／`7Dh` でデコードされ、`jt2413` が約 3.6 MHz のクロックイネーブルで動作します。
+
+最後に、PSG、SCC、OPLL を加算して 16-bit の `audio_sample` を作り、V9958 の HDMI 音声入力へ渡しています。
+
+```verilog
+audio_sample <=
+    {2'b0, psgSound3, 6'b0}
+    + {scc_wav, 1'b0}
+    + jt2413_wav;
+```
+
+音声ミキサには飽和処理が見当たらないため、複数音源を同時に大音量で鳴らした場合は加算結果の上位ビット切り捨てやラップアラウンドが起きる可能性があります。音が歪む場合は、この加算幅とクリッピング処理が確認対象です。
+
+**9. SD カードと Flash**
+
+SD カードは `top.v:1518-1790` の `sd_reader` と `dpram` で処理されています。
+
+主な領域は次の通りです。
+
+```text
+7C00h-7DFFh : 512-byte sector transfer area
+7E00h       : SD enable
+7E01h       : command
+7E02h       : status
+7E03h-7E06h: sector address
+```
+
+Flash は `flash` モジュールで SPI 読み出しを行い、Nextor ROM の開始アドレスとして `0x100000` を設定しています。
+
+```verilog
+ff_flash_addr <= 24'h100000;
+```
+
+README にある「Flash Address = 0x100000」と一致しています。
+
+Flash 読み出し中は `flash_wait_n` を CPU の `WAIT_n` に合成しています。そのため、Flash の応答が遅い場合は CPU サイクルが停止します。
+
+**10. キーボードと M0S**
+
+M0S／BL616 からの HID データは `fpga_companion` で受けます。
+
+```text
+M0S / BL616
+    |
+    v
+fpga_companion
+    |
+    v
+128-bit keyboard
+    |
+    v
+USB keyboard または PS/2 keyboard interface
+    |
+    v
+keyboard_data
+    |
+    v
+MSX PPI port B
+```
+
+現在は `ENABLE_PS2KEYBOARD` が定義されているため、通常の USB キーボード VHDL モジュールではなく、`ps2_keyboard_msx` が有効です。`top.v:1890-1945`
+
+重要な点として、PS/2 側では次のように M0S の `keyboard` データを使っていません。
+
+```verilog
+.keyboard(128'b0)
+```
+
+つまり現在の設定では、
+
+- M0S／BL616 の HID キーボードデータは生成される
+- しかし PS/2 キーボードモジュールには渡されない
+- 実際のキー入力は PS/2 物理ピンからのみ入る
+
+という構成です。USB キーボードを使いたい場合は `ENABLE_PS2KEYBOARD` を外す必要があります。
+
+**確認できた主な注意点**
+
+1. **ビルド入口の不一致**
+
+   `.gprj` は `top_BeebDock.v`、`build.tcl` は `top.v` を使っています。また、制約ファイル名も一致していません。最優先で整理すべき箇所です。
+
+2. **外部 Beeb バスは現在ほぼ無効**
+
+   外部バスの入力はコメントアウトされ、CPU クロックやリセット、データバスは内部生成されています。名前に `BeebDock` が残っていますが、現在の `top.v` は内部 MSX コア主体です。
+
+3. **設定レジスタの反映経路に疑問がある**
+
+   `top.v:1435-1485` の `config_enable_mapper3`、`config_enable_mapper12`、`config_enable_sdcard` などは `always_latch` 内で `~bus_reset_n` のときだけ更新されています。
+
+   そのため、CPU が設定ポートへ書き込んで `config1_ff`／`config2_ff` を変更しても、派生した有効フラグが実行中に更新されない可能性があります。設定メニューで Slot 配置や SD 有効状態が反映されない場合、ここが有力です。
+
+4. **`config_reset` がシステムリセットに接続されていない**
+
+   リセット入力に関するコードはコメントアウトされています。
+
+   ```verilog
+   // .din(ex_bus_reset_n & ~config_reset)
+   ```
+
+   現在の `bus_reset_n` は `ex_bus_reset_n` だけで決まるため、設定メニューから発行した `config_reset` は周辺の一部パルス生成には使われても、CPU 全体のリセットにはなっていません。
+
+5. **複数クロックドメイン間の信号受け渡しが多い**
+
+   `bus_addr`、各種要求信号、`cpu_dout` を 27 MHz と 54 MHz の両方の always ブロックで直接参照しています。Z80 バス自体が 3.6 MHz 相当なので成立している部分もありますが、厳密な CDC 同期や要求保持は限定的です。
+
+6. **未初期化レジスタの可能性**
+
+   `cnt_clk_enable_27m`、一部の音源クロックレジスタ、Mapper／設定関連レジスタには、リセット処理がないものがあります。FPGA の初期値に依存している箇所と、明示的なリセットを受ける箇所が混在しています。
+
+7. **現在の `top.v` はエディタ上ではエラーなし**
+
+   VS Code の診断では `top.v` にエラーは報告されませんでした。ただし、これは Gowin の完全な合成・配置配線を通した結果ではないため、プロジェクトファイルの不一致や未定義モジュール、制約ファイル問題までは保証しません。
+
+**まとめ**
+
+設計の本体は、内部 Z80 を中心にした MSX2+ SoC です。V9958 と SDRAM が映像・メモリの中心にあり、PSG／OPLL／SCC が HDMI 音声へ集約され、BIOS・Nextor・SD カードによって起動・ストレージ機能を提供しています。
+
+分析上、機能面で最も気になるのは次の3点です。
+
+- 実際のビルドが `top.v` と `top_BeebDock.v` のどちらを使うのか
+- 設定ポート変更後に `config_enable_*` が本当に更新されるのか
+- `ENABLE_PS2KEYBOARD` によって M0S USB キーボードが意図せず無効化されていないか
+
+現状のソースは大規模な移植途中の構成を含んでおり、まずはビルド対象を統一した上で、設定反映とキーボード経路を実機で確認するのがよいです。

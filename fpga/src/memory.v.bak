@@ -7,9 +7,11 @@ module memory_ctrl (
 	input wire video_dhclk,
 	input wire video_dlclk,
 
+    // CPU 24-bit SDRAM path (from wrapper)
     input wire cpu_sdram_req,
     input wire cpu_sdram_write,
     input wire [23:0] cpu_sdram_addr,
+
 
 	input wire [7:0] mapper_din,
     input wire mapper_req,

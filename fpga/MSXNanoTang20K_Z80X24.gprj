@@ -96,6 +96,7 @@
         <File path="src/ocm/lpf.vhd" type="file.vhdl" enable="1"/>
         <File path="src/ocm/scc_wave2.vhd" type="file.vhdl" enable="1"/>
         <File path="src/ocm/swioports.vhd" type="file.vhdl" enable="1"/>
+        <File path="src/usb/ps2_keyboard_msx.vhd" type="file.vhdl" enable="1"/>
         <File path="src/usb/usb_keyboard_msx.vhd" type="file.vhdl" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/ram.vhd" type="file.vhdl" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/vdp/vdp.vhd" type="file.vhdl" enable="1"/>

@@ -87,10 +87,10 @@ module top
     output wire [3:0] O_sdram_dqm // 32/4
 
     //output wire SLTSL3
-
+    
 `ifdef ENABLE_PS2KEYBOARD
-    ,
     // ★一番最後など（カッコを閉じる前）に、PS/2物理ピンの定義を2行追加
+    ,
     inout  wire        ps2_clk,
     inout  wire        ps2_data
 `endif
@@ -607,10 +607,11 @@ wire [7:0] mapper_read_data =
                      ( megarom_req == 1) ? ff_rom_dout :
                      //( slot3_req_r == 1) ? 8'hff :
                  `endif
-                `ifdef ENABLE_SOUND
+                 `ifdef ENABLE_SOUND
                      //( scc_req3_r == 1 ) ? scc_dout:
                      ( megaram_req == 1 ) ? megaram_dout:
-                `endif
+                 `endif
+                     ( cpu_sdram_req == 1 ) ? cpu_sdram_dout :
                      //( slot0_req_r == 1 || slot3_req_r == 1) ? 8'hff :
                 `ifdef ENABLE_CONFIG
                      ( config_req == 1 && config_ok == 1) ? config_dout :
@@ -1974,5 +1975,6 @@ ps2_keyboard_msx ps2_keyboard_msx
 
     );
 `endif
+
 
 endmodule

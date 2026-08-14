@@ -1,0 +1,23 @@
+10 CLS:PRINT "- 24bit Window Test (B000-BFFF) -"
+20 WR=&HB000:REM 4KB Window
+30 PO=&HE1:REM HL_B  SETTING PORT
+32 PM=&HE0:REM MODE SET 
+34 OUT PM,1
+40 '
+50 ' 1. Write a value to B000h in the normal bank (00)
+60 OUT PO,0:POKE WR,&HAA
+70 '
+80 ' 2. Switch to bank 01 and write a different value to B000h
+90 OUT PO,1:POKE WR,&H55
+100 '
+110 ' 3. Verification
+120 OUT PO,0:V0=PEEK(WR)
+130 OUT PO,1:V1=PEEK(WR)
+140 '
+150 PRINT "Bank 00 @B000h:";HEX$(V0)
+160 PRINT "Bank 01 @B000h:";HEX$(V1)
+170 IF V0=&HAA AND V1=&H55 THEN PRINT "RESULT: SUCCESS!":GOTO 190
+180 PRINT "RESULT: FAILED (Same physical address)"
+190 OUT PO,0
+200 OUT PM,0
+210 END
