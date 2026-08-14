@@ -18,12 +18,16 @@ module MSXnano_CPU_Wrapper24 #(
     output wire        RFSH_n,
     output wire        HALT_n,
     output wire        BUSAK_n,
-    output wire [15:0] A,
+    output wire [23:0] A,
     output wire        update_addr,
     input  wire [7:0]  DI,
     output wire [7:0]  DO,
     output wire        Data_Reverse
 );
+
+    wire [15:0] cpu_addr;
+
+    assign A = {8'b0, cpu_addr};
 
     G80a  #(
         .Mode    (Mode),  // 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
@@ -46,7 +50,7 @@ module MSXnano_CPU_Wrapper24 #(
         .RFSH_n       (RFSH_n),
         .HALT_n       (HALT_n),
         .BUSAK_n      (BUSAK_n),
-        .A            (A),
+        .A            (cpu_addr),
         .update_addr  (update_addr),
         .DI           (DI),
         .DO           (DO),
