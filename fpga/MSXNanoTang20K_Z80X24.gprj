@@ -5,6 +5,7 @@
     <Version>5</Version>
     <Device name="GW2AR-18C" pn="GW2AR-LV18QN88C8/I7">gw2ar18c-000</Device>
     <FileList>
+        <File path="MSXnano_CPU_Wrapper24.v" type="file.verilog" enable="1"/>
         <File path="jtopl/jt2413.v" type="file.verilog" enable="1"/>
         <File path="jtopl/jtopl.v" type="file.verilog" enable="1"/>
         <File path="jtopl/jtopl2.v" type="file.verilog" enable="1"/>
@@ -40,7 +41,6 @@
         <File path="jtopl/jtopll_mmr.v" type="file.verilog" enable="1"/>
         <File path="jtopl/jtopll_reg.v" type="file.verilog" enable="1"/>
         <File path="jtopl/jtopll_reg_ch.v" type="file.verilog" enable="1"/>
-        <File path="msxnano_24bit_wrapper.v" type="file.verilog" enable="1"/>
         <File path="pulse_min_max/pulse_max.v" type="file.verilog" enable="1"/>
         <File path="pulse_min_max/pulse_min.v" type="file.verilog" enable="1"/>
         <File path="src/bios_msx2p.v" type="file.verilog" enable="1"/>

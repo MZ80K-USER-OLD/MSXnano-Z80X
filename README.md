@@ -20,6 +20,20 @@ Slot map has been updated to improve compatibility without requiring changes.
 
 Mapper and megaram can be relocated to slots 1 or 2 using config menu.
 
+
+
+## SD-RAM Physical Address Mappings
+
+   
+
+| Physical Address  Range (Hexadecimal) | Allocated Size | Main Uses and Functions                                      |
+| ------------------------------------- | -------------- | ------------------------------------------------------------ |
+| 0x000000 ～ 0x3FFFFF                  | 4MB            | Main RAM (Memory Mapper) – A vast RAM space used by Nextor OS and standard MSX2+ software |
+| 0x400000 ～ 0x5FFFF                   | 2MB            | MegaRAM / SCC Expansion RAM    For loading and running large-capacity ROM games (such as Konami games featuring the SCC sound chip) |
+| 0x600000 ～ 0x7FFFFF                  | 2MB            | Unused or reserved for future expansion (e.g. VRAM area); currently left as spare space to allow for future needs |
+
+
+
 ## Megaram + Sofarun
 Megaram is detected automatically by sofarun using default settings. When using other software you may need to indicate location, Slot 3-3 by default.
 

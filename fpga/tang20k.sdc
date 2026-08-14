@@ -15,26 +15,26 @@ create_generated_clock -name clock_VideoDHClk -source [get_nets {clk_27m}] -mast
 create_generated_clock -name clock_VideoDLClk -source [get_nets {clk_27m}] -master_clock clock_27m -divide_by 4 [get_nets {VideoDLClk}] -add
 // set_clock_groups -asynchronous -group [get_clocks {clock_108m clock_54m clock_VideoDHClk clock_VideoDLClk clock_27m }] -group [get_clocks {clock_reset }] -group [get_clocks {clock_env_reset }] 
 
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/?*?/D}] -setup -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/Regs/?*?/?*}] -setup -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/?*?/?*}] -setup -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/?*?/D}] -setup -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/?*?/CE}] -setup -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/?*?/CE}] -setup -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/Regs/RegsL_RegsL*/DI*}] -setup -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/?*?/D}] -setup -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/Regs/?*?/?*}] -setup -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/?*?/?*}] -setup -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/?*?/D}] -setup -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/?*?/CE}] -setup -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/?*?/CE}] -setup -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/Regs/RegsL_RegsL*/DI*}] -setup -end 2
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {cpu1/DI_Reg*/SET}] -setup -end 10
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {cpu1/DI_Reg*/RESET}] -setup -end 10
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {memory_ctrl/vram/u_sdram/?*?/D}] -setup -end 2
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {ppi_port*?/CE}] -setup -end 10
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {memory_ctrl/vram/?*?/D}] -setup -end 2
 
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/?*?/D}] -hold -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/Regs/?*?/?*}] -hold -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/?*?/?*}] -hold -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/?*?/D}] -hold -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/?*?/CE}] -hold -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/?*?/CE}] -hold -end 2
-set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/u0/Regs/RegsL_RegsL*/DI*}] -hold -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/?*?/D}] -hold -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/Regs/?*?/?*}] -hold -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/?*?/?*}] -hold -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/?*?/D}] -hold -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/?*?/CE}] -hold -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/?*?/CE}] -hold -end 2
+set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/u0/Regs/RegsL_RegsL*/DI*}] -hold -end 2
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {cpu1/DI_Reg*/SET}] -hold -end 10
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {memory_ctrl/vram/u_sdram/?*?/D}] -hold -end 2
 //set_multicycle_path -from [get_clocks {clock_108m}] -to [get_pins {ppi_port*?/CE}] -hold -end 10

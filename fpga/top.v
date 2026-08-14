@@ -724,7 +724,7 @@ wire [7:0] mapper_read_data =
 `endif
 
     wire update_addr;
-    G80a  #(
+    MSXnano_CPU_Wrapper24  #(
         .Mode    (0),     // 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
         //.T2Write (0),     //0 => WR_n active in T3, /=0 => WR_n active in T2
         .IOWait   (1)      // 0 => Single I/O cycle, 1 => Std I/O cycle
@@ -764,28 +764,6 @@ wire [7:0] mapper_read_data =
         .DO         (cpu_dout),
         .Data_Reverse (bus_data_reverse)
     );
-
-    wire [23:0] cpu_sdram_addr;
-    wire cpu_sdram_req;
-    wire cpu_sdram_write;
-    wire [7:0] cpu_sdram_dout;
-    wire [2:0] cpu_t80_reg_pair = bus_addr[15:13];
-    wire [1:0] cpu_mode24 = 2'b01;
-
-    msxnano_24bit_wrapper msx24_wrapper (
-        .t80_addr    (bus_addr),
-        .t80_reg_pair(cpu_t80_reg_pair),
-        .t80_mreq_n  (bus_mreq_n),
-        .mode24      (cpu_mode24),
-        .sdram_addr  (cpu_sdram_addr)
-    );
-
-    assign cpu_sdram_req = (bus_mreq_n == 1'b0) &&
-                           (bus_iorq_n == 1'b1) &&
-                           ((bus_rd_n == 1'b0) || (bus_wr_n == 1'b0)) &&
-                           (mapper_req == 1'b0) &&
-                           (megaram_req == 1'b0);
-    assign cpu_sdram_write = (bus_wr_n == 1'b0);
 
     //assign led[5:1] = cpu_din[5:1];
 
@@ -1144,10 +1122,6 @@ memory_ctrl mem1 (
     .video_dhclk(VideoDHClk),
     .video_dlclk(VideoDLClk),
 
-    .cpu_sdram_req(cpu_sdram_req),
-    .cpu_sdram_write(cpu_sdram_write),
-    .cpu_sdram_addr(cpu_sdram_addr),
-
     .mapper_din(cpu_dout),
     .mapper_req(mapper_req),
     .mapper_write(mapper_write),
@@ -1163,7 +1137,6 @@ memory_ctrl mem1 (
     .mapper_dout(mapper_dout),
     .megaram_dout(megaram_dout),
     .vram_dout(VrmDbi2),
-    .cpu_sdram_dout(cpu_sdram_dout),
 
     .O_sdram_clk(O_sdram_clk),
     .O_sdram_cke(O_sdram_cke),

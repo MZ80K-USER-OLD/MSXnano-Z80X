@@ -1,0 +1,5 @@
+SDRAM物理アドレスマッピング一覧物理
+アドレス範囲（16進数）	割り当てサイズ	主な用途・機能
+0x000000 〜 0x3FFFFF	4MB		メインRAM（Memory Mapper）Nextor OSや通常のMSX2+ソフトが使用する広大なRAM空間
+0x400000 〜 0x5FFFFF	2MB		MegaRAM / SCC拡張RAM大容量ROMゲーム（コナミのSCC音源入りゲームなど）の読み込み・実行用
+0x600000 〜 0x7FFFFF	2MB		未使用 または 将来の拡張用（VRAM領域など）現状は余裕を持たせている空き空間

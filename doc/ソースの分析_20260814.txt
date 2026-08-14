@@ -1,8 +1,8 @@
-To Do ���X�g���X�V���܂���
+To Do リストを更新しました
 
-���݊J���Ă��� `top.v` ���N�_�ɁA�g�b�v�K�w�̐M���o�H�A�N���b�N�^���Z�b�g�A��v�ȃ������E�f���E�����u���b�N���m�F���܂��B�܂��\���ƋߖT�̎������i���ēǂ݁A�����ł͂Ȃ��u���̐݌v���������Ă��邩�v�𐮗����܂��B
+現在開いている `top.v` を起点に、トップ階層の信号経路、クロック／リセット、主要なメモリ・映像・音源ブロックを確認します。まず構成と近傍の実装を絞って読み、推測ではなく「この設計が何をしているか」を整理します。
 
-Search complete: �g�b�v�\���𒲍�
+Search complete: トップ構成を調査
 
 Searched for files matching `**/fpga/**/*.v`, 85 matches
 
@@ -26,7 +26,7 @@ Searched for regex `psg1|YM2149|logo_fm` (`**/fpga/**`), 833 results
 
 Searched for regex `keyboard_bra|USB keyboard|fpga_companion|ps2_keyboard` (`**/fpga/**`), 997 results
 
-�g�b�v�K�w�̑O������A�݌v�̒��S���u�O�� Beeb �o�X�v�ł͂Ȃ��A������������ MSX2P �����V�X�e���� HDMI�^SDRAM�^���̓f�o�C�X�֐ڑ�����\�����ƌ����Ă��܂����B���� `top.v` �̌㔼�ŁACPU�E�������EVDP�E�����E�o�͂̎��ۂ̐ڑ����m�F���A���ڑ���r���h��̒��ӓ_��؂蕪���܂��B
+トップ階層の前半から、設計の中心が「外部 Beeb バス」ではなく、内部生成した MSX2P 相当システムを HDMI／SDRAM／入力デバイスへ接続する構成だと見えてきました。次に `top.v` の後半で、CPU・メモリ・VDP・音声・出力の実際の接続を確認し、未接続やビルド上の注意点を切り分けます。
 
 Read , lines 240 to 620
 
@@ -36,7 +36,7 @@ Read
 
 Read 
 
-�㔼�̐ڑ�����ACPU �� `G80a` �������������� 3.6 MHz �����̃C�l�[�u���œ����AI/O �f�R�[�h��ʂ��� VDP�EPSG�EPPI�ERTC�ESD�^Flash ��I������\�����Ɗm�F�ł��܂����B�����ł͓��ɁA���ݕҏW���Ă��� `top.v` �Ǝ��ۂ� Gowin �v���W�F�N�g���Q�Ƃ��� `top_BeebDock.v` �̍����A�����ĉ����ESDRAM�o�H���Ō�܂Ŋm�F���܂��B
+後半の接続から、CPU は `G80a` が内部生成した 3.6 MHz 相当のイネーブルで動き、I/O デコードを通じて VDP・PSG・PPI・RTC・SD／Flash を選択する構造だと確認できました。ここでは特に、現在編集している `top.v` と実際の Gowin プロジェクトが参照する `top_BeebDock.v` の差分、そして音声・SDRAM経路を最後まで確認します。
 
 Read , lines 1000 to 1450
 
@@ -54,14 +54,14 @@ Read , lines 65 to 123
 
 Read 
 
-**�T�v**
+**概要**
 
-���݂̃\�[�X�́ATang Nano 20K Dock ��œ��삷��Ɨ��^�� MSX2+ FPGA �R�A�ł��BREADME �ɋL�ڂ���Ă���ʂ�A��ȋ@�\�� Z80�AV9958�AMSX2+ BIOS�ASD �J�[�h�A4 MB Mapper�A2 MB MegaRAM/SCC�ARTC�APSG�AOPLL�AUSB�^PS2 �L�[�{�[�h�ł��B`README.md`
+現在のソースは、Tang Nano 20K Dock 上で動作する独立型の MSX2+ FPGA コアです。README に記載されている通り、主な機能は Z80、V9958、MSX2+ BIOS、SD カード、4 MB Mapper、2 MB MegaRAM/SCC、RTC、PSG、OPLL、USB／PS2 キーボードです。`README.md`
 
-�傫�ȐM���o�H�͎��̍\���ł��B
+大きな信号経路は次の構成です。
 
 ```text
-27 MHz �O���N���b�N
+27 MHz 外部クロック
         |
         v
    CLK_108P
@@ -71,79 +71,79 @@ Read
  108 MHz                54 MHz / 27 MHz
    |                       |
    |                       +--> Z80 G80a
-   |                       +--> I/O �f�R�[�h
+   |                       +--> I/O デコード
    |                       +--> PSG / OPLL / SCC
    |                       +--> SD / Flash
    |
-  �N���b�N�C�l�[�u������
+  クロックイネーブル生成
         |
-      3.6 MHz ����
+      3.6 MHz 相当
         |
         v
        Z80
         |
-        +--> BIOS / SubROM / ���S ROM
+        +--> BIOS / SubROM / ロゴ ROM
         +--> Mapper / MegaRAM
         +--> V9958
         +--> PSG / OPLL
         +--> RTC
-        +--> PPI / �L�[�{�[�h
+        +--> PPI / キーボード
 ```
 
-**1. �g�b�v�K�w�ƃr���h�Ώ�**
+**1. トップ階層とビルド対象**
 
-���݊J���Ă��� `top.v` �́A`module top` �Ƃ��Ĉȉ��������Ă��܂��B
+現在開いている `top.v` は、`module top` として以下を持っています。
 
-- 27 MHz �O���N���b�N
-- `s1` / `s2` ���Z�b�g�E�f�o�b�O����
-- M0S�^BL616 �Ƃ� SPI �ڑ�
-- HDMI �����o��
+- 27 MHz 外部クロック
+- `s1` / `s2` リセット・デバッグ入力
+- M0S／BL616 との SPI 接続
+- HDMI 差動出力
 - SPI Flash
 - MicroSD
 - UART
 - 32-bit SDRAM
-- PS/2 �L�[�{�[�h
+- PS/2 キーボード
 
-����A�v���W�F�N�g�t�@�C���ƃr���h�X�N���v�g�ɂ͒��ӂ��K�v�ł��B
+一方、プロジェクトファイルとビルドスクリプトには注意が必要です。
 
-- `MSXNanoTang20KBeebDock.gprj` �� `top_BeebDock.v` ��o�^���Ă���
-- `build.tcl` �� `top.v` ��o�^���Ă���
-- `build.tcl` �� `tang20k.cst` �� `tang20k.sdc` ���Q�Ƃ��Ă��邪�A���݂̍\���ɂ� `tang20kBeebDock.cst` �� `tang20kBeebDock.sdc` ������
-- `.gprj` �� `build.tcl` �Ŏg�p����g�b�v�t�@�C������ѐ���t�@�C������v���Ă��Ȃ�
+- `MSXNanoTang20KBeebDock.gprj` は `top_BeebDock.v` を登録している
+- `build.tcl` は `top.v` を登録している
+- `build.tcl` は `tang20k.cst` と `tang20k.sdc` を参照しているが、現在の構成には `tang20kBeebDock.cst` と `tang20kBeebDock.sdc` がある
+- `.gprj` と `build.tcl` で使用するトップファイルおよび制約ファイルが一致していない
 
-���������āAGowin IDE ���� `.gprj` ���r���h����ꍇ�ƁA`build.tcl` ����r���h����ꍇ�ŁA�ʂ̃\�[�X�^���񂪎g����\��������܂��B���݂̃\�[�X�𐳂����]������Ȃ�A�܂��r���h��������{������K�v������܂��B
+したがって、Gowin IDE から `.gprj` をビルドする場合と、`build.tcl` からビルドする場合で、別のソース／制約が使われる可能性があります。現在のソースを正しく評価するなら、まずビルド入口を一本化する必要があります。
 
-**2. �N���b�N�ƃ��Z�b�g**
+**2. クロックとリセット**
 
-`top.v:93-242` �ł́A27 MHz ���͂��� `CLK_108P` �� 108 MHz �𐶐����Ă��܂��B
+`top.v:93-242` では、27 MHz 入力から `CLK_108P` で 108 MHz を生成しています。
 
 - `clk_108m`: 108 MHz
 - `clk_54m`: 54 MHz
 - `clk_27m`: 27 MHz
-- `clk_3m6_internal`: 108 MHz �� 30 �������Đ��������� 3.6 MHz
+- `clk_3m6_internal`: 108 MHz を 30 分周して生成した約 3.6 MHz
 
-Z80 ���̂� 54 MHz �N���b�N�œ��삵�A`clk_enable_3m6_54` �� `clk_falling_3m6_54` ���N���b�N�C�l�[�u���Ƃ��ė��p���Ă��܂��B`top.v:650-760`
+Z80 自体は 54 MHz クロックで動作し、`clk_enable_3m6_54` と `clk_falling_3m6_54` をクロックイネーブルとして利用しています。`top.v:650-760`
 
-���Z�b�g�͎��̏����ł��B
+リセットは次の条件です。
 
 ```verilog
 assign ex_bus_reset_n = ~s1 && clock_locked;
 wire bus_reset_n = ex_bus_reset_n;
 ```
 
-����� `reset1_n`�A`reset2_n`�A`reset3_n` ��� 2^21 �T�C�N���̒x���ŏ��Ԃɉ������Ă��܂��B`top.v:293-365`
+さらに `reset1_n`、`reset2_n`、`reset3_n` を約 2^21 サイクルの遅延で順番に解除しています。`top.v:293-365`
 
-�ړI�Ƃ��ẮAPLL ���b�N��Ɏ��Ӊ�H��i�K�I�ɋN������\���ł��B�������A���Z�b�g�����ɂ��Ă͕����N���b�N�h���C���ɂ܂������Ă��܂��B
+目的としては、PLL ロック後に周辺回路を段階的に起動する構成です。ただし、リセット同期については複数クロックドメインにまたがっています。
 
-- `bus_reset_n`: PLL ���b�N�M���� `s1` ���璼�ڐ���
-- 27 MHz�A54 MHz�A108 MHz �̊e�h���C���Ŏg�p
-- �ꕔ�͔񓯊����Z�b�g�A�ꕔ�͓����I�Ɉ����Ă���
+- `bus_reset_n`: PLL ロック信号と `s1` から直接生成
+- 27 MHz、54 MHz、108 MHz の各ドメインで使用
+- 一部は非同期リセット、一部は同期的に扱われている
 
-���@�ŋN���s�����ቷ���̏������s�ǂ�����ꍇ�A�܂����̃��Z�b�g���z���m�F����̂��悳�����ł��B
+実機で起動不安定や低温時の初期化不良がある場合、まずこのリセット分配を確認するのがよさそうです。
 
-**3. Z80 �� MSX �o�X**
+**3. Z80 と MSX バス**
 
-Z80 �� `top.v:727-760` �� `G80a` �ł��B
+Z80 は `top.v:727-760` の `G80a` です。
 
 ```verilog
 G80a #(
@@ -157,7 +157,7 @@ G80a #(
 );
 ```
 
-`Mode(0)` �Ȃ̂Œʏ�� Z80 ���[�h�ł��BCPU �̃o�X�M���͓����̈ȉ��̐M���ɏo�Ă��܂��B
+`Mode(0)` なので通常の Z80 モードです。CPU のバス信号は内部の以下の信号に出ています。
 
 - `bus_addr`
 - `cpu_din`
@@ -169,61 +169,61 @@ G80a #(
 - `bus_m1_n`
 - `bus_rfsh_n`
 
-�O�� Beeb �o�X�p�Ǝv����M�������݂��܂����A���݂̃g�b�v�ł͑������R�����g�A�E�g����Ă��܂��B�Ⴆ�΁A�O������� `ex_bus_wait_n`�A`ex_bus_int_n`�A`ex_bus_clk_3m6`�A`ex_bus_data` �͓��͂Ƃ��Ďg��ꂸ�A�����ŌŒ�l�܂��͓��������M���ɒu���������Ă��܂��B
+外部 Beeb バス用と思われる信号も存在しますが、現在のトップでは多くがコメントアウトされています。例えば、外部からの `ex_bus_wait_n`、`ex_bus_int_n`、`ex_bus_clk_3m6`、`ex_bus_data` は入力として使われず、内部で固定値または内部生成信号に置き換えられています。
 
-�܂�A���݂� `top.v` �͊O�� Z80�^Beeb �o�X���󂯂�\���ł͂Ȃ��AFPGA ������ Z80 �� MSX �V�X�e���S�̂����s����X�^���h�A�����\���ł��B
+つまり、現在の `top.v` は外部 Z80／Beeb バスを受ける構成ではなく、FPGA 内部の Z80 が MSX システム全体を実行するスタンドアロン構成です。
 
-**4. MSX �X���b�g�� ROM**
+**4. MSX スロットと ROM**
 
-`top.v:800-1010` �ł́APPI �|�[�g A �̒l���g���� MSX �̃v���C�}���X���b�g���f�R�[�h���Ă��܂��B
+`top.v:800-1010` では、PPI ポート A の値を使って MSX のプライマリスロットをデコードしています。
 
-- 64 KB ��Ԃ� 4 �y�[�W�ɕ���
-- PPI �|�[�g A �� 2-bit ���ƂɃy�[�W�̃X���b�g��I��
-- Expanded Slot 3 �̃T�u�X���b�g�� `exp_slotx` �ŊǗ�
-- `FFFFh` �ւ̃A�N�Z�X�� Expanded Slot ���W�X�^���X�V
+- 64 KB 空間を 4 ページに分割
+- PPI ポート A の 2-bit ごとにページのスロットを選択
+- Expanded Slot 3 のサブスロットも `exp_slotx` で管理
+- `FFFFh` へのアクセスで Expanded Slot レジスタを更新
 
-ROM �n�͈ȉ��ł��B
+ROM 系は以下です。
 
 - `bios_msx2p`
 - `subrom_msx2p`
 - `logo_fm`
 
-BIOS �̓v���C�}���X���b�g 0�ASubROM �ƃ��S ROM �͐ݒ肳�ꂽ Expanded Slot �o�R�őI������܂��B`top.v:944-1000`
+BIOS はプライマリスロット 0、SubROM とロゴ ROM は設定された Expanded Slot 経由で選択されます。`top.v:944-1000`
 
-**5. V9958 �Ɖf���o��**
+**5. V9958 と映像出力**
 
-V9958 �� `top.v:1004-1055` �� `v9958_top` �Őڑ�����Ă��܂��B
+V9958 は `top.v:1004-1055` の `v9958_top` で接続されています。
 
-I/O �A�h���X�͎��̏����ł��B
+I/O アドレスは次の条件です。
 
 ```verilog
 bus_addr[7:2] == 6'b100110
 ```
 
-����� `98h` ���� `9Bh` �� VDP �|�[�g�ɑΉ����܂��B
+これは `98h` から `9Bh` の VDP ポートに対応します。
 
-VDP �̎�Ȑڑ��͈ȉ��ł��B
+VDP の主な接続は以下です。
 
-- CPU �f�[�^���́^�o��: `vdp_dout`, `cpu_dout`
-- VDP ���荞��: `vdp_int`
-- VRAM �A�h���X: `VdpAdr`
-- VRAM �������ݐ���: `WeVdp_n`
-- VRAM �f�[�^: `VrmDbo`, `VrmDbi2`
-- HDMI �����o��: `data_p/n`, `clk_p/n`
-- �X�L�������C������: `config_enable_scanlines`
+- CPU データ入力／出力: `vdp_dout`, `cpu_dout`
+- VDP 割り込み: `vdp_int`
+- VRAM アドレス: `VdpAdr`
+- VRAM 書き込み制御: `WeVdp_n`
+- VRAM データ: `VrmDbo`, `VrmDbi2`
+- HDMI 差動出力: `data_p/n`, `clk_p/n`
+- スキャンライン制御: `config_enable_scanlines`
 
-V9958 �����́A�Â� ESE-VDP �n�� VHDL �R�A�� HDMI/TMDS �o�̓��W�b�N��g�ݍ��킹���\���ł��B`vdp.vhd` �� CPU �C���^�[�t�F�[�X�AVDP ���W�X�^�A�`��^�C�~���O�AVRAM �A�N�Z�X���܂Ƃ߂��R�A�ł��B`vdp_vga.vhd` �ɂ̓��C���o�b�t�@�ɂ���d�o�b�t�@����������A�f���o�͂̃^�C�~���O�������s���܂��B
+V9958 内部は、古い ESE-VDP 系の VHDL コアと HDMI/TMDS 出力ロジックを組み合わせた構成です。`vdp.vhd` は CPU インターフェース、VDP レジスタ、描画タイミング、VRAM アクセスをまとめたコアです。`vdp_vga.vhd` にはラインバッファによる二重バッファ処理があり、映像出力のタイミング調整を行います。
 
 **6. SDRAM**
 
-Mapper�AMegaRAM�AVDP VRAM �� `top.v:1105-1145` �� `memory_ctrl` �ɏW�񂳂�Ă��܂��B
+Mapper、MegaRAM、VDP VRAM は `top.v:1105-1145` の `memory_ctrl` に集約されています。
 
-�p�r�͎��̒ʂ�ł��B
+用途は次の通りです。
 
-- Mapper: �ő� 4 MB
-- MegaRAM�^SCC ������
+- Mapper: 最大 4 MB
+- MegaRAM／SCC メモリ
 - V9958 VRAM
-- SDRAM �f�[�^�o�X: 32-bit
+- SDRAM データバス: 32-bit
 - SDRAM DQM: 4-bit
 
 ```verilog
@@ -236,11 +236,11 @@ memory_ctrl mem1 (
 );
 ```
 
-`SDRAM_32` ����`����Ă��邽�߁AMapper ���W�X�^�� 8-bit �S�̂��g���Ă��܂��B`top.v:1060-1110`
+`SDRAM_32` が定義されているため、Mapper レジスタは 8-bit 全体を使っています。`top.v:1060-1110`
 
-**7. Mapper �� MegaRAM**
+**7. Mapper と MegaRAM**
 
-Mapper �̃y�[�W���W�X�^�� `mapper_reg0` ���� `mapper_reg3` �ł��B
+Mapper のページレジスタは `mapper_reg0` から `mapper_reg3` です。
 
 ```verilog
 assign mapper_addr =
@@ -250,7 +250,7 @@ assign mapper_addr =
             {mapper_reg3, bus_addr[13:0]};
 ```
 
-�����l�͎��̃y�[�W�\���ł��B
+初期値は次のページ構成です。
 
 ```text
 mapper_reg0 = 03h
@@ -259,32 +259,32 @@ mapper_reg2 = 01h
 mapper_reg3 = 00h
 ```
 
-Mapper �̓f�t�H���g�� Slot 3 ���ɔz�u����A�ݒ�ɂ�� Slot 1�^2 ���ɂ��ړ��ł��܂��B
+Mapper はデフォルトで Slot 3 側に配置され、設定により Slot 1／2 側にも移動できます。
 
-MegaRAM�^SCC �� `megaram_scc` �� `scc_wave2` �̓�n���ɕ�����Ă��܂��B
+MegaRAM／SCC は `megaram_scc` と `scc_wave2` の二系統に分かれています。
 
-- SCC �������W�X�^�̈�
-- MegaRAM �f�[�^�̈�
-- Ghost SCC �̗L���^����
-- Slot 3�^Slot 1�E2 �z�u
-- ���`�A�h���X���[�h
+- SCC 音源レジスタ領域
+- MegaRAM データ領域
+- Ghost SCC の有効／無効
+- Slot 3／Slot 1・2 配置
+- 線形アドレスモード
 
-���̕����� `top.v:1230-1335` �����S�ł��B
+この部分は `top.v:1230-1335` が中心です。
 
-**8. ����**
+**8. 音源**
 
-`ENABLE_SOUND` �ɂ��A���̉������L���ɂȂ�܂��B
+`ENABLE_SOUND` により、次の音源が有効になります。
 
 - YM2149 PSG
 - YM2413 OPLL
 - SCC
-- PSG �t�B���^
+- PSG フィルタ
 
-PSG �� I/O �� `A0h` ���� `A2h` �ł��B`top.v:1160-1225`
+PSG の I/O は `A0h` から `A2h` です。`top.v:1160-1225`
 
-OPLL �� `7Ch`�^`7Dh` �Ńf�R�[�h����A`jt2413` ���� 3.6 MHz �̃N���b�N�C�l�[�u���œ��삵�܂��B
+OPLL は `7Ch`／`7Dh` でデコードされ、`jt2413` が約 3.6 MHz のクロックイネーブルで動作します。
 
-�Ō�ɁAPSG�ASCC�AOPLL �����Z���� 16-bit �� `audio_sample` �����AV9958 �� HDMI �������͂֓n���Ă��܂��B
+最後に、PSG、SCC、OPLL を加算して 16-bit の `audio_sample` を作り、V9958 の HDMI 音声入力へ渡しています。
 
 ```verilog
 audio_sample <=
@@ -293,13 +293,13 @@ audio_sample <=
     + jt2413_wav;
 ```
 
-�����~�L�T�ɂ͖O�a��������������Ȃ����߁A���������𓯎��ɑ剹�ʂŖ炵���ꍇ�͉��Z���ʂ̏�ʃr�b�g�؂�̂Ă⃉�b�v�A���E���h���N����\��������܂��B�����c�ޏꍇ�́A���̉��Z���ƃN���b�s���O�������m�F�Ώۂł��B
+音声ミキサには飽和処理が見当たらないため、複数音源を同時に大音量で鳴らした場合は加算結果の上位ビット切り捨てやラップアラウンドが起きる可能性があります。音が歪む場合は、この加算幅とクリッピング処理が確認対象です。
 
-**9. SD �J�[�h�� Flash**
+**9. SD カードと Flash**
 
-SD �J�[�h�� `top.v:1518-1790` �� `sd_reader` �� `dpram` �ŏ�������Ă��܂��B
+SD カードは `top.v:1518-1790` の `sd_reader` と `dpram` で処理されています。
 
-��ȗ̈�͎��̒ʂ�ł��B
+主な領域は次の通りです。
 
 ```text
 7C00h-7DFFh : 512-byte sector transfer area
@@ -309,19 +309,19 @@ SD �J�[�h�� `top.v:1518-1790` �� `sd_reader` �� `dpram` �ŏ�������Ă��܂��B
 7E03h-7E06h: sector address
 ```
 
-Flash �� `flash` ���W���[���� SPI �ǂݏo�����s���ANextor ROM �̊J�n�A�h���X�Ƃ��� `0x100000` ��ݒ肵�Ă��܂��B
+Flash は `flash` モジュールで SPI 読み出しを行い、Nextor ROM の開始アドレスとして `0x100000` を設定しています。
 
 ```verilog
 ff_flash_addr <= 24'h100000;
 ```
 
-README �ɂ���uFlash Address = 0x100000�v�ƈ�v���Ă��܂��B
+README にある「Flash Address = 0x100000」と一致しています。
 
-Flash �ǂݏo������ `flash_wait_n` �� CPU �� `WAIT_n` �ɍ������Ă��܂��B���̂��߁AFlash �̉������x���ꍇ�� CPU �T�C�N������~���܂��B
+Flash 読み出し中は `flash_wait_n` を CPU の `WAIT_n` に合成しています。そのため、Flash の応答が遅い場合は CPU サイクルが停止します。
 
-**10. �L�[�{�[�h�� M0S**
+**10. キーボードと M0S**
 
-M0S�^BL616 ����� HID �f�[�^�� `fpga_companion` �Ŏ󂯂܂��B
+M0S／BL616 からの HID データは `fpga_companion` で受けます。
 
 ```text
 M0S / BL616
@@ -333,7 +333,7 @@ fpga_companion
 128-bit keyboard
     |
     v
-USB keyboard �܂��� PS/2 keyboard interface
+USB keyboard または PS/2 keyboard interface
     |
     v
 keyboard_data
@@ -342,68 +342,68 @@ keyboard_data
 MSX PPI port B
 ```
 
-���݂� `ENABLE_PS2KEYBOARD` ����`����Ă��邽�߁A�ʏ�� USB �L�[�{�[�h VHDL ���W���[���ł͂Ȃ��A`ps2_keyboard_msx` ���L���ł��B`top.v:1890-1945`
+現在は `ENABLE_PS2KEYBOARD` が定義されているため、通常の USB キーボード VHDL モジュールではなく、`ps2_keyboard_msx` が有効です。`top.v:1890-1945`
 
-�d�v�ȓ_�Ƃ��āAPS/2 ���ł͎��̂悤�� M0S �� `keyboard` �f�[�^���g���Ă��܂���B
+重要な点として、PS/2 側では次のように M0S の `keyboard` データを使っていません。
 
 ```verilog
 .keyboard(128'b0)
 ```
 
-�܂茻�݂̐ݒ�ł́A
+つまり現在の設定では、
 
-- M0S�^BL616 �� HID �L�[�{�[�h�f�[�^�͐��������
-- ������ PS/2 �L�[�{�[�h���W���[���ɂ͓n����Ȃ�
-- ���ۂ̃L�[���͂� PS/2 �����s������̂ݓ���
+- M0S／BL616 の HID キーボードデータは生成される
+- しかし PS/2 キーボードモジュールには渡されない
+- 実際のキー入力は PS/2 物理ピンからのみ入る
 
-�Ƃ����\���ł��BUSB �L�[�{�[�h���g�������ꍇ�� `ENABLE_PS2KEYBOARD` ���O���K�v������܂��B
+という構成です。USB キーボードを使いたい場合は `ENABLE_PS2KEYBOARD` を外す必要があります。
 
-**�m�F�ł�����Ȓ��ӓ_**
+**確認できた主な注意点**
 
-1. **�r���h�����̕s��v**
+1. **ビルド入口の不一致**
 
-   `.gprj` �� `top_BeebDock.v`�A`build.tcl` �� `top.v` ���g���Ă��܂��B�܂��A����t�@�C��������v���Ă��܂���B�ŗD��Ő������ׂ��ӏ��ł��B
+   `.gprj` は `top_BeebDock.v`、`build.tcl` は `top.v` を使っています。また、制約ファイル名も一致していません。最優先で整理すべき箇所です。
 
-2. **�O�� Beeb �o�X�͌��݂قږ���**
+2. **外部 Beeb バスは現在ほぼ無効**
 
-   �O���o�X�̓��͂̓R�����g�A�E�g����ACPU �N���b�N�⃊�Z�b�g�A�f�[�^�o�X�͓�����������Ă��܂��B���O�� `BeebDock` ���c���Ă��܂����A���݂� `top.v` �͓��� MSX �R�A��̂ł��B
+   外部バスの入力はコメントアウトされ、CPU クロックやリセット、データバスは内部生成されています。名前に `BeebDock` が残っていますが、現在の `top.v` は内部 MSX コア主体です。
 
-3. **�ݒ背�W�X�^�̔��f�o�H�ɋ^�₪����**
+3. **設定レジスタの反映経路に疑問がある**
 
-   `top.v:1435-1485` �� `config_enable_mapper3`�A`config_enable_mapper12`�A`config_enable_sdcard` �Ȃǂ� `always_latch` ���� `~bus_reset_n` �̂Ƃ������X�V����Ă��܂��B
+   `top.v:1435-1485` の `config_enable_mapper3`、`config_enable_mapper12`、`config_enable_sdcard` などは `always_latch` 内で `~bus_reset_n` のときだけ更新されています。
 
-   ���̂��߁ACPU ���ݒ�|�[�g�֏�������� `config1_ff`�^`config2_ff` ��ύX���Ă��A�h�������L���t���O�����s���ɍX�V����Ȃ��\��������܂��B�ݒ胁�j���[�� Slot �z�u�� SD �L����Ԃ����f����Ȃ��ꍇ�A�������L�͂ł��B
+   そのため、CPU が設定ポートへ書き込んで `config1_ff`／`config2_ff` を変更しても、派生した有効フラグが実行中に更新されない可能性があります。設定メニューで Slot 配置や SD 有効状態が反映されない場合、ここが有力です。
 
-4. **`config_reset` ���V�X�e�����Z�b�g�ɐڑ�����Ă��Ȃ�**
+4. **`config_reset` がシステムリセットに接続されていない**
 
-   ���Z�b�g���͂Ɋւ���R�[�h�̓R�����g�A�E�g����Ă��܂��B
+   リセット入力に関するコードはコメントアウトされています。
 
    ```verilog
    // .din(ex_bus_reset_n & ~config_reset)
    ```
 
-   ���݂� `bus_reset_n` �� `ex_bus_reset_n` �����Ō��܂邽�߁A�ݒ胁�j���[���甭�s���� `config_reset` �͎��ӂ̈ꕔ�p���X�����ɂ͎g���Ă��ACPU �S�̂̃��Z�b�g�ɂ͂Ȃ��Ă��܂���B
+   現在の `bus_reset_n` は `ex_bus_reset_n` だけで決まるため、設定メニューから発行した `config_reset` は周辺の一部パルス生成には使われても、CPU 全体のリセットにはなっていません。
 
-5. **�����N���b�N�h���C���Ԃ̐M���󂯓n��������**
+5. **複数クロックドメイン間の信号受け渡しが多い**
 
-   `bus_addr`�A�e��v���M���A`cpu_dout` �� 27 MHz �� 54 MHz �̗����� always �u���b�N�Œ��ڎQ�Ƃ��Ă��܂��BZ80 �o�X���̂� 3.6 MHz �����Ȃ̂Ő������Ă��镔��������܂����A������ CDC ������v���ێ��͌���I�ł��B
+   `bus_addr`、各種要求信号、`cpu_dout` を 27 MHz と 54 MHz の両方の always ブロックで直接参照しています。Z80 バス自体が 3.6 MHz 相当なので成立している部分もありますが、厳密な CDC 同期や要求保持は限定的です。
 
-6. **�����������W�X�^�̉\��**
+6. **未初期化レジスタの可能性**
 
-   `cnt_clk_enable_27m`�A�ꕔ�̉����N���b�N���W�X�^�AMapper�^�ݒ�֘A���W�X�^�ɂ́A���Z�b�g�������Ȃ����̂�����܂��BFPGA �̏����l�Ɉˑ����Ă���ӏ��ƁA�����I�ȃ��Z�b�g���󂯂�ӏ������݂��Ă��܂��B
+   `cnt_clk_enable_27m`、一部の音源クロックレジスタ、Mapper／設定関連レジスタには、リセット処理がないものがあります。FPGA の初期値に依存している箇所と、明示的なリセットを受ける箇所が混在しています。
 
-7. **���݂� `top.v` �̓G�f�B�^��ł̓G���[�Ȃ�**
+7. **現在の `top.v` はエディタ上ではエラーなし**
 
-   VS Code �̐f�f�ł� `top.v` �ɃG���[�͕񍐂���܂���ł����B�������A����� Gowin �̊��S�ȍ����E�z�u�z����ʂ������ʂł͂Ȃ����߁A�v���W�F�N�g�t�@�C���̕s��v�▢��`���W���[���A����t�@�C�����܂ł͕ۏ؂��܂���B
+   VS Code の診断では `top.v` にエラーは報告されませんでした。ただし、これは Gowin の完全な合成・配置配線を通した結果ではないため、プロジェクトファイルの不一致や未定義モジュール、制約ファイル問題までは保証しません。
 
-**�܂Ƃ�**
+**まとめ**
 
-�݌v�̖{�̂́A���� Z80 �𒆐S�ɂ��� MSX2+ SoC �ł��BV9958 �� SDRAM ���f���E�������̒��S�ɂ���APSG�^OPLL�^SCC �� HDMI �����֏W�񂳂�ABIOS�ENextor�ESD �J�[�h�ɂ���ċN���E�X�g���[�W�@�\��񋟂��Ă��܂��B
+設計の本体は、内部 Z80 を中心にした MSX2+ SoC です。V9958 と SDRAM が映像・メモリの中心にあり、PSG／OPLL／SCC が HDMI 音声へ集約され、BIOS・Nextor・SD カードによって起動・ストレージ機能を提供しています。
 
-���͏�A�@�\�ʂōł��C�ɂȂ�͎̂���3�_�ł��B
+分析上、機能面で最も気になるのは次の3点です。
 
-- ���ۂ̃r���h�� `top.v` �� `top_BeebDock.v` �̂ǂ�����g���̂�
-- �ݒ�|�[�g�ύX��� `config_enable_*` ���{���ɍX�V�����̂�
-- `ENABLE_PS2KEYBOARD` �ɂ���� M0S USB �L�[�{�[�h���Ӑ}��������������Ă��Ȃ���
+- 実際のビルドが `top.v` と `top_BeebDock.v` のどちらを使うのか
+- 設定ポート変更後に `config_enable_*` が本当に更新されるのか
+- `ENABLE_PS2KEYBOARD` によって M0S USB キーボードが意図せず無効化されていないか
 
-����̃\�[�X�͑�K�͂ȈڐA�r���̍\�����܂�ł���A�܂��̓r���h�Ώۂ𓝈ꂵ����ŁA�ݒ蔽�f�ƃL�[�{�[�h�o�H�����@�Ŋm�F����̂��悢�ł��B
+現状のソースは大規模な移植途中の構成を含んでおり、まずはビルド対象を統一した上で、設定反映とキーボード経路を実機で確認するのがよいです。
