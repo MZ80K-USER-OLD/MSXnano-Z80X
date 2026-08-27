@@ -152,16 +152,23 @@ BEGIN
                         WHEN 56 => keys(2)(4) <= '0'; -- / ?
                         WHEN 50 => keys(2)(5) <= '0'; -- DEAD (accent key)
 
-                        -- CapsLock as CAPS key (row 6, bit3)
-                        WHEN 57 => keys(6)(3) <= '0'; -- CAPS
+                        -- CapsLock as CAPS key (row 6, bit4; matches PS/2 mapper)
+                        WHEN 57 => keys(6)(4) <= '0'; -- CAPS
+
+                        -- GRAPH (Left Alt) and かな (JIS Muhenkan / Zenkaku-Hankaku)
+                        WHEN 106 => keys(6)(2) <= '0'; -- GRAPH (Left Alt)
+                        WHEN 112 => keys(6)(3) <= '0'; -- かな (Muhenkan)
+                        WHEN 113 => keys(7)(0) <= '0'; -- かな (JIS Zenkaku/Hankaku)
+
+                        -- Non-US \| (JIS配列の '_'/ろ キー、Zキーと同じ位置)
+                        WHEN 100 => keys(5)(7) <= '0';
 
                         -- SPACE / ENTER / ESC / TAB / BS / STOP / SELECT
                         WHEN 44 => keys(8)(0) <= '0'; -- SPACE  (row 8, bit0)
                         WHEN 40 => keys(7)(7) <= '0'; -- RET    (row 7, bit7)
-                        WHEN 41 => keys(7)(2) <= '0'; -- ESC    (row 7, bit2)
+                        WHEN 41 => keys(7)(4) <= '0'; -- ESC    (row 7, bit4 = STOP, matches PS/2 mapper)
                         WHEN 43 => keys(7)(3) <= '0'; -- TAB    (row 7, bit3)
                         WHEN 42 => keys(7)(5) <= '0'; -- BS     (row 7, bit5)
-                        WHEN 71 => keys(7)(4) <= '0'; -- STOP   (here: ScrollLock)
                         WHEN 77 => keys(7)(6) <= '0'; -- SELECT (here: End)
 
                         -- Arrow keys + HOME / INS / DEL (row 8)

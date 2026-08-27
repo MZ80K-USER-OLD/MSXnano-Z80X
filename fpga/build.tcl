@@ -113,6 +113,7 @@ add_file src/usb/hid.v
 add_file src/usb/mcu_spi_new.v
 add_file src/usb/sys_ctrl.v
 add_file src/usb/usb_keyboard_msx.vhd
+add_file src/usb/ps2_hid_bridge.vhd
 
 add_file tang20k.cst
 add_file tang20k.sdc

@@ -8,6 +8,7 @@
 `define SDRAM_32
 `define ENABLE_WAIT //extra wait state for mreq+wr
 // `define SWAP23
+`define ENABLE_PS2KEYBOARD
 
 module top
 #(
@@ -86,6 +87,13 @@ module top
     output wire [3:0] O_sdram_dqm // 32/4
 
     //output wire SLTSL3
+
+`ifdef ENABLE_PS2KEYBOARD
+    ,
+    // ★一番最後など（カッコを閉じる前）に、PS/2物理ピンの定義を2行追加
+    inout  wire        ps2_clk,
+    inout  wire        ps2_data
+`endif
 
 );
 
@@ -1908,13 +1916,33 @@ fpga_companion fpga_companion_inst
     // ws2812_color =>  ws2812_color
 );
 
+`ifdef ENABLE_PS2KEYBOARD
+// PS/2のスキャンコードをUSB HID keycodeベクタへ変換し、MSXマトリクスへの
+// マッピング処理そのものは usb_keyboard_msx (USBキーボードと共通) に任せる。
+wire [127:0] keyboard_ps2;
+ps2_hid_bridge ps2_hid_bridge_inst
+    (
+        .CLK (clk_27m),
+        .RESET (~bus_reset_n),
+
+        .keyboard (keyboard_ps2),
+
+        // ★Dock BoardのPS/2物理ピンを直接アサインする
+        .ps2_clk  (ps2_clk),
+        .ps2_data (ps2_data)
+    );
+`endif
 
 usb_keyboard_msx usb_keyboard_msx
     (
         .CLK (clk_27m),
         .RESET (~bus_reset_n),
 
+`ifdef ENABLE_PS2KEYBOARD
+        .keyboard (keyboard_ps2),
+`else
         .keyboard (keyboard),
+`endif
         .A (keyboard_addr),
         .DO (keyboard_data),
         .FN (function_keys)

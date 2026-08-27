@@ -1912,21 +1912,30 @@ fpga_companion fpga_companion_inst
 );
 
 
-ps2_keyboard_msx ps2_keyboard_msx
+// PS/2のスキャンコードをUSB HID keycodeベクタへ変換し、MSXマトリクスへの
+// マッピング処理そのものは usb_keyboard_msx (USBキーボードと共通) に任せる。
+wire [127:0] keyboard_ps2;
+ps2_hid_bridge ps2_hid_bridge_inst
     (
         .CLK (clk_27m),
         .RESET (~bus_reset_n),
 
-        .keyboard (128'b0),     // 元のUSBベクトル入力は使わないので0を給電
-        //.keyboard (keyboard),
-        .A (keyboard_addr),
-        .DO (keyboard_data),
-        .FN (function_keys),
+        .keyboard (keyboard_ps2),
 
-        // ★ここにDock BoardのPS/2物理ピンを直接アサインする
+        // ★Dock BoardのPS/2物理ピンを直接アサインする
         .ps2_clk  (ps2_clk),
         .ps2_data (ps2_data)
+    );
 
+usb_keyboard_msx usb_keyboard_msx
+    (
+        .CLK (clk_27m),
+        .RESET (~bus_reset_n),
+
+        .keyboard (keyboard_ps2),
+        .A (keyboard_addr),
+        .DO (keyboard_data),
+        .FN (function_keys)
     );
 
 endmodule
