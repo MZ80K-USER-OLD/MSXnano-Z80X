@@ -28,11 +28,11 @@ module top
 	inout wire [4:0]	m0s,
 
     //connection is used with a M0S Dock
-	input wire	spi_sclk,
-	input wire	spi_csn,
-	output wire	spi_dir,
-	input wire	spi_dat,
-	output wire	spi_irqn,
+    // input wire	spi_sclk,
+    // input wire	spi_csn,
+    // output wire	spi_dir,
+    // input wire	spi_dat,
+    // output wire	spi_irqn,
 
     // output wire [1:0] ex_msel,
     // output wire ex_bus_m1_n,
@@ -88,7 +88,14 @@ module top
     //output wire SLTSL3
     // ★一番最後など（カッコを閉じる前）に、PS/2物理ピンの定義を2行追加
     inout  wire        ps2_clk,
-    inout  wire        ps2_data
+    inout  wire        ps2_data,
+
+    // Tang Nano 20K DOCK joystick interface
+    // pin 71 = JS_Clk / PHI2, pin 72 = JS_Load_N, pin 76 = JS_Data
+    output wire        js_clk,
+    output wire        js_load_n,
+    input  wire        js_data 
+      
 );
 
 initial begin
@@ -529,6 +536,26 @@ wire [7:0] ex_bus_data;
 wire psg_req_r;
 assign psg_req_r = (bus_addr[7:0] == 8'hA2 && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0) ? 1 : 0;
 
+// ------------------------------------------------------------------------
+// Tang Nano 20K DOCK joystick
+// ------------------------------------------------------------------------
+wire        dock_phi2;
+wire [7:0]  dock_psg_ioa;
+wire [7:0]  dock_psg_iob;
+
+assign dock_phi2 = ex_bus_clk_3m6;
+assign js_clk    = dock_phi2;
+
+msxnano_dock_joystick dock_joystick1 (
+    .clock     (clk_27m),
+    .reset_n   (bus_reset_n),
+    .phi2      (dock_phi2),
+    .js_data   (js_data),
+    .js_load_n (js_load_n),
+    .psg_r15   (dock_psg_iob),
+    .psg_ioa   (dock_psg_ioa)
+);
+
 //keyboard scan
 wire ppi_portb_req_r = (bus_addr[7:0] == 8'hA9 && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0) ? 1 : 0;
 wire ppi_portc_req_r = (bus_addr[7:0] == 8'hAA && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0);
@@ -581,7 +608,7 @@ wire [7:0] mapper_read_data =
     always @ (posedge clk_54m) begin
         cpu_din <= 
                 (mapper_port_read==1) ? mapper_read_data :
-                (psg_req_r == 1) ? 8'b11111111 :
++               (psg_req_r == 1) ? psg_dout :
                 (ppi_portb_req_r == 1) ? keyboard_data :
                 `ifdef ENABLE_V9958
                      ( vdp_csr_n == 0) ? vdp_dout :
@@ -618,6 +645,12 @@ wire [7:0] mapper_read_data =
                       8'hFF; // bus_data;
     end
 
+    wire       dock_phi2;
+    wire [7:0] dock_psg_ioa;
+    wire [7:0] dock_psg_iob;
+
+    assign dock_phi2 = ex_bus_clk_3m6;
+    assign js_clk    = dock_phi2;
 
 //    wire ex_bus_rd_n_test;
 //    wire ex_bus_wr_n_test;
@@ -1177,7 +1210,8 @@ memory_ctrl mem1 (
 
     YM2149 psg1 (
         .I_DA(cpu_dout),
-        .O_DA(),
+        //.O_DA(),
+        .O_DA(psg_dout),       
         .O_DA_OE_L(),
         .I_A9_L(0),
         .I_A8(1),
@@ -1186,12 +1220,13 @@ memory_ctrl mem1 (
         .I_BC1(psgBc1),
         .I_SEL_L(1),
         .O_AUDIO(psgSound1),
-        .I_IOA(psgPA),
+         .I_IOA(dock_psg_ioa),
         .O_IOA(),
         .O_IOA_OE_L(),
         .I_IOB(psgPB),
         //.O_IOB(psgPB),
-        .O_IOB(),
+        //.O_IOB(),
+        .O_IOB(dock_psg_iob),
         .O_IOB_OE_L(),
         
         .ENA(clk_enable_1m8), // clock enable for higher speed operation
@@ -1889,27 +1924,28 @@ memory_ctrl mem1 (
    );
 
 wire [127:0] keyboard;
-fpga_companion fpga_companion_inst
-(
-    .clk (clk_27m),
-    .reset (~bus_reset_n),
 
-    .m0s (m0s),
-
-	.spi_sclk (spi_sclk), 
-	.spi_csn (spi_csn), 
-	.spi_dir (spi_dir),
-	.spi_dat (spi_dat), 
-	.spi_irqn (spi_irqn),
-
-	.keyboard (keyboard)
-
-	// joystick0 => joystick0,
-	// joystick0_console => joystick0_console,
-	// joystick1 => joystick1,
-
-    // ws2812_color =>  ws2812_color
-);
+//fpga_companion fpga_companion_inst
+//(
+//    .clk (clk_27m),
+//    .reset (~bus_reset_n),
+//
+//    .m0s (m0s),
+//
+//	.spi_sclk (spi_sclk), 
+//	.spi_csn (spi_csn), 
+//	.spi_dir (spi_dir),
+//	.spi_dat (spi_dat), 
+//	.spi_irqn (spi_irqn),
+//
+//	.keyboard (keyboard)
+//
+//	// joystick0 => joystick0,
+//	// joystick0_console => joystick0_console,
+//	// joystick1 => joystick1,
+//
+//    // ws2812_color =>  ws2812_color
+//);
 
 
 // PS/2のスキャンコードをUSB HID keycodeベクタへ変換し、MSXマトリクスへの

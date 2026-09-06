@@ -92,6 +92,7 @@
         <File path="denoise/denoise.vhd" type="file.vhdl" enable="1"/>
         <File path="monostable/monostable.vhd" type="file.vhdl" enable="1"/>
         <File path="src/gowin_clkdiv2/gowin_clkdiv2.vhd" type="file.vhdl" enable="1"/>
+        <File path="src/msxnano_dock_joystick.vhd" type="file.vhdl" enable="1"/>
         <File path="src/ocm/lpf.vhd" type="file.vhdl" enable="1"/>
         <File path="src/ocm/scc_wave2.vhd" type="file.vhdl" enable="1"/>
         <File path="src/ocm/swioports.vhd" type="file.vhdl" enable="1"/>
