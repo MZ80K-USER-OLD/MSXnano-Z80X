@@ -53,6 +53,17 @@
         <File path="src/ocm/rtc.v" type="file.verilog" enable="1"/>
         <File path="src/psg_filter.v" type="file.verilog" enable="1"/>
         <File path="src/subrom_msx2p.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/hp_byte.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/hp_bytequad.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/hp_flag_m.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/hp_reg3.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/msxnano_tube.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/ph_byte.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/ph_bytequad.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/ph_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/ph_flag_m.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/ph_reg3.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/tube.v" type="file.verilog" enable="1"/>
         <File path="src/uart_tx.v" type="file.verilog" enable="1"/>
         <File path="src/usb/fpga_companion.v" type="file.verilog" enable="1"/>
         <File path="src/usb/hid.v" type="file.verilog" enable="1"/>
@@ -81,6 +92,7 @@
         <File path="tn_vdp_v3_v9958/src/v9958_top.v" type="file.verilog" enable="1"/>
         <File path="tn_vdp_v3_v9958/src/vram.v" type="file.verilog" enable="1"/>
         <File path="top_BeebDock.v" type="file.verilog" enable="1"/>
+        <File path="src/tube/tube_comp_pack.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/T80s.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/g80a.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/t80.vhd" type="file.vhdl" enable="1"/>

@@ -7,6 +7,7 @@
 `define ENABLE_CONFIG
 `define SDRAM_32
 `define ENABLE_WAIT //extra wait state for mreq+wr
+`define USE_TUBE
 // `define SWAP23
 
 module top
@@ -52,6 +53,16 @@ module top
     output wire clk_p,
     output wire clk_n,
 
+    // VGA/Tube shared bidirectional signals
+    inout wire vga_r,
+    inout wire vga_r_n,
+    inout wire vga_g,
+    inout wire vga_g_n,
+    inout wire vga_b,
+    inout wire vga_b_n,
+    inout wire vga_vs,
+    inout wire vga_hs,
+
     // flash
     output wire mspi_cs,
     output wire mspi_sclk,
@@ -86,7 +97,6 @@ module top
     output wire [3:0] O_sdram_dqm, // 32/4
 
     //output wire SLTSL3
-    // ★一番最後など（カッコを閉じる前）に、PS/2物理ピンの定義を2行追加
     inout  wire        ps2_clk,
     inout  wire        ps2_data,
 
@@ -94,8 +104,8 @@ module top
     // pin 71 = JS_Clk / PHI2, pin 72 = JS_Load_N, pin 76 = JS_Data
     output wire        js_clk,
     output wire        js_load_n,
-    input  wire        js_data 
-      
+    input  wire        js_data
+
 );
 
 initial begin
@@ -532,6 +542,76 @@ wire [7:0] ex_bus_data;
                           ( bus_data_reverse == 1  && ppi_swap == 1) ? cpu_dout_swap : 8'hzz;
 `endif
 
+wire [7:0] tube_rdata;
+wire       tube_irq_n;
+wire [7:0] ext_tube_data;
+wire [2:0] host_addr;
+wire       host_cs_n;
+wire       host_rnw;
+wire       dock_phi2;
+wire [7:0] dock_psg_ioa;
+wire [7:0] dock_psg_iob;
+
+assign dock_phi2 = ex_bus_clk_3m6;
+assign js_clk     = dock_phi2;
+
+msxnano_tube tube_host (
+    .reset_n          (bus_reset_n),
+    .io_addr          (bus_addr[7:0]),
+    .io_iorq_n        (bus_iorq_n),
+    .io_m1_n          (bus_m1_n),
+    .io_rd_n          (bus_rd_n),
+    .io_wr_n          (bus_wr_n),
+    .io_wdata         (cpu_dout),
+    .io_rdata         (tube_rdata),
+    .phi2             (dock_phi2),
+    .irq_n            (tube_irq_n),
+    .host_addr        (host_addr),
+    .host_cs_n        (host_cs_n),
+    .host_rnw         (host_rnw),
+    .tube_p_addr      (ext_copro_addr),
+    .tube_p_cs_n      (ext_copro_cs_n),
+    .ext_tube_data    (ext_copro_data),
+    .tube_p_rdnw      (ext_copro_rdnw),
+    .tube_p_phi2      (ext_copro_phi2),
+    .tube_p_reset_n   (ext_copro_reset_n)
+);
+
+`ifdef USE_TUBE
+// I/O port 00H-07H Tube registers
+wire tube_req_r =
+    (bus_iorq_n == 1'b0) &&
+    (bus_m1_n   == 1'b1) &&
+    (bus_rd_n   == 1'b0) &&
+    (bus_addr[7:3] == 5'b00000);
+
+// VGA pins are the physical Tube data bus in Tube mode.
+wire [7:0] ext_copro_data;
+wire [2:0] ext_copro_addr;
+
+tran (ext_copro_data[7], vga_g);
+tran (ext_copro_data[6], vga_b_n);
+tran (ext_copro_data[5], vga_vs);
+tran (ext_copro_data[4], vga_hs);
+tran (ext_copro_data[3], vga_r_n);
+tran (ext_copro_data[2], vga_b);
+tran (ext_copro_data[1], vga_g_n);
+tran (ext_copro_data[0], vga_r);
+
+// Tube　Control　signals that use the LED output
+assign led[5] = ext_copro_reset_n;
+assign led[4] = ext_copro_addr[2];
+assign led[3] = ext_copro_addr[1];
+assign led[2] = ext_copro_cs_n;
+assign led[1] = ext_copro_rdnw;
+assign led[0] = ext_copro_addr[0];
+
+
+`endif
+
+// ------------------------------------------------------------------------
+// PSG　<- joystick 　
+// ------------------------------------------------------------------------
 //joystick
 wire psg_req_r;
 assign psg_req_r = (bus_addr[7:0] == 8'hA2 && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0) ? 1 : 0;
@@ -610,6 +690,7 @@ wire [7:0] mapper_read_data =
                 (mapper_port_read==1) ? mapper_read_data :
 +               (psg_req_r == 1) ? psg_dout :
                 (ppi_portb_req_r == 1) ? keyboard_data :
+                tube_req_r       ? tube_rdata :
                 `ifdef ENABLE_V9958
                      ( vdp_csr_n == 0) ? vdp_dout :
                 `endif
@@ -644,13 +725,6 @@ wire [7:0] mapper_read_data =
                      ( slotx_req_r == 1 ) ? 8'hff :
                       8'hFF; // bus_data;
     end
-
-    wire       dock_phi2;
-    wire [7:0] dock_psg_ioa;
-    wire [7:0] dock_psg_iob;
-
-    assign dock_phi2 = ex_bus_clk_3m6;
-    assign js_clk    = dock_phi2;
 
 //    wire ex_bus_rd_n_test;
 //    wire ex_bus_wr_n_test;
@@ -771,9 +845,9 @@ wire [7:0] mapper_read_data =
         .WAIT_n    (bus_wait_n),
 `endif
     `ifdef ENABLE_V9958
-        .INT_n     (bus_int_n & vdp_int),
+        .INT_n     (bus_int_n & vdp_int & tube_irq_n),
     `else
-        .INT_n     (bus_int_n),
+        .INT_n     (bus_int_n & tube_irq_n),
     `endif
         .NMI_n     (1),
         .BUSRQ_n   (1),
@@ -796,7 +870,9 @@ wire [7:0] mapper_read_data =
 
     // assign  led[5:1] = bus_addr[5:1];
 
+`ifndef USE_TUBE
     assign led[5:0] = keyboard_data[5:0];
+`endif
 
     // assign led[5] = bus_reset_n;
     // assign led[4] = reset3_n;
