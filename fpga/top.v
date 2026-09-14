@@ -6,6 +6,7 @@
 `define ENABLE_SDCARD
 `define ENABLE_CONFIG
 `define SDRAM_32
+`define USE_DOCK_JOISTICK
 `define ENABLE_WAIT //extra wait state for mreq+wr
 // `define SWAP23
 `define ENABLE_PS2KEYBOARD
@@ -28,12 +29,14 @@ module top
 	// interface to external FPGA companion - USB KEYBOARD and gamepads
 	inout wire [4:0]	m0s,
 
+`ifndef USE_DOCK_JOISTICK
     //connection is used with a M0S Dock
 	input wire	spi_sclk,
 	input wire	spi_csn,
 	output wire	spi_dir,
 	input wire	spi_dat,
 	output wire	spi_irqn,
+`endif
 
     // output wire [1:0] ex_msel,
     // output wire ex_bus_m1_n,
@@ -92,9 +95,15 @@ module top
     ,
     // ★一番最後など（カッコを閉じる前）に、PS/2物理ピンの定義を2行追加
     inout  wire        ps2_clk,
-    inout  wire        ps2_data
+    inout  wire        ps2_data,
 `endif
-
+`ifdef USE_DOCK_JOISTICK
+    // Tang Nano 20K DOCK joystick interface
+    // pin 71 = JS_Clk / PHI2, pin 72 = JS_Load_N, pin 76 = JS_Data
+    output wire        js_clk,
+    output wire        js_load_n,
+    input  wire        js_data
+`endif    
 );
 
 initial begin
@@ -534,6 +543,27 @@ wire [7:0] ex_bus_data;
 wire psg_req_r;
 assign psg_req_r = (bus_addr[7:0] == 8'hA2 && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0) ? 1 : 0;
 
+`ifdef USE_DOCK_JOISTICK
+// ------------------------------------------------------------------------
+// Tang Nano 20K DOCK joystick
+// ------------------------------------------------------------------------
+wire        dock_phi2;
+wire [7:0]  dock_psg_ioa;
+wire [7:0]  dock_psg_iob;
+
+assign dock_phi2 = ex_bus_clk_3m6;
+assign js_clk    = dock_phi2;
+
+msxnano_dock_joystick dock_joystick1 (
+    .clock     (clk_27m),
+    .reset_n   (bus_reset_n),
+    .phi2      (dock_phi2),
+    .js_data   (js_data),
+    .js_load_n (js_load_n),
+    .psg_r15   (dock_psg_iob),
+    .psg_ioa   (dock_psg_ioa)
+);
+`endif
 
 //keyboard scan
 wire ppi_portb_req_r = (bus_addr[7:0] == 8'hA9 && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0) ? 1 : 0;
@@ -587,7 +617,7 @@ wire [7:0] mapper_read_data =
     always @ (posedge clk_54m) begin
         cpu_din <= 
                 (mapper_port_read==1) ? mapper_read_data :
-                (psg_req_r == 1) ? 8'b11111111 :
+                (psg_req_r == 1) ? psg_dout :
                 (ppi_portb_req_r == 1) ? keyboard_data :
                 `ifdef ENABLE_V9958
                      ( vdp_csr_n == 0) ? vdp_dout :
@@ -1169,8 +1199,12 @@ memory_ctrl mem1 (
     assign iorq_rd_n = bus_iorq_n | bus_rd_n;
     assign psgBdir = ( bus_addr[7:3]== 5'b10100 && iorq_wr_n == 0 && bus_addr[1]== 0 ) ?  1 : 0; // I/O:A0-A2h / PSG(AY-3-8910) bdir = 1 when writing to &HA0-&Ha1
     assign psgBc1 = ( bus_addr[7:3]== 5'b10100 && ((iorq_rd_n==0 && bus_addr[1]== 1) || (bus_addr[1]==0 && iorq_wr_n==0 && bus_addr[0]==0))) ? 1 : 0; // I/O:A0-A2h / PSG(AY-3-8910) bc1 = 1 when writing A0 or reading A2
-    assign psgPA =8'h00;
-    reg psgPB = 8'hff;
+`ifdef USE_DOCK_JOISTICK
+    assign psgPA = dock_psg_ioa;
+`else
+    assign psgPA = 8'h00;
+`endif
+    wire [7:0] psgPB;
 
     wire clk_enable_1m8;
     reg clk_1m8_prev;
@@ -1183,7 +1217,7 @@ memory_ctrl mem1 (
 
     YM2149 psg1 (
         .I_DA(cpu_dout),
-        .O_DA(),
+        .O_DA(psg_dout),
         .O_DA_OE_L(),
         .I_A9_L(0),
         .I_A8(1),
@@ -1197,7 +1231,7 @@ memory_ctrl mem1 (
         .O_IOA_OE_L(),
         .I_IOB(psgPB),
         //.O_IOB(psgPB),
-        .O_IOB(),
+        .O_IOB(psgPB),
         .O_IOB_OE_L(),
         
         .ENA(clk_enable_1m8), // clock enable for higher speed operation
@@ -1902,11 +1936,19 @@ fpga_companion fpga_companion_inst
 
     .m0s (m0s),
 
-	.spi_sclk (spi_sclk), 
-	.spi_csn (spi_csn), 
-	.spi_dir (spi_dir),
-	.spi_dat (spi_dat), 
-	.spi_irqn (spi_irqn),
+`ifdef USE_DOCK_JOISTICK
+    .spi_sclk (1'b0),
+    .spi_csn (1'b1),
+    .spi_dir (),
+    .spi_dat (1'b0),
+    .spi_irqn (),
+`else
+    .spi_sclk (spi_sclk),
+    .spi_csn (spi_csn),
+    .spi_dir (spi_dir),
+    .spi_dat (spi_dat),
+    .spi_irqn (spi_irqn),
+`endif
 
 	.keyboard (keyboard)
 	// joystick0 => joystick0,
@@ -1930,21 +1972,30 @@ usb_keyboard_msx usb_keyboard_msx
 `endif
 
 `ifdef ENABLE_PS2KEYBOARD
-ps2_keyboard_msx ps2_keyboard_msx
+// PS/2のスキャンコードをUSB HID keycodeベクタへ変換し、MSXマトリクスへの
+// マッピング処理そのものは usb_keyboard_msx (USBキーボードと共通) に任せる。
+wire [127:0] keyboard_ps2;
+ps2_hid_bridge ps2_hid_bridge_inst
     (
         .CLK (clk_27m),
         .RESET (~bus_reset_n),
 
-        .keyboard (128'b0),     // 元のUSBベクトル入力は使わないので0を給電
-        //.keyboard (keyboard),
-        .A (keyboard_addr),
-        .DO (keyboard_data),
-        .FN (function_keys),
+        .keyboard (keyboard_ps2),
 
-        // ★ここにDock BoardのPS/2物理ピンを直接アサインする
+        // ★Dock BoardのPS/2物理ピンを直接アサインする
         .ps2_clk  (ps2_clk),
         .ps2_data (ps2_data)
+    );
 
+usb_keyboard_msx usb_keyboard_msx
+    (
+        .CLK (clk_27m),
+        .RESET (~bus_reset_n),
+
+        .keyboard (keyboard_ps2),
+        .A (keyboard_addr),
+        .DO (keyboard_data),
+        .FN (function_keys)
     );
 `endif
 

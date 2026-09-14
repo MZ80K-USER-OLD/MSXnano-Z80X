@@ -33,7 +33,10 @@ MSXnanoのMemory Mapperは、最大4MBまでサポートします（MapAdr(21 do
 * 回路上のマッピング処理:
 
 -- メインRAM要求時、SD-RAMアドレスの最上位(21)を '0' に固定して下位21bitをそのまま割り当てる
+
+```
 pMemAdr <= "0" & MapAdr(21 downto 1); -- ワードアドレス化
+```
 
 これにより、8MB全体の「前半4MB」が丸ごとマッパーRAMとして排他的に確保されます。
 
@@ -46,8 +49,10 @@ SoRunなどでゲームを読み込むために使われる2MBのMegaRAM領域 �
 
 * 回路上のマッピング処理:
 
+```
 -- MegaRAM要求時、上位2bitを "10"（4MBオフセット）にする
 pMemAdr <= "10" & MegaRamAdr(19 downto 1); 
+```
 
 
 
