@@ -644,6 +644,26 @@ wire ppi_portc_req_w = (bus_addr[7:0] == 8'hAA && bus_iorq_n == 0 && bus_m1_n ==
 wire [3:0] keyboard_addr;
 reg [7:0] keyboard_data;
 wire [1:12] function_keys;
+wire [7:0] ocm_fkeys;
+reg  [3:0] ocm_fn_prev;
+
+// onechipMSX OCM function keys: F9..F12 are FKeys[3..0].
+// Function keys are emitted as press events; Shift remains a held state.
+assign ocm_fkeys = {
+    keyboard_ps2[105] | keyboard_ps2[109],
+    3'b0,
+    function_keys[9]  & ~ocm_fn_prev[3],
+    function_keys[10] & ~ocm_fn_prev[2],
+    function_keys[11] & ~ocm_fn_prev[1],
+    function_keys[12] & ~ocm_fn_prev[0]
+};
+
+always @(posedge clk_27m or negedge bus_reset_n) begin
+    if (!bus_reset_n)
+        ocm_fn_prev <= 4'b0;
+    else
+        ocm_fn_prev <= function_keys[9:12];
+end
 
 reg [7:0] ppi_port_c = 8'h00;
 
@@ -1968,7 +1988,9 @@ memory_ctrl mem1 (
             .dbi           (swio_dout     ),
             .dbo           (cpu_dout      ),
             .io42_id212    (io42_id212    ),
-            .iSlt2_linear  (iSlt2_linear  )
+            .iSlt2_linear  (iSlt2_linear  ),
+            .FKeys         (ocm_fkeys     ),
+            .vFKeys        (8'h00         )
         );
 
     // virtual DIP-SW assignment (2/2)
