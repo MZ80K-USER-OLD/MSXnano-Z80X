@@ -542,52 +542,30 @@ wire [7:0] ex_bus_data;
                           ( bus_data_reverse == 1  && ppi_swap == 1) ? cpu_dout_swap : 8'hzz;
 `endif
 
-wire [7:0] tube_rdata;
-wire       tube_irq_n;
-wire [7:0] ext_tube_data;
-wire [2:0] host_addr;
-wire       host_cs_n;
-wire       host_rnw;
-wire       dock_phi2;
-wire [7:0] dock_psg_ioa;
-wire [7:0] dock_psg_iob;
-
-assign dock_phi2 = ex_bus_clk_3m6;
-assign js_clk     = dock_phi2;
-
-msxnano_tube tube_host (
-    .reset_n          (bus_reset_n),
-    .io_addr          (bus_addr[7:0]),
-    .io_iorq_n        (bus_iorq_n),
-    .io_m1_n          (bus_m1_n),
-    .io_rd_n          (bus_rd_n),
-    .io_wr_n          (bus_wr_n),
-    .io_wdata         (cpu_dout),
-    .io_rdata         (tube_rdata),
-    .phi2             (dock_phi2),
-    .irq_n            (tube_irq_n),
-    .host_addr        (host_addr),
-    .host_cs_n        (host_cs_n),
-    .host_rnw         (host_rnw),
-    .tube_p_addr      (ext_copro_addr),
-    .tube_p_cs_n      (ext_copro_cs_n),
-    .ext_tube_data    (ext_copro_data),
-    .tube_p_rdnw      (ext_copro_rdnw),
-    .tube_p_phi2      (ext_copro_phi2),
-    .tube_p_reset_n   (ext_copro_reset_n)
-);
+wire       tube_irq_n = 1'b1;
 
 `ifdef USE_TUBE
-// I/O port 00H-07H Tube registers
-wire tube_req_r =
+// PiTubeDirect host bus. The external device owns the Tube ULA/FIFOs.
+localparam [7:0] TUBE_IO_BASE = 8'hB8;
+wire tube_req =
     (bus_iorq_n == 1'b0) &&
     (bus_m1_n   == 1'b1) &&
-    (bus_rd_n   == 1'b0) &&
-    (bus_addr[7:3] == 5'b00000);
+    (bus_addr[7:3] == TUBE_IO_BASE[7:3]);
+wire tube_req_r = tube_req && (bus_rd_n == 1'b0);
+wire tube_req_w = tube_req && (bus_wr_n == 1'b0);
 
 // VGA pins are the physical Tube data bus in Tube mode.
 wire [7:0] ext_copro_data;
 wire [2:0] ext_copro_addr;
+wire       ext_copro_cs_n;
+wire       ext_copro_rdnw;
+wire       ext_copro_reset_n;
+
+assign ext_copro_addr   = bus_addr[2:0];
+assign ext_copro_cs_n   = ~tube_req;
+assign ext_copro_rdnw   = tube_req_r;
+assign ext_copro_reset_n = bus_reset_n;
+assign ext_copro_data   = tube_req_w ? cpu_dout : 8'bz;
 
 tran (ext_copro_data[7], vga_g);
 tran (ext_copro_data[6], vga_b_n);
@@ -710,7 +688,7 @@ wire [7:0] mapper_read_data =
                 (mapper_port_read==1) ? mapper_read_data :
 +               (psg_req_r == 1) ? psg_dout :
                 (ppi_portb_req_r == 1) ? keyboard_data :
-                tube_req_r       ? tube_rdata :
+                tube_req_r       ? ext_copro_data :
                 `ifdef ENABLE_V9958
                      ( vdp_csr_n == 0) ? vdp_dout :
                 `endif
