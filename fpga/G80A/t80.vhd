@@ -104,6 +104,14 @@ entity T80 is
         DI          : in std_logic_vector(7 downto 0);
         DO          : out std_logic_vector(7 downto 0);
         mode24      : out std_logic_vector(1 downto 0);
+        bank_bc     : out std_logic_vector(7 downto 0);
+        bank_de     : out std_logic_vector(7 downto 0);
+        bank_hl     : out std_logic_vector(7 downto 0);
+        bank_ix     : out std_logic_vector(7 downto 0);
+        bank_iy     : out std_logic_vector(7 downto 0);
+        bank_pc     : out std_logic_vector(7 downto 0);
+        bank_msp    : out std_logic_vector(7 downto 0);
+        bank_int    : out std_logic_vector(7 downto 0);
         MC          : out std_logic_vector(2 downto 0);
         TS          : out std_logic_vector(2 downto 0);
         IntCycle_n  : out std_logic;
@@ -163,6 +171,14 @@ architecture rtl of T80 is
     signal INT_s            : std_logic;
     signal IStatus          : std_logic_vector(1 downto 0);
     signal mode24_r         : std_logic_vector(1 downto 0);
+    signal bank_bc_r        : std_logic_vector(7 downto 0);
+    signal bank_de_r        : std_logic_vector(7 downto 0);
+    signal bank_hl_r        : std_logic_vector(7 downto 0);
+    signal bank_ix_r        : std_logic_vector(7 downto 0);
+    signal bank_iy_r        : std_logic_vector(7 downto 0);
+    signal bank_pc_r        : std_logic_vector(7 downto 0);
+    signal bank_msp_r       : std_logic_vector(7 downto 0);
+    signal bank_int_r       : std_logic_vector(7 downto 0);
 
     signal DI_Reg           : std_logic_vector(7 downto 0);
     signal T_Res            : std_logic;
@@ -364,6 +380,14 @@ begin
             MCycles <= "000";
             DO <= "00000000";
             mode24_r <= "00";
+            bank_bc_r <= (others => '0');
+            bank_de_r <= (others => '0');
+            bank_hl_r <= (others => '0');
+            bank_ix_r <= (others => '0');
+            bank_iy_r <= (others => '0');
+            bank_pc_r <= (others => '0');
+            bank_msp_r <= (others => '0');
+            bank_int_r <= (others => '0');
 
             ACC <= (others => '1');
             F <= (others => '1');
@@ -677,6 +701,14 @@ begin
                         when x"90" => mode24_r <= "00";
                         when x"91" => mode24_r <= "01";
                         when x"92" => mode24_r <= "10";
+                        when x"04" => bank_bc_r <= ACC;
+                        when x"14" => bank_de_r <= ACC;
+                        when x"24" => bank_hl_r <= ACC;
+                        when x"34" => bank_int_r <= ACC;
+                        when x"35" => bank_msp_r <= ACC;
+                        when x"0C" => ACC <= bank_bc_r;
+                        when x"1C" => ACC <= bank_de_r;
+                        when x"2C" => ACC <= bank_hl_r;
                         when others => null;
                         end case;
                     end if;
@@ -951,6 +983,14 @@ begin
     MC <= std_logic_vector(MCycle);
     TS <= std_logic_vector(TState);
     mode24 <= mode24_r;
+    bank_bc <= bank_bc_r;
+    bank_de <= bank_de_r;
+    bank_hl <= bank_hl_r;
+    bank_ix <= bank_ix_r;
+    bank_iy <= bank_iy_r;
+    bank_pc <= bank_pc_r;
+    bank_msp <= bank_msp_r;
+    bank_int <= bank_int_r;
     DI_Reg <= DI;
     HALT_n <= not Halt_FF;
     BUSAK_n <= not BusAck;

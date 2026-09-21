@@ -93,6 +93,14 @@ entity G80a is
         DI           : in std_logic_vector(7 downto 0);
         DO           : out std_logic_vector(7 downto 0);
         mode24       : out std_logic_vector(1 downto 0);
+        bank_bc      : out std_logic_vector(7 downto 0);
+        bank_de      : out std_logic_vector(7 downto 0);
+        bank_hl      : out std_logic_vector(7 downto 0);
+        bank_ix      : out std_logic_vector(7 downto 0);
+        bank_iy      : out std_logic_vector(7 downto 0);
+        bank_pc      : out std_logic_vector(7 downto 0);
+        bank_msp     : out std_logic_vector(7 downto 0);
+        bank_int     : out std_logic_vector(7 downto 0);
         Data_Reverse: out std_logic
     );
 end G80a;
@@ -179,6 +187,14 @@ begin
             DI => DI_Reg,
             DO => DO,
             mode24 => mode24,
+            bank_bc => bank_bc,
+            bank_de => bank_de,
+            bank_hl => bank_hl,
+            bank_ix => bank_ix,
+            bank_iy => bank_iy,
+            bank_pc => bank_pc,
+            bank_msp => bank_msp,
+            bank_int => bank_int,
             MC => MCycle,
             TS => TState,
             IntCycle_n => IntCycle_n);

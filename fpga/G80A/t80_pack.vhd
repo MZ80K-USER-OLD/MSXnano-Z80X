@@ -91,6 +91,14 @@ package T80_Pack is
         DI          : in std_logic_vector(7 downto 0);
         DO          : out std_logic_vector(7 downto 0);
         mode24      : out std_logic_vector(1 downto 0);
+        bank_bc     : out std_logic_vector(7 downto 0);
+        bank_de     : out std_logic_vector(7 downto 0);
+        bank_hl     : out std_logic_vector(7 downto 0);
+        bank_ix     : out std_logic_vector(7 downto 0);
+        bank_iy     : out std_logic_vector(7 downto 0);
+        bank_pc     : out std_logic_vector(7 downto 0);
+        bank_msp    : out std_logic_vector(7 downto 0);
+        bank_int    : out std_logic_vector(7 downto 0);
         MC          : out std_logic_vector(2 downto 0);
         TS          : out std_logic_vector(2 downto 0);
         IntCycle_n  : out std_logic;

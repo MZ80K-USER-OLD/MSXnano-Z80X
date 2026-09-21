@@ -23,6 +23,14 @@ module MSXnano_CPU_Wrapper24 #(
     input  wire [7:0]  DI,
     output wire [7:0]  DO,
     output wire [1:0]  mode24,
+    output wire [7:0]  bank_bc,
+    output wire [7:0]  bank_de,
+    output wire [7:0]  bank_hl,
+    output wire [7:0]  bank_ix,
+    output wire [7:0]  bank_iy,
+    output wire [7:0]  bank_pc,
+    output wire [7:0]  bank_msp,
+    output wire [7:0]  bank_int,
     output wire        Data_Reverse
 );
 
@@ -56,6 +64,14 @@ module MSXnano_CPU_Wrapper24 #(
         .DI           (DI),
         .DO           (DO),
         .mode24       (mode24),
+        .bank_bc      (bank_bc),
+        .bank_de      (bank_de),
+        .bank_hl      (bank_hl),
+        .bank_ix      (bank_ix),
+        .bank_iy      (bank_iy),
+        .bank_pc      (bank_pc),
+        .bank_msp     (bank_msp),
+        .bank_int     (bank_int),
         .Data_Reverse (Data_Reverse)
     );
 
