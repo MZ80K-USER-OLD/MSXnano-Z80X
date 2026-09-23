@@ -20,7 +20,24 @@ Slot map has been updated to improve compatibility without requiring changes.
 
 Mapper and megaram can be relocated to slots 1 or 2 using config menu.
 
+## Command status / 命令一覧
 
+- Instruction list: [AVAILABLE_INSTRUCTIONS.md](AVAILABLE_INSTRUCTIONS.md)
+- Status legend: 実装済み = implemented, 未実装 = not implemented yet, 仕様のみ = defined in spec but not yet implemented in the current project.
+
+## Recent fixes / 本修正内容
+
+This revision adds a 24-bit MMU layer to the MSX T80 extended CPU design and documents the behavior in the project notes.
+
+- Added a 256-entry MMU register map with logical bank to physical bank translation.
+- Fixed bank 00h so it always maps to the native MSX 64KB address space and ignores writes.
+- Defined MMU control through the 0xF0 / 0xF1 port pair: index register and data register.
+- Clarified MMU behavior in M0/M1/M2 modes, keeping compatibility in M0 while enabling extended addressing in M1/M2.
+- Added reset behavior using identity mapping and safe handling for unimplemented physical banks.
+- Prevented invalid physical-bank wraparound by returning 0xFF for reads and instruction fetches, while ignoring writes to non-existent banks.
+- Documented the physical-bank attribute model (VALID, TYPE, READ, WRITE, EXECUTE, SIDE_EFFECT, OWNER) to make bank access rules explicit and safer.
+
+This ensures the 24-bit memory map is compatible with existing MSX behavior while preventing accidental access to invalid SDRAM regions.
 
 ## SD-RAM Physical Address Mappings
 
