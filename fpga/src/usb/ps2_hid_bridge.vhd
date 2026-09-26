@@ -108,6 +108,9 @@ BEGIN
                     ELSE
                         -- 非拡張コード
                         CASE scan_code IS
+                            -- 非US/US記号キー
+                            WHEN X"0E" => hid_code := 53; -- ` ~ (backquote / tilde)
+
                             -- アルファベット
                             WHEN X"1C" => hid_code := 4;  -- A
                             WHEN X"32" => hid_code := 5;  -- B
@@ -204,7 +207,6 @@ BEGIN
                             -- 標準HID usage id(135..140)は127bitのkeyboardベクタに収まらないため、
                             -- 修飾キーと同様に空き番地(112..)へ詰め替える project-local な拡張コード。
                             WHEN X"67" => hid_code := 112; -- 無変換 -> かな
-                            WHEN X"0E" => hid_code := 113; -- 全角/半角 -> かな(代替)
 
                             -- 修飾キー (usage_id - 120 に詰め替え)
                             WHEN X"14" => hid_code := 104; -- Left Ctrl
