@@ -7,7 +7,10 @@
 `define ENABLE_CONFIG
 `define SDRAM_32
 `define ENABLE_WAIT //extra wait state for mreq+wr
-`define USE_TUBE
+`define ENABLE_TUBE
+`define ENABLE_PS2KEYBOARD
+`define ENABLE_DOCK_JOYSTICK
+
 // `define SWAP23
 
 module top
@@ -96,16 +99,18 @@ module top
     output wire [1:0] O_sdram_ba, // two banks
     output wire [3:0] O_sdram_dqm, // 32/4
 
+`ifdef ENABLE_PS2KEYBOARD
     //output wire SLTSL3
     inout  wire        ps2_clk,
     inout  wire        ps2_data,
-
+`endif
+`ifdef ENABLE_DOCK_JOYSTICK
     // Tang Nano 20K DOCK joystick interface
     // pin 71 = JS_Clk / PHI2, pin 72 = JS_Load_N, pin 76 = JS_Data
     output wire        js_clk,
     output wire        js_load_n,
     input  wire        js_data
-
+`endif
 );
 
 initial begin
@@ -544,7 +549,7 @@ wire [7:0] ex_bus_data;
 
 wire       tube_irq_n = 1'b1;
 
-`ifdef USE_TUBE
+`ifdef ENABLE_TUBE
 // PiTubeDirect host bus. The external device owns the Tube ULA/FIFOs.
 localparam [7:0] TUBE_IO_BASE = 8'hB8;
 wire tube_req =
@@ -594,6 +599,7 @@ assign led[0] = ext_copro_addr[0];
 wire psg_req_r;
 assign psg_req_r = (bus_addr[7:0] == 8'hA2 && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0) ? 1 : 0;
 
+`ifdef ENABLE_DOCK_JOYSTICK
 // ------------------------------------------------------------------------
 // Tang Nano 20K DOCK joystick
 // ------------------------------------------------------------------------
@@ -613,6 +619,7 @@ msxnano_dock_joystick dock_joystick1 (
     .psg_r15   (dock_psg_iob),
     .psg_ioa   (dock_psg_ioa)
 );
+`endif
 
 //keyboard scan
 wire ppi_portb_req_r = (bus_addr[7:0] == 8'hA9 && bus_iorq_n == 0 && bus_m1_n == 1 && bus_rd_n == 0) ? 1 : 0;
@@ -868,7 +875,7 @@ wire [7:0] mapper_read_data =
 
     // assign  led[5:1] = bus_addr[5:1];
 
-`ifndef USE_TUBE
+`ifndef ENABLE_TUBE
     assign led[5:0] = keyboard_data[5:0];
 `endif
 
@@ -2001,28 +2008,31 @@ memory_ctrl mem1 (
 
 wire [127:0] keyboard;
 
-//fpga_companion fpga_companion_inst
-//(
-//    .clk (clk_27m),
-//    .reset (~bus_reset_n),
-//
-//    .m0s (m0s),
-//
-//	.spi_sclk (spi_sclk), 
-//	.spi_csn (spi_csn), 
-//	.spi_dir (spi_dir),
-//	.spi_dat (spi_dat), 
-//	.spi_irqn (spi_irqn),
-//
-//	.keyboard (keyboard)
-//
-//	// joystick0 => joystick0,
-//	// joystick0_console => joystick0_console,
-//	// joystick1 => joystick1,
-//
-//    // ws2812_color =>  ws2812_color
-//);
+`ifndef ENABLE_PS2KEYBOARD
+fpga_companion fpga_companion_inst
+(
+    .clk (clk_27m),
+    .reset (~bus_reset_n),
 
+    .m0s (m0s),
+
+	.spi_sclk (spi_sclk), 
+	.spi_csn (spi_csn), 
+	.spi_dir (spi_dir),
+	.spi_dat (spi_dat), 
+	.spi_irqn (spi_irqn),
+
+	.keyboard (keyboard)
+`ifndef ENABLE_DOCK_JOYSTICK
+	 joystick0 => joystick0,
+	 joystick0_console => joystick0_console,
+	 joystick1 => joystick1,
+
+     ws2812_color =>  ws2812_color
+`endif
+
+);
+`endif
 
 // PS/2のスキャンコードをUSB HID keycodeベクタへ変換し、MSXマトリクスへの
 // マッピング処理そのものは usb_keyboard_msx (USBキーボードと共通) に任せる。
