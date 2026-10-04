@@ -152,16 +152,17 @@ BEGIN
                         WHEN 56 => keys(2)(4) <= '0'; -- / ?
                         WHEN 50 => keys(2)(5) <= '0'; -- DEAD (accent key)
 
-                        -- CapsLock as CAPS key (row 6, bit4; matches PS/2 mapper)
-                        WHEN 57 => keys(6)(4) <= '0'; -- CAPS
+                        -- CapsLock as CAPS key (row 6, bit3 per official MSX key matrix)
+                        WHEN 57 => keys(6)(3) <= '0'; -- CAPS
 
                         -- GRAPH (Left Alt) and かな (JIS Muhenkan / Zenkaku-Hankaku)
                         WHEN 106 => keys(6)(2) <= '0'; -- GRAPH (Left Alt)
-                        WHEN 112 => keys(6)(3) <= '0'; -- かな (Muhenkan)
+                        WHEN 112 => keys(6)(4) <= '0'; -- かな (Muhenkan) -- row 6 bit4 = CODE/かな per official MSX key matrix
                         WHEN 113 => keys(7)(0) <= '0'; -- かな (JIS Zenkaku/Hankaku)
 
-                        -- Non-US \| (JIS配列の '_'/ろ キー、Zキーと同じ位置)
-                        WHEN 100 => keys(5)(7) <= '0';
+                        -- Non-US \| / JIS "ろ" (Ro) key -> row 2, bit 5
+                        -- (shared with DEAD/HID 50, matching the official MSX key matrix)
+                        WHEN 100 => keys(2)(5) <= '0';
 
                         -- SPACE / ENTER / ESC / TAB / BS / STOP / SELECT
                         WHEN 44 => keys(8)(0) <= '0'; -- SPACE  (row 8, bit0)
