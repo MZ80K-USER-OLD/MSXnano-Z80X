@@ -31,6 +31,8 @@ module MSXnano_CPU_Wrapper24 #(
     output wire [7:0]  bank_pc,
     output wire [7:0]  bank_msp,
     output wire [7:0]  bank_int,
+    output wire [7:0]  bank_nvr,
+    output wire [7:0]  bank_rst,
     output wire        Data_Reverse
 );
 
@@ -72,6 +74,8 @@ module MSXnano_CPU_Wrapper24 #(
         .bank_pc      (bank_pc),
         .bank_msp     (bank_msp),
         .bank_int     (bank_int),
+        .bank_nvr     (bank_nvr),
+        .bank_rst     (bank_rst),
         .Data_Reverse (Data_Reverse)
     );
 

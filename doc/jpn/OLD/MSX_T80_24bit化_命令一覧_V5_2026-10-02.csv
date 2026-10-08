@@ -1,0 +1,138 @@
+﻿作成年月日: 2026-10-02
+カテゴリ,オプコード(HEX),命令表記,拡張バイト,使用モード,挙動概要,状態
+モード制御,ED 90,SET_M0,なし,M0/M1/M2,M0へ原子的に切替,確定
+モード制御,ED 91,SET_M1,なし,M0/M1/M2,M1へ原子的に切替,確定
+モード制御,ED 92,SET_M2,なし,M0/M1/M2,M2へ原子的に切替。SET直後PC_B規則は未定,opcode確定・PC_B詳細未定
+モード制御,ED 93,JP.M0 addr16,"low, high",M0/M1/M2,"MODE=M0, PC=00:addr16。復帰frameなし",確定
+モード制御,ED 94,JP.M1 addr16,"low, high",M0/M1/M2,"MODE=M1, PC=00:addr16。復帰frameなし",確定
+モード制御,ED 95,JP.M2 ext24,"low, high, bank",M0/M1/M2,"MODE=M2, PC=ext24。復帰frameなし",確定
+モード制御,ED 96,CALL.M0 addr16,"low, high",M0/M1/M2,PC24+MODEをMSPへ4byte保存しM0へ,確定
+モード制御,ED 97,CALL.M1 addr16,"low, high",M0/M1/M2,PC24+MODEをMSPへ4byte保存しM1へ,確定
+モード制御,ED 98,CALL.M2 ext24,"low, high, bank",M0/M1/M2,PC24+MODEをMSPへ4byte保存しM2へ,確定
+モード制御,ED 99,RET.M,なし,M0/M1/M2,"MSPからPC_L,PC_H,PC_B,MODEを復元",確定
+バンクレジスタ,ED 04,"LD BC_B,A",なし,M0/M1/M2,既存V2割当を継続,継続候補
+バンクレジスタ,ED 14,"LD DE_B,A",なし,M0/M1/M2,既存V2割当を継続,継続候補
+バンクレジスタ,ED 24,"LD HL_B,A",なし,M0/M1/M2,既存V2割当を継続,継続候補
+バンクレジスタ,ED 0C,"LD A,BC_B",なし,M0/M1/M2,既存V2割当を継続,継続候補
+バンクレジスタ,ED 1C,"LD A,DE_B",なし,M0/M1/M2,既存V2割当を継続,継続候補
+バンクレジスタ,ED 2C,"LD A,HL_B",なし,M0/M1/M2,既存V2割当を継続,継続候補
+24bit ALU,ED 03,INC24 BC,なし,M2,BC24+1。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 13,INC24 DE,なし,M2,DE24+1。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 23,INC24 HL,なし,M2,HL24+1。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 0B,DEC24 BC,なし,M2,BC24-1。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 1B,DEC24 DE,なし,M2,DE24-1。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 2B,DEC24 HL,なし,M2,HL24-1。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 09,"ADD24 HL,BC",なし,M2,HL24←HL24+BC24。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 19,"ADD24 HL,DE",なし,M2,HL24←HL24+DE24。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 29,"ADD24 HL,HL",なし,M2,HL24←HL24+HL24。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bit ALU,ED 39,"ADD24 HL,SP",なし,M2,M2ではSP指定をMSP24としてHL24へ加算。専用24bit ALU。H保持、P/V=24bit signed overflow,既存割当をV4原則へ更新・最終表記確認
+24bitロード,ED 32,"LD24 HL,imm24","low, high, bank",M0/M1/M2,HL24へ即値24bitロード,既存割当候補
+24bitロード,ED 2A,"LD24 HL,(ext24)","low, high, bank",M1/M2,24bit論理アドレスから3byteロード。byte毎MMU変換,既存割当候補
+24bitロード,ED 22,"LD24 (ext24),HL","low, high, bank",M1/M2,HL24を3byte store。byte毎MMU変換,既存割当候補
+特殊24bitレジスタ,TBD,"LD24 MSP,imm24",命令による,M0/M1/M2,MSP24へ即値ロード。全MODEで利用可能,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 HL,MSP",命令による,M0/M1/M2,HL24←MSP24。F不変,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 MSP,HL",命令による,M0/M1/M2,MSP24←HL24。F不変,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 IVR,imm24",命令による,M0/M1/M2,IVR24へ即値ロード,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 HL,IVR",命令による,M0/M1/M2,HL24←IVR24。F不変,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 IVR,HL",命令による,M0/M1/M2,IVR24←HL24。F不変,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 NVR,imm24",命令による,M0/M1/M2,NVR24へ即値ロード,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 HL,NVR",命令による,M0/M1/M2,HL24←NVR24。F不変,命令採用・opcode未定
+特殊24bitレジスタ,TBD,"LD24 NVR,HL",命令による,M0/M1/M2,NVR24←HL24。F不変,命令採用・opcode未定
+相対分岐,ED 18,JR.L offset16,"low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED 20,"JR.L NZ,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED 28,"JR.L Z,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED 30,"JR.L NC,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED 38,"JR.L C,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED C7,"JR.L PO,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED D7,"JR.L PE,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED E7,"JR.L P,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+相対分岐,ED F7,"JR.L M,offset16","low, high",M2,signed offset16。24bit bank越え規則は最終未定,opcode確定・境界動作未定
+絶対分岐,ED C3,JP.L ext24,"low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED C2,"JP.L NZ,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED CA,"JP.L Z,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED D2,"JP.L NC,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED DA,"JP.L C,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED E2,"JP.L PO,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED EA,"JP.L PE,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED F2,"JP.L P,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+絶対分岐,ED FA,"JP.L M,ext24","low, high, bank",M2,24bit絶対分岐。MODE変更なし,確定
+拡張CALL,ED CD,CALL.L ext24,"low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED C4,"CALL.L NZ,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED CC,"CALL.L Z,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED D4,"CALL.L NC,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED DC,"CALL.L C,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED E4,"CALL.L PO,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED EC,"CALL.L PE,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED F4,"CALL.L P,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張CALL,ED FC,"CALL.L M,ext24","low, high, bank",M2,MSPへPC24をZ80拡張順でPUSH。MODE変更なし,確定
+拡張RET,ED C9,RET.L,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED C0,RET.L NZ,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED C8,RET.L Z,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED D0,RET.L NC,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED D8,RET.L C,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED E0,RET.L PO,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED E8,RET.L PE,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED F0,RET.L P,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+拡張RET,ED F8,RET.L M,なし,M2,MSPからPC24をPOP。MODE変更なし,確定
+割り込み復帰,ED 4E,RETI.L,なし,M2,Extended Return FrameからPC24+MODE復帰。IFF等詳細は未定,opcode確定・詳細未定
+割り込み復帰,TBD,RETN.L,なし,M2,NMI用Extended Return Frame復帰。IFF1←IFF2等詳細は未定,命令必要・opcode未定
+24bitスタック,TBD,PUSH24 BC,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,POP24 BC,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,PUSH24 DE,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,POP24 DE,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,PUSH24 HL,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,POP24 HL,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,PUSH24 IX,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,POP24 IX,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,PUSH24 IY,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+24bitスタック,TBD,POP24 IY,なし,M2,Z80 PUSH/POPの24bit自然拡張。LOW/HIGH/BANK配置、bank越え可,対象/命令採用方向・opcode未定
+M2割り込み,—,IRQ entry,—,M2,CALL.Mx型4byte frameをMSPへ保存後 PC24←IVR24,仕様確定・非opcode
+M2割り込み,—,NMI entry,—,M2,CALL.Mx型4byte frameをMSPへ保存後 PC24←NVR24,仕様確定・非opcode
+バンクレジスタ,DD ED 24,"LD IX_B,A",なし,M0/M1/M2,DD prefixによりHL_B対象をIX_Bへ置換,確定
+バンクレジスタ,FD ED 24,"LD IY_B,A",なし,M0/M1/M2,FD prefixによりHL_B対象をIY_Bへ置換,確定
+バンクレジスタ,DD ED 2C,"LD A,IX_B",なし,M0/M1/M2,DD prefixによりHL_B対象をIX_Bへ置換,確定
+バンクレジスタ,FD ED 2C,"LD A,IY_B",なし,M0/M1/M2,FD prefixによりHL_B対象をIY_Bへ置換,確定
+IX/IY 24bit,DD ED 23,INC24 IX,なし,M2,IX24+1。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,FD ED 23,INC24 IY,なし,M2,IY24+1。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,DD ED 2B,DEC24 IX,なし,M2,IX24-1。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,FD ED 2B,DEC24 IY,なし,M2,IY24-1。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,DD ED 09,"ADD24 IX,BC",なし,M2,IX24←IX24+BC24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,FD ED 09,"ADD24 IY,BC",なし,M2,IY24←IY24+BC24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,DD ED 19,"ADD24 IX,DE",なし,M2,IX24←IX24+DE24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,FD ED 19,"ADD24 IY,DE",なし,M2,IY24←IY24+DE24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,DD ED 29,"ADD24 IX,IX",なし,M2,IX24←IX24+IX24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,FD ED 29,"ADD24 IY,IY",なし,M2,IY24←IY24+IY24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,DD ED 39,"ADD24 IX,SP",なし,M2,IX24←IX24+SP24。M2ではSP指定=MSP24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+IX/IY 24bit,FD ED 39,"ADD24 IY,SP",なし,M2,IY24←IY24+SP24。M2ではSP指定=MSP24。専用24bit ALU、H保持、P/V=24bit signed overflow,確定
+インデックス転送,DD ED 80 d,"LD16 BC,(IX+d)",d=signed8,M0/M1/M2,BC下位16bit←[EA+0..1]。bank byte不変。F不変,確定案
+インデックス転送,DD ED 81 d,"LD16 DE,(IX+d)",d=signed8,M0/M1/M2,DE下位16bit←[EA+0..1]。bank byte不変。F不変,確定案
+インデックス転送,DD ED 82 d,"LD16 HL,(IX+d)",d=signed8,M0/M1/M2,HL下位16bit←[EA+0..1]。bank byte不変。F不変,確定案
+インデックス転送,DD ED 83 d,"LD16 (IX+d),BC",d=signed8,M0/M1/M2,[EA+0..1]←BC下位16bit。F不変,確定案
+インデックス転送,DD ED 84 d,"LD16 (IX+d),DE",d=signed8,M0/M1/M2,[EA+0..1]←DE下位16bit。F不変,確定案
+インデックス転送,DD ED 85 d,"LD16 (IX+d),HL",d=signed8,M0/M1/M2,[EA+0..1]←HL下位16bit。F不変,確定案
+インデックス転送,DD ED 86 d,"LD24 BC,(IX+d)",d=signed8,M0/M1/M2,BC24←[EA+0..2]。各byteをMMU変換。F不変,確定案
+インデックス転送,DD ED 87 d,"LD24 DE,(IX+d)",d=signed8,M0/M1/M2,DE24←[EA+0..2]。各byteをMMU変換。F不変,確定案
+インデックス転送,DD ED 88 d,"LD24 HL,(IX+d)",d=signed8,M0/M1/M2,HL24←[EA+0..2]。各byteをMMU変換。F不変,確定案
+インデックス転送,DD ED 89 d,"LD24 (IX+d),BC",d=signed8,M0/M1/M2,[EA+0..2]←BC24。各byteをMMU変換。F不変,確定案
+インデックス転送,DD ED 8A d,"LD24 (IX+d),DE",d=signed8,M0/M1/M2,[EA+0..2]←DE24。各byteをMMU変換。F不変,確定案
+インデックス転送,DD ED 8B d,"LD24 (IX+d),HL",d=signed8,M0/M1/M2,[EA+0..2]←HL24。各byteをMMU変換。F不変,確定案
+インデックス転送,FD ED 80 d,"LD16 BC,(IY+d)",d=signed8,M0/M1/M2,BC下位16bit←[EA+0..1]。bank byte不変。F不変,確定案
+インデックス転送,FD ED 81 d,"LD16 DE,(IY+d)",d=signed8,M0/M1/M2,DE下位16bit←[EA+0..1]。bank byte不変。F不変,確定案
+インデックス転送,FD ED 82 d,"LD16 HL,(IY+d)",d=signed8,M0/M1/M2,HL下位16bit←[EA+0..1]。bank byte不変。F不変,確定案
+インデックス転送,FD ED 83 d,"LD16 (IY+d),BC",d=signed8,M0/M1/M2,[EA+0..1]←BC下位16bit。F不変,確定案
+インデックス転送,FD ED 84 d,"LD16 (IY+d),DE",d=signed8,M0/M1/M2,[EA+0..1]←DE下位16bit。F不変,確定案
+インデックス転送,FD ED 85 d,"LD16 (IY+d),HL",d=signed8,M0/M1/M2,[EA+0..1]←HL下位16bit。F不変,確定案
+インデックス転送,FD ED 86 d,"LD24 BC,(IY+d)",d=signed8,M0/M1/M2,BC24←[EA+0..2]。各byteをMMU変換。F不変,確定案
+インデックス転送,FD ED 87 d,"LD24 DE,(IY+d)",d=signed8,M0/M1/M2,DE24←[EA+0..2]。各byteをMMU変換。F不変,確定案
+インデックス転送,FD ED 88 d,"LD24 HL,(IY+d)",d=signed8,M0/M1/M2,HL24←[EA+0..2]。各byteをMMU変換。F不変,確定案
+インデックス転送,FD ED 89 d,"LD24 (IY+d),BC",d=signed8,M0/M1/M2,[EA+0..2]←BC24。各byteをMMU変換。F不変,確定案
+インデックス転送,FD ED 8A d,"LD24 (IY+d),DE",d=signed8,M0/M1/M2,[EA+0..2]←DE24。各byteをMMU変換。F不変,確定案
+インデックス転送,FD ED 8B d,"LD24 (IY+d),HL",d=signed8,M0/M1/M2,[EA+0..2]←HL24。各byteをMMU変換。F不変,確定案
+24bitレジスタ転送,ED A0,"LD24 HL,BC",なし,M0/M1/M2,HL24←BC24。source不変、F不変,確定案
+24bitレジスタ転送,ED A1,"LD24 BC,HL",なし,M0/M1/M2,BC24←HL24。source不変、F不変,確定案
+24bitレジスタ転送,ED A2,"LD24 HL,DE",なし,M0/M1/M2,HL24←DE24。source不変、F不変,確定案
+24bitレジスタ転送,ED A3,"LD24 DE,HL",なし,M0/M1/M2,DE24←HL24。source不変、F不変,確定案
+24bitレジスタ転送,DD ED A4,"LD24 IX,HL",なし,M0/M1/M2,IX24←HL24。source不変、F不変,確定案
+24bitレジスタ転送,DD ED A5,"LD24 HL,IX",なし,M0/M1/M2,HL24←IX24。source不変、F不変,確定案
+24bitレジスタ転送,FD ED A4,"LD24 IY,HL",なし,M0/M1/M2,IY24←HL24。source不変、F不変,確定案
+24bitレジスタ転送,FD ED A5,"LD24 HL,IY",なし,M0/M1/M2,HL24←IY24。source不変、F不変,確定案

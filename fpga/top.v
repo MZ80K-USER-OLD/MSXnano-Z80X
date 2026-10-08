@@ -387,6 +387,18 @@ wire [7:0] ex_bus_data;
 //    reg msel_ff = 0;
     reg [4:0] mp_cnt;
     wire [15:0] bus_addr;
+    wire [23:0] cpu_addr24;
+    wire [1:0] cpu_mode24;
+    wire [7:0] cpu_bank_bc;
+    wire [7:0] cpu_bank_de;
+    wire [7:0] cpu_bank_hl;
+    wire [7:0] cpu_bank_ix;
+    wire [7:0] cpu_bank_iy;
+    wire [7:0] cpu_bank_pc;
+    wire [7:0] cpu_bank_msp;
+    wire [7:0] cpu_bank_int;
+    wire [7:0] cpu_bank_nvr;
+    wire [7:0] cpu_bank_rst;
     assign ex_msel = msel;
     assign ex_bus_mp = bus_mp;
 //    assign msel = { msel_ff, ~ msel_ff };
@@ -788,12 +800,24 @@ wire [7:0] mapper_read_data =
         .RFSH_n    (bus_rfsh_n),
         .HALT_n    ( ),
         .BUSAK_n   ( ),
-        .A         (bus_addr),
+        .A         (cpu_addr24),
         .update_addr(update_addr),
         .DI         (cpu_din),
         .DO         (cpu_dout),
+        .mode24     (cpu_mode24),
+        .bank_bc    (cpu_bank_bc),
+        .bank_de    (cpu_bank_de),
+        .bank_hl    (cpu_bank_hl),
+        .bank_ix    (cpu_bank_ix),
+        .bank_iy    (cpu_bank_iy),
+        .bank_pc    (cpu_bank_pc),
+        .bank_msp   (cpu_bank_msp),
+        .bank_int   (cpu_bank_int),
+        .bank_nvr   (cpu_bank_nvr),
+        .bank_rst   (cpu_bank_rst),
         .Data_Reverse (bus_data_reverse)
     );
+    assign bus_addr = cpu_addr24[15:0];
 
     //assign led[5:1] = cpu_din[5:1];
 

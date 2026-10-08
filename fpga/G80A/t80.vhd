@@ -112,6 +112,8 @@ entity T80 is
         bank_pc     : out std_logic_vector(7 downto 0);
         bank_msp    : out std_logic_vector(7 downto 0);
         bank_int    : out std_logic_vector(7 downto 0);
+        bank_nvr    : out std_logic_vector(7 downto 0);
+        bank_rst    : out std_logic_vector(7 downto 0);
         MC          : out std_logic_vector(2 downto 0);
         TS          : out std_logic_vector(2 downto 0);
         IntCycle_n  : out std_logic;
@@ -178,8 +180,10 @@ architecture rtl of T80 is
     signal bank_ix_r        : std_logic_vector(7 downto 0);
     signal bank_iy_r        : std_logic_vector(7 downto 0);
     signal bank_pc_r        : std_logic_vector(7 downto 0);
-    signal bank_msp_r       : std_logic_vector(7 downto 0);
-    signal bank_int_r       : std_logic_vector(7 downto 0);
+    signal bank_msp_r       : std_logic_vector(7 downto 0);   -- MSP24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 MSP)
+    signal bank_int_r       : std_logic_vector(7 downto 0);   -- IVR24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 IVR)
+    signal bank_nvr_r       : std_logic_vector(7 downto 0);   -- NVR24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 NVR)
+    signal bank_rst_r       : std_logic_vector(7 downto 0);   -- RST_B (V8/V7 finalized opcode: ED3A LD RST_B,A / ED3E LD A,RST_B)
 
     signal DI_Reg           : std_logic_vector(7 downto 0);
     signal T_Res            : std_logic;
@@ -389,6 +393,8 @@ begin
             bank_pc_r <= (others => '0');
             bank_msp_r <= (others => '0');
             bank_int_r <= (others => '0');
+            bank_nvr_r <= (others => '0');
+            bank_rst_r <= (others => '0');
 
             ACC <= (others => '1');
             F <= (others => '1');
@@ -703,14 +709,18 @@ begin
                         when x"90" => mode24_r <= "00";
                         when x"91" => mode24_r <= "01";
                         when x"92" => mode24_r <= "10";
-                        when x"04" => bank_bc_r <= ACC;
-                        when x"14" => bank_de_r <= ACC;
-                        when x"24" => bank_hl_r <= ACC;
-                        when x"34" => bank_int_r <= ACC;
-                        when x"35" => bank_msp_r <= ACC;
-                        when x"0C" => ACC <= bank_bc_r;
-                        when x"1C" => ACC <= bank_de_r;
-                        when x"2C" => ACC <= bank_hl_r;
+                        when x"04" => bank_bc_r <= ACC;    -- LD BC_B,A
+                        when x"14" => bank_de_r <= ACC;    -- LD DE_B,A
+                        when x"24" => bank_hl_r <= ACC;    -- LD HL_B,A
+                        when x"05" => bank_ix_r <= ACC;    -- LD IX_B,A
+                        when x"15" => bank_iy_r <= ACC;    -- LD IY_B,A
+                        when x"3A" => bank_rst_r <= ACC;   -- LD RST_B,A
+                        when x"0C" => ACC <= bank_bc_r;    -- LD A,BC_B
+                        when x"1C" => ACC <= bank_de_r;    -- LD A,DE_B
+                        when x"2C" => ACC <= bank_hl_r;    -- LD A,HL_B
+                        when x"0D" => ACC <= bank_ix_r;    -- LD A,IX_B
+                        when x"1D" => ACC <= bank_iy_r;    -- LD A,IY_B
+                        when x"3E" => ACC <= bank_rst_r;   -- LD A,RST_B
                         when others => null;
                         end case;
                     end if;
@@ -993,6 +1003,8 @@ begin
     bank_pc <= bank_pc_r;
     bank_msp <= bank_msp_r;
     bank_int <= bank_int_r;
+    bank_nvr <= bank_nvr_r;
+    bank_rst <= bank_rst_r;
     DI_Reg <= DI;
     HALT_n <= not Halt_FF;
     BUSAK_n <= not BusAck;
