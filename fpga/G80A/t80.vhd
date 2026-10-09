@@ -155,6 +155,7 @@ architecture rtl of T80 is
 
     -- Help Registers
     signal TmpAddr          : std_logic_vector(15 downto 0);    -- Temporary address register
+    signal TmpBank          : std_logic_vector(7 downto 0);     -- Phase2: 24bit EA bank byte for (IX/IY+d), paired with TmpAddr
     signal IR               : std_logic_vector(7 downto 0);     -- Instruction register
     signal ISet             : std_logic_vector(1 downto 0);     -- Instruction set selector
     signal RegBusA_r        : std_logic_vector(15 downto 0);
@@ -378,6 +379,7 @@ begin
             A <= (others => '0');
 			update_addr <= '0';
             TmpAddr <= (others => '0');
+            TmpBank <= (others => '0');
             IR <= "00000000";
             ISet <= "00";
             XY_State <= "00";
@@ -613,6 +615,23 @@ begin
                 end if;
                 if TState = 3 and MCycle = "110" then
                     TmpAddr <= std_logic_vector(signed(RegBusC) + signed(DI_Reg));
+                    -- Phase2: 24bit address generator for (IX/IY+d).
+                    -- M0 keeps plain 16bit wrap (bank unchanged); M1/M2 add
+                    -- the signed displacement across the full 24bit IX24/IY24
+                    -- value, carrying/borrowing into the bank byte.
+                    if mode24_r = "00" then
+                        if XY_State(1) = '0' then
+                            TmpBank <= bank_ix_r;
+                        else
+                            TmpBank <= bank_iy_r;
+                        end if;
+                    else
+                        if XY_State(1) = '0' then
+                            TmpBank <= Addr24_AddDisp8(bank_ix_r, RegBusC, DI_Reg)(23 downto 16);
+                        else
+                            TmpBank <= Addr24_AddDisp8(bank_iy_r, RegBusC, DI_Reg)(23 downto 16);
+                        end if;
+                    end if;
                 end if;
 
                 if (TState = 2 and Wait_n = '1') or (TState = 4 and MCycle = "001") then

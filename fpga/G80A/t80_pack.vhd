@@ -54,8 +54,27 @@
 
 library IEEE;
 use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
 
 package T80_Pack is
+
+    -- Phase2: 24bit address generator.
+    --
+    -- All functions compute (Bank & Low16) + signed(Disp), modulo 2^24, and
+    -- return the concatenated 24bit result (bits 23:16 = new bank byte,
+    -- bits 15:0 = new 16bit word). Carry/borrow between Low16 and Bank
+    -- happens naturally through the fixed-width 24bit addition, e.g.
+    -- Addr24_Inc(x"FF", x"FFFF") = x"000000" and
+    -- Addr24_Dec(x"00", x"0000") = x"FFFFFF".
+    --
+    -- Used for IX24/IY24 (+d) effective address generation in M1/M2 (Phase3),
+    -- and reusable for JR.L 16bit displacement (Phase11) and MSP24
+    -- increment/decrement (Phase9). M0 must not call these: M0 keeps the
+    -- existing plain 16bit wrap behaviour untouched.
+    function Addr24_AddDisp16(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0); Disp16 : std_logic_vector(15 downto 0)) return std_logic_vector;
+    function Addr24_AddDisp8(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0); Disp8 : std_logic_vector(7 downto 0)) return std_logic_vector;
+    function Addr24_Inc(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0)) return std_logic_vector;
+    function Addr24_Dec(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0)) return std_logic_vector;
 
     component T80
     generic(
@@ -229,3 +248,31 @@ package T80_Pack is
     end component;
 
 end;
+
+package body T80_Pack is
+
+    function Addr24_AddDisp16(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0); Disp16 : std_logic_vector(15 downto 0)) return std_logic_vector is
+        variable Base  : unsigned(23 downto 0);
+        variable Delta : unsigned(23 downto 0);
+    begin
+        Base  := unsigned(Bank & Low16);
+        Delta := unsigned(std_logic_vector(resize(signed(Disp16), 24)));
+        return std_logic_vector(Base + Delta);
+    end function Addr24_AddDisp16;
+
+    function Addr24_AddDisp8(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0); Disp8 : std_logic_vector(7 downto 0)) return std_logic_vector is
+    begin
+        return Addr24_AddDisp16(Bank, Low16, std_logic_vector(resize(signed(Disp8), 16)));
+    end function Addr24_AddDisp8;
+
+    function Addr24_Inc(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0)) return std_logic_vector is
+    begin
+        return Addr24_AddDisp16(Bank, Low16, x"0001");
+    end function Addr24_Inc;
+
+    function Addr24_Dec(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0)) return std_logic_vector is
+    begin
+        return Addr24_AddDisp16(Bank, Low16, x"FFFF");
+    end function Addr24_Dec;
+
+end package body T80_Pack;
