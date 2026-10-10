@@ -76,6 +76,34 @@ package T80_Pack is
     function Addr24_Inc(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0)) return std_logic_vector;
     function Addr24_Dec(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0)) return std_logic_vector;
 
+    -- Phase8: dedicated 24bit ALU add/subtract (MSX_T80_24bit化_実装手順_V2
+    -- section 10 "Phase 8", CPU仕様書V8 section 6 "24bit ALU"). Deliberately
+    -- separate from the shared 8bit ALU (t80_alu.vhd) so INC24/DEC24/
+    -- ADD24/ADC24/SBC24/CP24 add zero risk of regressing existing Z80 ALU
+    -- behaviour. Uses the same two's-complement "add NOT(B) plus inverted
+    -- carry-in" technique as t80_alu.vhd's internal AddSub procedure, split
+    -- into a low 23bit chunk and the top bit so the carry-into-bit23 can be
+    -- captured for signed-overflow detection (P/V = carry-out-of-bit23 XOR
+    -- carry-into-bit23, mirroring t80_alu.vhd's OverFlow_v computation).
+    --
+    -- Sub='0' computes A+B+Carry_In (ADD/ADC/INC24 use this, with
+    -- Carry_In='0' for ADD/INC24 and Carry_In=F(Flag_C) for ADC24).
+    -- Sub='1' computes A+NOT(B)+Carry_In, the standard two's-complement
+    -- subtraction form (DEC24/CP24/SBC24 use this, with Carry_In='1' for
+    -- DEC24/CP24 - the fixed "+1" that has no real borrow-in - and
+    -- Carry_In=not F(Flag_C) for SBC24, i.e. the existing borrow inverted;
+    -- there
+    -- is no dedicated SUB24 opcode, matching the spec's "SUB24は設けずC=0の
+    -- SBC24を使う").
+    --
+    -- Returns a 26bit vector: bit25=Overflow (P/V), bit24=raw adder
+    -- carry-out of bit23 (the caller must invert this for Sub='1' to get
+    -- the Z80-convention C flag, exactly as t80_alu.vhd does for SUB/SBC/
+    -- CP: "not Carry_v"), bits 23 downto 0 = 24bit result. H (half-carry)
+    -- is intentionally NOT computed/returned: per spec, H is preserved
+    -- (left untouched by the caller) for this whole 24bit ALU group.
+    function Alu24_AddSub(A : std_logic_vector(23 downto 0); B : std_logic_vector(23 downto 0); Sub : std_logic; Carry_In : std_logic) return std_logic_vector;
+
     component T80
     generic(
         Mode        : integer := 0;  -- 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
@@ -275,5 +303,35 @@ package body T80_Pack is
     begin
         return Addr24_AddDisp16(Bank, Low16, x"FFFF");
     end function Addr24_Dec;
+
+    function Alu24_AddSub(A : std_logic_vector(23 downto 0); B : std_logic_vector(23 downto 0); Sub : std_logic; Carry_In : std_logic) return std_logic_vector is
+        variable B_i          : unsigned(23 downto 0);
+        variable Low_i        : unsigned(24 downto 0);
+        variable CarryInto23  : std_logic;
+        variable Top_i        : unsigned(2 downto 0);
+        variable CarryOut23   : std_logic;
+        variable Result       : std_logic_vector(23 downto 0);
+        variable Overflow     : std_logic;
+    begin
+        if Sub = '1' then
+            B_i := not unsigned(B);
+        else
+            B_i := unsigned(B);
+        end if;
+
+        -- bits 22:0, carry generated into bit23
+        Low_i := unsigned("0" & A(22 downto 0) & Carry_In) + unsigned("0" & std_logic_vector(B_i(22 downto 0)) & "1");
+        CarryInto23 := Low_i(24);
+        Result(22 downto 0) := std_logic_vector(Low_i(23 downto 1));
+
+        -- bit 23, carry-in from the low chunk above
+        Top_i := unsigned("0" & A(23 downto 23) & CarryInto23) + unsigned("0" & std_logic_vector(B_i(23 downto 23)) & "1");
+        CarryOut23 := Top_i(2);
+        Result(23) := Top_i(1);
+
+        Overflow := CarryOut23 xor CarryInto23;
+
+        return Overflow & CarryOut23 & Result;
+    end function Alu24_AddSub;
 
 end package body T80_Pack;

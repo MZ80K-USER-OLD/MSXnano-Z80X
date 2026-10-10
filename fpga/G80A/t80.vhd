@@ -196,6 +196,19 @@ architecture rtl of T80 is
     signal bank_nvr_r       : std_logic_vector(7 downto 0);   -- NVR24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 NVR)
     signal bank_rst_r       : std_logic_vector(7 downto 0);   -- RST_B (V8/V7 finalized opcode: ED3A LD RST_B,A / ED3E LD A,RST_B)
 
+    -- Phase8: dedicated 24bit ALU (fully combinational, see the process
+    -- near RegAddrA_r/RegAddrB_r below and Alu24_AddSub in t80_pack.vhd).
+    -- alu24_active/alu24_writeback already fold in the XY_State="00" guard
+    -- (DD/FD IX/IY target variants are deferred, same scope limitation as
+    -- Phase7's LD24 HL,IX/IY - see AVAILABLE_INSTRUCTIONS.md), so T_Res
+    -- commit logic only needs to check these two signals.
+    signal alu24_active     : std_logic;
+    signal alu24_writeback  : std_logic;
+    signal alu24_sub        : std_logic;
+    signal alu24_overflow   : std_logic;
+    signal alu24_carry      : std_logic;
+    signal alu24_result24   : std_logic_vector(23 downto 0);
+
     signal DI_Reg           : std_logic_vector(7 downto 0);
     signal T_Res            : std_logic;
     signal XY_State         : std_logic_vector(1 downto 0);
@@ -807,6 +820,30 @@ begin
                         end case;
                     end if;
 
+                    -- Phase8: dedicated 24bit ALU writeback (bank byte) and
+                    -- flags. alu24_active/alu24_writeback already fold in
+                    -- the ISet="10"/XY_State="00" guard (see the Phase8
+                    -- combinational process above), so no further opcode
+                    -- matching is needed here. H (half-carry), X and Y
+                    -- (undocumented bits 3/5) are intentionally left
+                    -- untouched - per CPU仕様書V8 section 6, H is
+                    -- preserved, and the spec does not define X/Y for this
+                    -- new 24bit ALU group, so they default to preserved too.
+                    if alu24_active = '1' then
+                        if alu24_writeback = '1' then
+                            bank_hl_r <= alu24_result24(23 downto 16);
+                        end if;
+                        F(Flag_S) <= alu24_result24(23);
+                        if alu24_result24 = x"000000" then
+                            F(Flag_Z) <= '1';
+                        else
+                            F(Flag_Z) <= '0';
+                        end if;
+                        F(Flag_N) <= alu24_sub;
+                        F(Flag_P) <= alu24_overflow;
+                        F(Flag_C) <= alu24_carry;
+                    end if;
+
                 Read_To_Reg_r(3 downto 0) <= Set_BusA_To;
                 Read_To_Reg_r(4) <= Read_To_Reg;
                 if Read_To_Acc = '1' then
@@ -849,6 +886,105 @@ begin
 
         end if;
 
+    end process;
+
+---------------------------------------------------------------------------
+--
+-- Phase8: dedicated 24bit ALU (INC24/DEC24/ADD24/ADC24/SBC24/CP24)
+--
+-- Fully combinational; purely a "preview" of what the T_Res (TState=4)
+-- commit below should write, computed from RegBusC (destination HL's
+-- current low word, read via the register file's purely-combinational 3rd
+-- port, settled one cycle ahead by the RegAddrC override below - see that
+-- override's comment for why RegBusA_r cannot be used here) and RegBusB
+-- (source register's low word, same one-cycle-ahead mechanism already
+-- used by Phase7). See Alu24_AddSub in t80_pack.vhd for the actual
+-- add/subtract/carry/overflow arithmetic. HL target only; DD/FD IX/IY
+-- target replacement (per CPU仕様書V8 section 6) is deferred, same scope
+-- limitation as Phase7's LD24 HL,IX/IY (AVAILABLE_INSTRUCTIONS.md).
+---------------------------------------------------------------------------
+    process (IR, ISet, XY_State, bank_hl_r, bank_bc_r, bank_de_r, bank_msp_r,
+            MSP, RegBusC, RegBusB, F)
+        variable dest24  : std_logic_vector(23 downto 0);
+        variable src24   : std_logic_vector(23 downto 0);
+        variable sub_v   : std_logic;
+        variable cin_v   : std_logic;
+        variable wb_v    : std_logic;
+        variable active_v: std_logic;
+        variable raw     : std_logic_vector(25 downto 0);
+    begin
+        active_v := '0';
+        wb_v     := '0';
+        sub_v    := '0';
+        cin_v    := '0';
+        dest24   := bank_hl_r & RegBusC;
+        src24    := (others => '0');
+
+        if ISet = "10" and XY_State = "00" then
+            case IR is
+            when x"23" =>                          -- INC24 HL
+                active_v := '1'; wb_v := '1';
+                sub_v := '0'; cin_v := '0';
+                src24 := x"000001";
+            when x"2B" =>                          -- DEC24 HL
+                active_v := '1'; wb_v := '1';
+                -- Twos-complement "SUB" convention (mirrors t80_alu.vhd's
+                -- AddSub Carry_In seeding for a plain SUB): Sub='1' needs
+                -- Carry_In='1' (A + NOT(B) + 1), not '0' - there is no
+                -- real borrow-in here, this is the fixed "+1" that turns
+                -- ones' complement into twos' complement.
+                sub_v := '1'; cin_v := '1';
+                src24 := x"000001";
+            when x"09" | x"19" | x"29" | x"39" =>   -- ADD24 HL,BC/DE/HL/SP
+                active_v := '1'; wb_v := '1';
+                sub_v := '0'; cin_v := '0';
+                case IR(5 downto 4) is
+                when "00" => src24 := bank_bc_r & RegBusB;
+                when "01" => src24 := bank_de_r & RegBusB;
+                when "10" => src24 := bank_hl_r & RegBusB;
+                when others => src24 := bank_msp_r & std_logic_vector(MSP);
+                end case;
+            when x"07" | x"17" | x"27" | x"37" =>   -- ADC24 HL,BC/DE/HL/SP
+                active_v := '1'; wb_v := '1';
+                sub_v := '0'; cin_v := F(Flag_C);
+                case IR(5 downto 4) is
+                when "00" => src24 := bank_bc_r & RegBusB;
+                when "01" => src24 := bank_de_r & RegBusB;
+                when "10" => src24 := bank_hl_r & RegBusB;
+                when others => src24 := bank_msp_r & std_logic_vector(MSP);
+                end case;
+            when x"0F" | x"1F" | x"2F" | x"3F" =>   -- SBC24 HL,BC/DE/HL/SP
+                active_v := '1'; wb_v := '1';
+                -- Carry_In = NOT F(Flag_C): A - B - borrow = A + NOT(B) +
+                -- NOT(borrow), same twos-complement convention as above,
+                -- now folding in the real existing-carry-flag borrow-in.
+                sub_v := '1'; cin_v := not F(Flag_C);
+                case IR(5 downto 4) is
+                when "00" => src24 := bank_bc_r & RegBusB;
+                when "01" => src24 := bank_de_r & RegBusB;
+                when "10" => src24 := bank_hl_r & RegBusB;
+                when others => src24 := bank_msp_r & std_logic_vector(MSP);
+                end case;
+            when x"3D" =>                          -- CP24 HL,DE (no writeback)
+                active_v := '1'; wb_v := '0';
+                sub_v := '1'; cin_v := '1';         -- same "SUB" convention as DEC24
+                src24 := bank_de_r & RegBusB;
+            when others => null;
+            end case;
+        end if;
+
+        raw := Alu24_AddSub(dest24, src24, sub_v, cin_v);
+
+        alu24_active    <= active_v;
+        alu24_writeback <= wb_v;
+        alu24_sub       <= sub_v;
+        alu24_result24  <= raw(23 downto 0);
+        alu24_overflow  <= raw(25);
+        if sub_v = '1' then
+            alu24_carry <= not raw(24);
+        else
+            alu24_carry <= raw(24);
+        end if;
     end process;
 
 ---------------------------------------------------------------------------
@@ -902,7 +1038,34 @@ begin
                         RegAddrB_r <= Alternate & "01";    -- src DE
                     when others => null;
                     end case;
+
+                    -- Phase8: dedicated 24bit ALU (ED23/2B/09/19/29/39/
+                    -- 07/17/27/37/0F/1F/2F/3F/3D). HL target only (see the
+                    -- Phase8 combinational process above); guarded by
+                    -- XY_State="00" so a stray DD/FD-prefixed instance of
+                    -- these opcode bytes (IX/IY target, deferred) falls
+                    -- through to the default NOP classification instead of
+                    -- picking up a wrong register address.
+                    if XY_State = "00" then
+                        case IR is
+                        when x"23" | x"2B" | x"09" | x"19" | x"29" | x"39" |
+                             x"07" | x"17" | x"27" | x"37" | x"0F" | x"1F" |
+                             x"2F" | x"3F" | x"3D" =>
+                            RegAddrA_r <= Alternate & "10";    -- dest HL
+                        when others => null;
+                        end case;
+                        case IR is
+                        when x"09" | x"07" | x"0F" =>
+                            RegAddrB_r <= Alternate & "00";    -- src BC
+                        when x"19" | x"17" | x"1F" | x"3D" =>
+                            RegAddrB_r <= Alternate & "01";    -- src DE
+                        when x"29" | x"27" | x"2F" =>
+                            RegAddrB_r <= Alternate & "10";    -- src HL
+                        when others => null;    -- SP(MSP24): no register-file read needed
+                        end case;
+                    end if;
                 end if;
+
 
                 -- Address from register
                 RegAddrC <= Alternate & Set_Addr_To(1 downto 0);
@@ -912,6 +1075,32 @@ begin
                 end if;
                 if ((JumpXY = '1' or LDSPHL = '1') and XY_State /= "00") or (MCycle = "110") then
                     RegAddrC <= XY_State(1) & "11";
+                end if;
+
+                -- Phase8: dedicated 24bit ALU dest (HL) read. RegBusA_r is
+                -- NOT usable here: it is delayed by a full TWO cycles from
+                -- when RegAddrA_r is set (one cycle for RegAddrA_r itself
+                -- to reach RegAddrA/RegBusA, another for "RegBusA_r <=
+                -- RegBusA" below to sample it), but an ED-prefixed opcode
+                -- only has ONE cycle between ISet/IR settling (at the
+                -- TState 2->3 edge of the opcode-fetch MCycle) and T_Res
+                -- (TState=4) committing - RegBusA_r would still hold stale
+                -- data from the *previous* instruction at that point. The
+                -- purely-combinational 3rd port (RegAddrC/RegBusC, used
+                -- elsewhere only for JumpXY/LDSPHL/(IX/IY+d) which are all
+                -- inactive during these opcodes) has no such extra delay:
+                -- once RegAddrC is set here (one cycle ahead, same as
+                -- RegAddrA_r/RegAddrB_r), RegBusC reflects HL's current
+                -- value immediately, in time for the Phase8 combinational
+                -- ALU process to read it at T_Res.
+                if ISet = "10" and XY_State = "00" then
+                    case IR is
+                    when x"23" | x"2B" | x"09" | x"19" | x"29" | x"39" |
+                         x"07" | x"17" | x"27" | x"37" | x"0F" | x"1F" |
+                         x"2F" | x"3F" | x"3D" =>
+                        RegAddrC <= Alternate & "10";    -- dest/compare HL
+                    when others => null;
+                    end case;
                 end if;
 
                 if I_DJNZ = '1' and Save_ALU_r = '1' and Mode < 2 then
@@ -952,7 +1141,8 @@ begin
             signed(RegBusA) + 1;
 
     process (Save_ALU_r, Auto_Wait_t1, ALU_OP_r, Read_To_Reg_r,
-            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR)
+            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR,
+            alu24_active, alu24_writeback)
     begin
         RegWEH <= '0';
         RegWEL <= '0';
@@ -995,10 +1185,21 @@ begin
             when others => null;
             end case;
         end if;
+
+        -- Phase8: dedicated 24bit ALU writeback (low 16bit word). Paired
+        -- with the bank_hl_r write and flags at T_Res in the big clocked
+        -- process above; alu24_active/alu24_writeback already fold in the
+        -- ISet="10"/XY_State="00"/HL-target-only guard (see the Phase8
+        -- combinational process), so only MCycle/TState need checking here.
+        if MCycle = "001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
+            RegWEH <= '1';
+            RegWEL <= '1';
+        end if;
     end process;
 
     process (Save_Mux, RegBusB, RegBusA_r, ID16,
-            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR, MSP, IVR, NVR)
+            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR, MSP, IVR, NVR,
+            alu24_active, alu24_writeback, alu24_result24)
     begin
         RegDIH <= Save_Mux;
         RegDIL <= Save_Mux;
@@ -1035,6 +1236,13 @@ begin
                 RegDIL <= std_logic_vector(NVR(7 downto 0));
             when others => null;
             end case;
+        end if;
+
+        -- Phase8: dedicated 24bit ALU writeback data source, paired with
+        -- the RegWEH/RegWEL commit above.
+        if MCycle = "001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
+            RegDIH <= alu24_result24(15 downto 8);
+            RegDIL <= alu24_result24(7 downto 0);
         end if;
     end process;
 

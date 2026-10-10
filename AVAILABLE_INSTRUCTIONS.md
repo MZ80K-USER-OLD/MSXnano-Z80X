@@ -93,12 +93,18 @@
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
-| `ED 23` | `INC24 HL` | 24bitで+1 | 未実装 |
-| `ED 2B` | `DEC24 HL` | 24bitで-1 | 未実装 |
-| `ED 09` / `19` / `29` / `39` | `ADD24 HL, BC/DE/HL/SP` | 24bit加算 | 未実装 |
-| `ED 07` / `17` / `27` / `37` | `ADC24 HL, BC/DE/HL/SP` | 24bit桁上げ加算 | 未実装 |
-| `ED 0F` / `1F` / `2F` / `3F` | `SBC24 HL, BC/DE/HL/SP` | 24bit桁借り減算 | 未実装 |
-| `ED 3D` | `CP24 HL, DE` | 24bit比較（writebackなし） | 未実装 |
+| `ED 23` | `INC24 HL` | 24bitで+1 | 実装済み（GHDL検証済み、実機未検証。HL targetのみ。DD/FD IX/IY targetは未実装） |
+| `ED 2B` | `DEC24 HL` | 24bitで-1 | 実装済み（同上） |
+| `ED 09` / `19` / `29` / `39` | `ADD24 HL, BC/DE/HL/SP` | 24bit加算 | 実装済み（同上。SP operandはMSP24） |
+| `ED 07` / `17` / `27` / `37` | `ADC24 HL, BC/DE/HL/SP` | 24bit桁上げ加算 | 実装済み（同上） |
+| `ED 0F` / `1F` / `2F` / `3F` | `SBC24 HL, BC/DE/HL/SP` | 24bit桁借り減算 | 実装済み（同上） |
+| `ED 3D` | `CP24 HL, DE` | 24bit比較（writebackなし） | 実装済み（同上） |
+
+- 実装は[t80.vhd](fpga/G80A/t80.vhd)内の専用の組合せ論理プロセスと、[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Alu24_AddSub`関数（t80_alu.vhdの既存8bit ALUとは完全に独立）で構成されており、Phase7と同様にT80コア共通部分（`t80_mcode.vhd`やレジスタファイルのメインデコード経路）には一切手を加えていません。
+- フラグ: `S`=bit23、`Z`=24bit zero、`H`は変更なし（保持）、`P/V`=24bit符号付きオーバーフロー、`N`=加算系命令で0・減算系命令で1、`C`=24bit carry/borrow。未定義のX/Y（bit3/5）フラグも同様にこの命令群では変更されません（CPU仕様書V8はこれらを規定していないため、保持する設計としています）。
+- `CP24`は書き込みを行わず、フラグのみを更新します（HL24は変更されません）。
+- DD/FDプレフィクスによるIX/IYターゲットの置換は未実装です（Phase7のLD24 HL,IX/IYと同様、二重プレフィクスのデコード拡張が必要なため次フェーズに繰り越し）。DD/FD付きでこれらのopcodeを実行した場合は未定義命令としてNOP扱いになります。
+- GHDLテストベンチ: [tb_phase8_alu24.vhd](fpga/G80A/test/tb_phase8_alu24.vhd)（全9ケース、符号付きオーバーフロー・24bit carry/borrow・H保持・MSP24オペランド・CP24の非書き込みを含めて検証済み）。
 
 ---
 
