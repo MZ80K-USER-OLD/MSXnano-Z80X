@@ -399,9 +399,12 @@ wire [7:0] ex_bus_data;
     wire [7:0] cpu_bank_int;
     wire [7:0] cpu_bank_nvr;
     wire [7:0] cpu_bank_rst;
+    // Z80X24 base spec: straight-through logical->physical bank mapping
+    // (no MMU translation table). See the cpu_sdram_* section below for
+    // the full rationale and how to re-add the optional MMU24 wrapper
+    // (fpga/G80A/mmu24.vhd) later if bank remapping/write-protection is
+    // needed again.
     wire [7:0] mmu_physical_bank;
-    wire [7:0] mmu_dout;
-    wire       mmu_sel;
     assign ex_msel = msel;
     assign ex_bus_mp = bus_mp;
 //    assign msel = { msel_ff, ~ msel_ff };
@@ -628,30 +631,38 @@ wire [7:0] mapper_read_data =
     (bus_addr[1:0] == 2'b10) ? mapper_reg_fe :
                                mapper_reg_ff;
 
-// Phase4: MMU_DATA 24bit logical->physical bank translation (F0h/F1h).
-// cpu_addr24[23:16] is the Phase3 A_Bank (00h in M0, or for PC/SP/direct
-// addressing); mmu_physical_bank is the translated bank byte, not yet
-// wired into the physical SD-RAM address (that connection + real hardware
-// verification is Phase5 "MMU実機検証").
-MMU24 mmu24_0 (
-    .RESET_n       (bus_reset_n),
-    .CLK           (clk_54m),
-    .IORQ_n        (bus_iorq_n),
-    .M1_n          (bus_m1_n),
-    .RD_n          (bus_rd_n),
-    .WR_n          (bus_wr_n),
-    .Port_Addr     (bus_addr[7:0]),
-    .D_In          (bus_data),
-    .D_Out         (mmu_dout),
-    .D_OutEn       (mmu_sel),
-    .Logical_Bank  (cpu_addr24[23:16]),
-    .Physical_Bank (mmu_physical_bank)
-);
+// Z80X24 base spec (no MMU): straight-through logical->physical bank
+// mapping. cpu_addr24[23:16] is the Phase3 A_Bank (00h in M0, or for
+// PC/SP/direct addressing; non-zero only for register-indirect data
+// accesses in M1/M2 - see t80.vhd). mmu_physical_bank is wired directly
+// into the physical SD-RAM address below (cpu_sdram_*), with no
+// translation table, aliasing, or per-bank write protection.
+//
+// An MMU translation layer (F0h/F1h MMU_INDEX/MMU_DATA table lookup, plus
+// F2h MMU_ATTR.W write protection) was previously implemented here as
+// fpga/G80A/mmu24.vhd (Phase4/5/6), but was removed from this default
+// build: on this project's current FPGA floorplan, BSRAM is already 100%
+// allocated by other IP (mostly the BIOS/SUBROM/MSX-logo boot ROMs), so
+// MMU24's two 256-entry tables could not be packed into real BSRAM and
+// fell back to expensive LUT-based distributed RAM, costing roughly 12
+// percentage points of Logic (LUT) utilization and 13 points of Register
+// utilization project-wide - by far the single largest consumer among all
+// Z80X24 Phase1-7 additions.
+//
+// mmu24.vhd itself is kept in the repository, fully implemented and still
+// GHDL-verified in isolation (fpga/G80A/test/tb_phase4_mmu24.vhd,
+// tb_phase5_mmu_mapping.vhd, tb_phase6_mmu_attr.vhd), as an optional
+// add-on for projects/floorplans with spare BSRAM. To re-add it: reinstate
+// its File entry in MSXNanoTang20K_Z80X24.gprj, replace the
+// "assign mmu_physical_bank = ..." line below with an MMU24 instance
+// (Logical_Bank => cpu_addr24[23:16], Physical_Bank => mmu_physical_bank,
+// D_Out/D_OutEn wired into the cpu_din mux below, Write_Allow gating
+// cpu_sdram_write), exactly as it was wired prior to this change.
+assign mmu_physical_bank = cpu_addr24[23:16];
 
     always @ (posedge clk_54m) begin
         cpu_din <= 
                 (mapper_port_read==1) ? mapper_read_data :
-                (mmu_sel==1) ? mmu_dout :
                 (cpu_sdram_req==1) ? cpu_sdram_dout :
                 (psg_req_r == 1) ? psg_dout :
                 (ppi_portb_req_r == 1) ? keyboard_data :
@@ -1193,15 +1204,15 @@ MMU24 mmu24_0 (
 reg [15:0] VrmDbi2;
 reg [7:0] megaram_dout;
 
-// Phase5: MMU extended-memory SD-RAM request (MSX_T80_24bit化_実装手順_V2
-// section 7 "Phase 5"). When the current data access translates, via
-// mmu24_0, to a non-zero physical bank, route the bus cycle straight to
-// the flat 24bit SD-RAM window (memory_ctrl's pre-existing cpu_sdram_*
-// port group) instead of the legacy MSX slot/BIOS/mapper decode below.
-// Legacy M0-only MSX software always has mmu_physical_bank = 00h (Phase3
-// forces A_Bank = 00h outside register-indirect M1/M2 accesses, and
-// MMU_DATA[00h] is fixed at 00h - see mmu24.vhd), so this path is never
-// taken by existing software and the legacy decode is unaffected.
+// Phase5: extended-memory SD-RAM request (MSX_T80_24bit化_実装手順_V2
+// section 7 "Phase 5"). When the current data access has a non-zero
+// physical bank (= A_Bank straight through, see mmu_physical_bank above),
+// route the bus cycle straight to the flat 24bit SD-RAM window
+// (memory_ctrl's pre-existing cpu_sdram_* port group) instead of the
+// legacy MSX slot/BIOS/mapper decode below. Legacy M0-only MSX software
+// always has mmu_physical_bank = 00h (Phase3 forces A_Bank = 00h outside
+// register-indirect M1/M2 accesses), so this path is never taken by
+// existing software and the legacy decode is unaffected.
 //
 // Per doc/jpn/SDRAMメモリマップ.md, 0x000000-0x5FFFFF is already occupied by
 // the legacy Memory Mapper (0x000000-0x3FFFFF) and MegaRAM/SCC
@@ -1210,11 +1221,12 @@ reg [7:0] megaram_dout;
 // this new client is based at CPU_SDRAM_BASE and limited to physical
 // banks 01h-1Bh (27 x 64KB = 0x1B0000, leaving the first 64KB of the free
 // region, 0x640000-0x64FFFF, spare) to guarantee it can never alias or
-// overflow into an existing client's region. physical bank 00h is already
-// excluded (legacy alias, see mmu24.vhd); banks above 1Bh are simply not
-// routed here yet (an access with such a bank reads back 8'hFF, same as
-// any other unmapped region, and writes are silently dropped) until a
-// larger dedicated SD-RAM allocation is carved out.
+// overflow into an existing client's region. physical bank 00h is always
+// excluded (legacy alias, enforced below by cpu_sdram_bank_in_range);
+// banks above 1Bh are simply not routed here yet (an access with such a
+// bank reads back 8'hFF, same as any other unmapped region, and writes
+// are silently dropped) until a larger dedicated SD-RAM allocation is
+// carved out.
 localparam [23:0] CPU_SDRAM_BASE = 24'h640000;
 localparam [7:0]  CPU_SDRAM_BANK_MAX = 8'h1B;
 
@@ -1230,6 +1242,9 @@ always @ (posedge clk_54m) begin
                          (bus_rd_n == 0 || bus_wr_n == 0) && bus_rfsh_n == 1 ) ? 1 : 0;
 end
 assign cpu_sdram_req = cpu_sdram_req_r;
+// No MMU in this build, so there is no per-bank write-protection
+// attribute to gate against (see the MMU24 removal note above): any
+// in-range bank is both readable and writable.
 assign cpu_sdram_write = cpu_sdram_req & ~bus_wr_n;
 assign cpu_sdram_addr = CPU_SDRAM_BASE + { mmu_physical_bank, bus_addr };
 

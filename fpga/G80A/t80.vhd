@@ -146,6 +146,8 @@ architecture rtl of T80 is
     signal R                : unsigned(7 downto 0);
     signal SP, PC           : unsigned(15 downto 0);
     signal MSP              : unsigned(15 downto 0);
+    signal IVR              : unsigned(15 downto 0);    -- Phase7: IVR24 low word (bank byte = bank_int_r)
+    signal NVR              : unsigned(15 downto 0);    -- Phase7: NVR24 low word (bank byte = bank_nvr_r)
     signal RegDIH           : std_logic_vector(7 downto 0);
     signal RegDIL           : std_logic_vector(7 downto 0);
     signal RegBusA          : std_logic_vector(15 downto 0);
@@ -414,7 +416,15 @@ begin
             I <= (others => '0');
             R <= (others => '0');
             SP <= (others => '1');
-            MSP <= (others => '1');
+            -- Phase7: MSP24/IVR24/NVR24 reset to 000000h per
+            -- MSX_T80_24bit化_CPU仕様書_V8 section 2 ("RESETは...
+            -- MSP24/IVR24/NVR24=000000h"). This differs from the plain Z80
+            -- SP register above, which keeps the standard all-1s Z80 reset
+            -- convention (MSP24 is a new Z80X24 register with its own
+            -- spec'd reset value, not a Z80-compatible stack pointer).
+            MSP <= (others => '0');
+            IVR <= (others => '0');
+            NVR <= (others => '0');
             Alternate <= '0';
 
             Read_To_Reg_r <= "00000";
@@ -774,6 +784,25 @@ begin
                         when x"0D" => ACC <= bank_ix_r;    -- LD A,IX_B
                         when x"1D" => ACC <= bank_iy_r;    -- LD A,IY_B
                         when x"3E" => ACC <= bank_rst_r;   -- LD A,RST_B
+                        -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 transfer
+                        -- (MSX_T80_24bit化_実装手順_V2 section 9 "Phase 7").
+                        -- full 24bit, source and F unchanged. The 16bit
+                        -- low-word copy (BC/DE/HL/MSP/IVR/NVR) is committed
+                        -- via RegWEH/RegWEL/RegDIH/RegDIL below (reading
+                        -- the pre-edge RegBusB, routed in one cycle ahead
+                        -- via the RegAddrB_r override further below); this
+                        -- block only updates the matching 8bit bank byte /
+                        -- internal 16bit register at the same clock edge.
+                        when x"06" => bank_hl_r <= bank_bc_r;   -- LD24 HL,BC
+                        when x"0E" => bank_bc_r <= bank_hl_r;   -- LD24 BC,HL
+                        when x"16" => bank_hl_r <= bank_de_r;   -- LD24 HL,DE
+                        when x"1E" => bank_de_r <= bank_hl_r;   -- LD24 DE,HL
+                        when x"35" => MSP <= unsigned(RegBusB); bank_msp_r <= bank_hl_r; -- LD24 MSP,HL
+                        when x"36" => bank_hl_r <= bank_msp_r;  -- LD24 HL,MSP
+                        when x"9B" => IVR <= unsigned(RegBusB); bank_int_r <= bank_hl_r; -- LD24 IVR,HL
+                        when x"9C" => bank_hl_r <= bank_int_r;  -- LD24 HL,IVR
+                        when x"9E" => NVR <= unsigned(RegBusB); bank_nvr_r <= bank_hl_r; -- LD24 NVR,HL
+                        when x"9F" => bank_hl_r <= bank_nvr_r;  -- LD24 HL,NVR
                         when others => null;
                         end case;
                     end if;
@@ -843,6 +872,38 @@ begin
                     RegAddrB_r <= XY_State(1) & "11";
                 end if;
 
+                -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 register-pair
+                -- transfer (ED06/0E/16/1E/35/36/9B/9C/9E/9F). t80_mcode.vhd
+                -- leaves these opcodes classified as NOP (Set_BusA_To/
+                -- Set_BusB_To stay "0000"), so the pipelined register-file
+                -- addresses are overridden directly here instead - the same
+                -- one-cycle-ahead pipelining already used above for
+                -- Set_BusA_To/Set_BusB_To, so the correct address is
+                -- already in place by the time T_Res (TState=4) commits the
+                -- write (see RegWEH/RegWEL and RegDIH/RegDIL below, and the
+                -- bank-byte/internal-register update in the ED-prefixed
+                -- case block above).
+                if ISet = "10" then
+                    case IR is
+                    when x"06" | x"16" | x"36" | x"9C" | x"9F" =>
+                        RegAddrA_r <= Alternate & "10";    -- dest HL
+                    when x"0E" =>
+                        RegAddrA_r <= Alternate & "00";    -- dest BC
+                    when x"1E" =>
+                        RegAddrA_r <= Alternate & "01";    -- dest DE
+                    when others => null;
+                    end case;
+                    case IR is
+                    when x"0E" | x"1E" | x"35" | x"9B" | x"9E" =>
+                        RegAddrB_r <= Alternate & "10";    -- src HL
+                    when x"06" =>
+                        RegAddrB_r <= Alternate & "00";    -- src BC
+                    when x"16" =>
+                        RegAddrB_r <= Alternate & "01";    -- src DE
+                    when others => null;
+                    end case;
+                end if;
+
                 -- Address from register
                 RegAddrC <= Alternate & Set_Addr_To(1 downto 0);
                 -- Jump (HL), LD SP,HL
@@ -891,7 +952,7 @@ begin
             signed(RegBusA) + 1;
 
     process (Save_ALU_r, Auto_Wait_t1, ALU_OP_r, Read_To_Reg_r,
-            ExchangeDH, IncDec_16, MCycle, TState, Wait_n)
+            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR)
     begin
         RegWEH <= '0';
         RegWEL <= '0';
@@ -918,10 +979,26 @@ begin
             when others =>
             end case;
         end if;
+
+        -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 register-pair writeback
+        -- (ED06/0E/16/1E/36/9C/9F write BC/DE/HL; ED9A/9D immediate-load and
+        -- the DD/FD ED26/2E IX/IY hub variants are not part of this
+        -- increment, see AVAILABLE_INSTRUCTIONS.md). Committed at T_Res
+        -- (TState=4) of the ED-prefixed opcode-fetch MCycle; the
+        -- destination address is set up one cycle ahead via RegAddrA_r
+        -- above.
+        if ISet = "10" and MCycle = "001" and TState = 4 then
+            case IR is
+            when x"06" | x"0E" | x"16" | x"1E" | x"36" | x"9C" | x"9F" =>
+                RegWEH <= '1';
+                RegWEL <= '1';
+            when others => null;
+            end case;
+        end if;
     end process;
 
     process (Save_Mux, RegBusB, RegBusA_r, ID16,
-            ExchangeDH, IncDec_16, MCycle, TState, Wait_n)
+            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR, MSP, IVR, NVR)
     begin
         RegDIH <= Save_Mux;
         RegDIL <= Save_Mux;
@@ -938,6 +1015,26 @@ begin
         if IncDec_16(2) = '1' and ((TState = 2 and MCycle /= "001") or (TState = 3 and MCycle = "001")) then
             RegDIH <= std_logic_vector(ID16(15 downto 8));
             RegDIL <= std_logic_vector(ID16(7 downto 0));
+        end if;
+
+        -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 register-pair writeback
+        -- data source, paired with the RegWEH/RegWEL commit above.
+        if ISet = "10" and MCycle = "001" and TState = 4 then
+            case IR is
+            when x"06" | x"0E" | x"16" | x"1E" =>
+                RegDIH <= RegBusB(15 downto 8);
+                RegDIL <= RegBusB(7 downto 0);
+            when x"36" =>
+                RegDIH <= std_logic_vector(MSP(15 downto 8));
+                RegDIL <= std_logic_vector(MSP(7 downto 0));
+            when x"9C" =>
+                RegDIH <= std_logic_vector(IVR(15 downto 8));
+                RegDIL <= std_logic_vector(IVR(7 downto 0));
+            when x"9F" =>
+                RegDIH <= std_logic_vector(NVR(15 downto 8));
+                RegDIL <= std_logic_vector(NVR(7 downto 0));
+            when others => null;
+            end case;
         end if;
     end process;
 

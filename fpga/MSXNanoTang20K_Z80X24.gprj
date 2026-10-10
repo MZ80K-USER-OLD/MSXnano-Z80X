@@ -84,7 +84,11 @@
         <File path="top.v" type="file.verilog" enable="1"/>
         <File path="G80A/T80s.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/g80a.vhd" type="file.vhdl" enable="1"/>
-        <File path="G80A/mmu24.vhd" type="file.vhdl" enable="1"/>
+        <!-- Optional MMU24 add-on (24bit logical->physical bank translation +
+             write-protection). Disabled by default in this project: see the
+             MMU removal notes in top.v (around mmu_physical_bank) for why
+             and how to re-enable (set enable="1" and re-wire top.v). -->
+        <File path="G80A/mmu24.vhd" type="file.vhdl" enable="0"/>
         <File path="G80A/t80.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/t80_alu.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/t80_mcode.vhd" type="file.vhdl" enable="1"/>

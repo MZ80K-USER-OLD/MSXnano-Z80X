@@ -7,9 +7,9 @@ Tang Nano 20K内蔵の8MB SD-RAM（物理バイトアドレス 0x000000〜0x7FFF
 - `mapper_req` / `mapper_addr`（Memory Mapper＝メインRAM）
 - `megaram_req` / `megaram_addr`（MegaRAM / SCC拡張RAM）
 - `vram_din` / `vram_addr`（VDP(V9958) VRAM、専用タイムスロットでアクセス）
-- `cpu_sdram_req` / `cpu_sdram_addr`（Z80X24 24bit CPU拡張メモリ。MMU24によるバンク変換経由、Phase5で接続。詳細は4章）
+- `cpu_sdram_req` / `cpu_sdram_addr`（Z80X24 24bit CPU拡張メモリ。標準仕様では論理バンク＝物理バンクのstraight-throughマッピング、Phase5で接続。詳細は4章）
 
-`cpu_sdram_req` という4つ目の入力ポートも `memory_ctrl` には存在し（[memory.v:10](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/src/memory.v:10)）、Phase5（24bit CPU拡張のMMU実機検証）で [top.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/top.v:1230) のインスタンス化箇所に接続されました。詳細は4章を参照してください。**MAIN-ROM/SUB-ROM（BIOS）はこの4系統のいずれにも含まれず、SD-RAMを一切使用しません**（詳細は3章）。
+`cpu_sdram_req` という4つ目の入力ポートも `memory_ctrl` には存在し（[memory.v:10](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/src/memory.v:10)）、Phase5（24bit CPU拡張メモリの実機検証）で [top.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/top.v:1230) のインスタンス化箇所に接続されました。詳細は4章を参照してください。**MAIN-ROM/SUB-ROM（BIOS）はこの4系統のいずれにも含まれず、SD-RAMを一切使用しません**（詳細は3章）。
 
 ------------------------------
 ## 1. OCM-PLD（移植元）と MSXnano-Z80X（本実装）の違い
@@ -39,8 +39,8 @@ Tang Nano 20K内蔵の8MB SD-RAM（物理バイトアドレス 0x000000〜0x7FFF
 | MegaRAM / SCC拡張RAM | 0x400000 〜 0x5FFFFF | 2MB | `sdram_addr <= {3'b10, megaram_addr[20:0]}` — [memory.v:105](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/src/memory.v:105) |
 | VDP VRAM（現在の実使用分） | 0x600000 〜 0x61FFFF | 128KB | `SdrBa<=2'b11`固定＋専用タイムスロット、`vram_addr`は実質17bit幅 — [memory.v:339-385](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/src/memory.v:339) |
 | **VDP VRAM予約領域**（拡張VRAM等を見込んだマージン） | 0x620000 〜 0x63FFFF | +128KB（合計256KB予約） | ハード的な制約はないが、V9958の拡張VRAMモード等に備えて**予約**（下記3.1参照） |
-| （未使用、予備） | 0x640000 〜 0x64FFFF | 64KB | Z80X24拡張メモリ領域の先頭64KB。物理bank 00hは「MSX互換64KBへのalias」専用（[mmu24.vhd](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/G80A/mmu24.vhd)）のためこの経路を通らず、意図的に未割当のまま |
-| **Z80X24 CPU拡張メモリ**（物理bank 01h〜1Bh） | 0x650000 〜 0x7FFFFF | 約1.6875MB（27×64KB） | `cpu_sdram_addr <= CPU_SDRAM_BASE + {mmu_physical_bank, bus_addr}` — [top.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/top.v:1230)（`CPU_SDRAM_BASE=0x640000`、`mmu_physical_bank`は[mmu24.vhd](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/G80A/mmu24.vhd)のMMU_DATA変換結果） |
+| （未使用、予備） | 0x640000 〜 0x64FFFF | 64KB | Z80X24拡張メモリ領域の先頭64KB。物理bank 00hは「Z80互換空間（既存のMSX互換64KB）」専用で、この経路（`cpu_sdram_req`）を通らず既存のスロット/BIOS/マッパー経路を使うため、意図的に未割当のまま |
+| **Z80X24 CPU拡張メモリ**（物理bank 01h〜1Bh） | 0x650000 〜 0x7FFFFF | 約1.6875MB（27×64KB） | `cpu_sdram_addr <= CPU_SDRAM_BASE + {mmu_physical_bank, bus_addr}` — [top.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/top.v:1230)（`CPU_SDRAM_BASE=0x640000`、`mmu_physical_bank`は標準仕様では`cpu_addr24[23:16]`（論理バンク）をそのまま使うstraight-through値。詳細は2.2章） |
 
 ### 2.1 VDP VRAMについて：256KBを予約領域とする理由
 
@@ -48,19 +48,24 @@ Tang Nano 20K内蔵の8MB SD-RAM（物理バイトアドレス 0x000000〜0x7FFF
 
 ただし、V9958は設定次第で128KBを超える拡張VRAM構成（192KB等）を取り得るため、将来的にVRAM容量を拡張する改修が入る可能性があります。そのため、本ドキュメントでは安全マージンとして **0x600000〜0x63FFFF（256KB）をVDP用に予約**し、他用途での使用を避けることを推奨します。現時点でこの256KB全体がハードウェア的に専有されているわけではなく、あくまで将来の拡張に備えた予約です。
 
-### 2.2 Z80X24 CPU拡張メモリについて（Phase5で追加）
+### 2.2 Z80X24 CPU拡張メモリについて（標準仕様：straight-throughマッピング、Phase5で追加）
 
-24bit CPU拡張（M1/M2モード）でCPUコアが出す論理バンクバイト（`A_Bank`）は、[mmu24.vhd](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/G80A/mmu24.vhd) のMMU_DATAテーブル（F0h/F1h経由でソフトウェアが設定）で物理バンクバイトへ変換されます。この物理バンクバイトは [top.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/top.v:1230) で `cpu_sdram_req`/`cpu_sdram_addr` として `memory_ctrl` の空きクライアントポートへ配線されており、以下のルールで実アドレスへ変換されます。
+24bit CPU拡張（M1/M2モード）でCPUコアが出す論理バンクバイト（`A_Bank`、`cpu_addr24[23:16]`）は、**標準仕様では変換テーブルを介さずそのまま物理バンクバイトとして使われます**（`mmu_physical_bank = cpu_addr24[23:16]`、[top.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/top.v)参照）。この物理バンクバイトは [top.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/top.v:1230) で `cpu_sdram_req`/`cpu_sdram_addr` として `memory_ctrl` の空きクライアントポートへ配線されており、以下のルールで実アドレスへ変換されます。
 
-- 物理bank 00h：`mmu24.vhd`で固定的に「MSX互換64KBへのalias」を意味するため、`cpu_sdram_req`は発行されず、既存のスロット/BIOS/マッパーデコード（本ドキュメント2章の領域）がそのまま使われます。
-- 物理bank 01h〜1Bh（27バンク）：`0x650000`〜`0x7FFFFF`へ1バンク=64KBで直線的にマッピングされます。
+- 物理bank 00h（＝論理バンク00h、Z80互換空間）：`cpu_sdram_req`は発行されず、既存のスロット/BIOS/マッパーデコード（本ドキュメント2章の領域）がそのまま使われます。例外的に常に読み書き可能です。
+- 物理bank 01h〜1Bh（27バンク）：`0x650000`〜`0x7FFFFF`へ1バンク=64KBで直線的にマッピングされます。write protectionはなく、全バンク常に読み書き可能です。
 - 物理bank 1Ch以上：現状どの領域にも接続されていません（アクセスすると読出しは`0xFF`、書込みは無視されます）。より大きな専用SD-RAM割り当てを追加する際の拡張余地です。
+
+なお、論理→物理バンク変換とper-bank write protectionを行うMMU拡張（F0h/F1h/F2hポート、[mmu24.vhd](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/G80A/mmu24.vhd)）も実装・GHDL検証済みでリポジトリに同梱されていますが、**デフォルトビルドでは無効**です（Tang Nano
+20Kの現在の面積配分ではBSRAMが全消費されており、MMUの256エントリテーブルがLUTベースの distributed
+RAMへfallbackしてLUT/Register使用率が大きく増加するため）。BSRAMに余裕のある構成では、`MSXNanoTang20K_Z80X24.gprj`で`mmu24.vhd`を`enable="1"`にし、`top.v`の該当箇所を書き換えることで再度有効化できます（詳細は[CPU仕様書V8](MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md)14.1章、および`mmu24.vhd`冒頭コメント参照）。
 
 `cpu_sdram_req`は `mode24`/バンクレジスタの値のみで判定しており、既存のスロット/マッパーデコード（`pri_slot_num`等）とは独立しています。そのため、拡張メモリアクセス中のHL/BC/DE/(IX+d)/(IY+d)がMemory Mapper等が有効な16bitアドレスと重なった場合、同一バスサイクルで両方のクライアントが要求を出すことがあります。MSX-DOS2は多くの構成でTPA自体をMemory Mapper RAM上に置くため、これは実運用では「稀なケース」ではなく「ほぼ毎回起きるケース」でした。
 
 このため、[memory.v](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/fpga/src/memory.v)のアービタは `cpu_sdram_req` を `mapper_req`/`megaram_req` より**常に優先**するよう実装されています（Phase5実機検証で発見・修正。優先順位が逆だった当初実装では、拡張メモリへの書込みが実際にはMemory Mapper RAMへ書き込まれてしまい、読出しは常に未更新の`cpu_sdram_dout`=00hを返していました）。`cpu_sdram_req`はmode24=M0の通常MSXソフトでは常に0なので、この優先順位変更は既存のMSX互換動作には一切影響しません。
 
-この優先順位修正を含め、[Project/MMUTest](../../Project/MMUTest)のMSX-DOS(2)用テストプログラム`MMUTEST.COM`により、物理bank間の独立性・エイリアス・`MMU_DATA[n]=00h`の64KB互換aliasを含む全8テストが実機（Tang Nano）でPASSすることを確認済みです。
+この優先順位修正を含め、[Project/MMUTest](../../Project/MMUTest)のMSX-DOS(2)用テストプログラム`MMUTEST.COM`により、物理bank間の独立性・bank00の既存MSX互換空間へのalias動作を含む全8テストが実機（Tang
+Nano）でPASSすることを確認済みです（MMUTestはMMUが有効だった当時に作成されたテストですが、MMU_DATA[n]=n（straight-through）という設定で動かせば標準仕様の動作確認にもそのまま使えます。詳細は[Project/MMUTest/README.md](../../Project/MMUTest/README.md)参照）。
 
 ------------------------------
 ## 3. MAIN-ROM/SUB-ROM（BIOS）の実際の格納方式

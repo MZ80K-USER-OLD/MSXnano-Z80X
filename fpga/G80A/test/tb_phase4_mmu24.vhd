@@ -3,6 +3,13 @@
 -- bank translation
 -- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 6 "Phase 4")
 --
+-- NOTE: MMU24 is an OPTIONAL add-on, not instantiated by the default
+-- top.v build (see mmu24.vhd's header comment and
+-- MSX_T80_24bit化_CPU仕様書_V8 section 14.1). The default build instead
+-- uses a straight-through logical->physical bank mapping. This testbench
+-- still exercises the standalone mmu24.vhd module directly and remains
+-- valid/passing regardless of whether top.v currently instantiates it.
+--
 -- Exercises MMU24 (fpga/G80A/mmu24.vhd) in isolation via simple I/O-port
 -- level read/write stimulus (no CPU core involved), covering:
 --   - reset state: every logical bank defaults to physical bank 00h

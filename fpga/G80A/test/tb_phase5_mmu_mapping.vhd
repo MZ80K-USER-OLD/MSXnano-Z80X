@@ -2,6 +2,15 @@
 -- Phase5 self-checking testbench: MMU real-mapping scenarios
 -- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 7 "Phase 5")
 --
+-- NOTE: MMU24 is an OPTIONAL add-on, not instantiated by the default
+-- top.v build (see mmu24.vhd's header comment and
+-- MSX_T80_24bit化_CPU仕様書_V8 section 14.1). The default build instead
+-- uses a straight-through logical->physical bank mapping, so the
+-- F0h/F1h-driven remapping/aliasing scenarios below only apply when MMU24
+-- has been re-enabled. This testbench still exercises the standalone
+-- mmu24.vhd module (wired to the real T80 core) directly and remains
+-- valid/passing regardless of whether top.v currently instantiates it.
+--
 -- Drives the real T80 CPU core together with the real MMU24 translation
 -- table (both already unit/Phase-tested individually in tb_phase3_m1_data
 -- and tb_phase4_mmu24) through the exact scenarios Phase5 describes:
