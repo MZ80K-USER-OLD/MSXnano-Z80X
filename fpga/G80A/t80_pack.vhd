@@ -106,6 +106,7 @@ package T80_Pack is
         BUSAK_n     : out std_logic;
         A           : out std_logic_vector(15 downto 0);
         update_addr	: out std_logic;
+        A_Bank      : out std_logic_vector(7 downto 0);
         DInst       : in std_logic_vector(7 downto 0);
         DI          : in std_logic_vector(7 downto 0);
         DO          : out std_logic_vector(7 downto 0);

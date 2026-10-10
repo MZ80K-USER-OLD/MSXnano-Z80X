@@ -100,6 +100,13 @@ entity T80 is
         BUSAK_n     : out std_logic;
         A           : out std_logic_vector(15 downto 0);
 		update_addr	: out std_logic;
+        -- Phase3: 24bit logical address bank byte for the current data bus
+        -- cycle (paired with A to form A_Bank & A). Valid (non-zero capable)
+        -- only for register-indirect data accesses (HL/BC/DE/(IX+d)/(IY+d))
+        -- while mode24 /= M0. PC fetch, SP/stack and 16bit direct (nn)
+        -- addressing stay at 00h in Phase3 (PC remains 16bit; see Phase 3
+        -- "最小M1" in MSX_T80_24bit化_実装手順_V2_2026-10-05.md).
+        A_Bank      : out std_logic_vector(7 downto 0);
         DInst       : in std_logic_vector(7 downto 0);
         DI          : in std_logic_vector(7 downto 0);
         DO          : out std_logic_vector(7 downto 0);
@@ -156,6 +163,7 @@ architecture rtl of T80 is
     -- Help Registers
     signal TmpAddr          : std_logic_vector(15 downto 0);    -- Temporary address register
     signal TmpBank          : std_logic_vector(7 downto 0);     -- Phase2: 24bit EA bank byte for (IX/IY+d), paired with TmpAddr
+    signal A_Bank_r         : std_logic_vector(7 downto 0);     -- Phase3: registered bank byte for the current A bus cycle
     signal IR               : std_logic_vector(7 downto 0);     -- Instruction register
     signal ISet             : std_logic_vector(1 downto 0);     -- Instruction set selector
     signal RegBusA_r        : std_logic_vector(15 downto 0);
@@ -380,6 +388,7 @@ begin
 			update_addr <= '0';
             TmpAddr <= (others => '0');
             TmpBank <= (others => '0');
+            A_Bank_r <= (others => '0');
             IR <= "00000000";
             ISet <= "00";
             XY_State <= "00";
@@ -451,6 +460,7 @@ begin
 						update_addr <= '1';
                         A(7 downto 0) <= std_logic_vector(R);
                         A(15 downto 8) <= I;
+                        A_Bank_r <= (others => '0');
                         R(6 downto 0) <= R(6 downto 0) + 1;
                     end if;
 
@@ -499,6 +509,11 @@ begin
 
                 if T_Res = '1' then
 					update_addr <= '1';
+                    -- Phase3 default: PC fetch, SP/stack and direct (nn)
+                    -- addressing stay 16bit (bank byte 00h). Only the
+                    -- register-indirect cases below override this for
+                    -- M1/M2.
+                    A_Bank_r <= (others => '0');
                     BTR_r <= (I_BT or I_BC or I_BTR) and not No_BTR;
                     if Jump = '1' then
                         A(15 downto 8) <= DI_Reg;
@@ -524,11 +539,22 @@ begin
                         when aXY =>
                             if XY_State = "00" then
                                 A <= RegBusC;
+                                -- Phase3: plain HL indirect access, 24bit
+                                -- logical address is bank_hl_r & HL.
+                                if mode24_r /= "00" then
+                                    A_Bank_r <= bank_hl_r;
+                                end if;
                             else
                                 if NextIs_XY_Fetch = '1' then
                                     A <= std_logic_vector(PC);
                                 else
                                     A <= TmpAddr;
+                                    -- Phase3: (IX/IY+d) effective address;
+                                    -- TmpBank already carries/borrows across
+                                    -- the bank byte (Phase2 Addr24_AddDisp8).
+                                    if mode24_r /= "00" then
+                                        A_Bank_r <= TmpBank;
+                                    end if;
                                 end if;
                             end if;
                         when aIOA =>
@@ -551,9 +577,17 @@ begin
                                 A(7 downto 0) <= RegBusC(7 downto 0);
                             else
                                 A <= RegBusC;
+                                -- Phase3: BC indirect access (LD A,(BC) etc.)
+                                if mode24_r /= "00" then
+                                    A_Bank_r <= bank_bc_r;
+                                end if;
                             end if;
                         when aDE =>
                             A <= RegBusC;
+                            -- Phase3: DE indirect access (LD A,(DE) etc.)
+                            if mode24_r /= "00" then
+                                A_Bank_r <= bank_de_r;
+                            end if;
                         when aZI =>
                             if Inc_WZ = '1' then
                                 A <= std_logic_vector(unsigned(TmpAddr) + 1);
@@ -1014,6 +1048,7 @@ begin
     MC <= std_logic_vector(MCycle);
     TS <= std_logic_vector(TState);
     mode24 <= mode24_r;
+    A_Bank <= A_Bank_r;
     bank_bc <= bank_bc_r;
     bank_de <= bank_de_r;
     bank_hl <= bank_hl_r;

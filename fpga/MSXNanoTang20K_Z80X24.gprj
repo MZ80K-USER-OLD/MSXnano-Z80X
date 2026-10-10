@@ -84,6 +84,7 @@
         <File path="top.v" type="file.verilog" enable="1"/>
         <File path="G80A/T80s.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/g80a.vhd" type="file.vhdl" enable="1"/>
+        <File path="G80A/mmu24.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/t80.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/t80_alu.vhd" type="file.vhdl" enable="1"/>
         <File path="G80A/t80_mcode.vhd" type="file.vhdl" enable="1"/>

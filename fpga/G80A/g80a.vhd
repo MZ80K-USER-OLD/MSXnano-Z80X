@@ -90,6 +90,7 @@ entity G80a is
         BUSAK_n     : out std_logic;
         A           : out std_logic_vector(15 downto 0);
 		update_addr	: out std_logic;
+        A_Bank       : out std_logic_vector(7 downto 0);
         DI           : in std_logic_vector(7 downto 0);
         DO           : out std_logic_vector(7 downto 0);
         mode24       : out std_logic_vector(1 downto 0);
@@ -128,6 +129,7 @@ architecture rtl of G80a is
     signal RFSH_n_i     : std_logic;
     signal BUSAK_n_i    : std_logic;
     signal A_i          : std_logic_vector(15 downto 0);
+    signal A_Bank_i     : std_logic_vector(7 downto 0);     -- Phase3: 24bit logical address bank byte
     --signal DO           : std_logic_vector(7 downto 0);
     signal DI_Reg       : std_logic_vector (7 downto 0);    -- Input synchroniser
     signal Wait_s       : std_logic;
@@ -150,6 +152,7 @@ begin
     WR_n <= WR_n_j when BUSAK_n_i = '1' else 'Z';                       -- 0247a
     RFSH_n <= RFSH_n_i when BUSAK_n_i = '1' else 'Z';
     A <= A_i when BUSAK_n_i = '1' else (others => 'Z');
+    A_Bank <= A_Bank_i when BUSAK_n_i = '1' else (others => 'Z');
     --D <= DO when Write = '1' and BUSAK_n_i = '1' else (others => 'Z');
     Data_Reverse <= Write;
 
@@ -185,6 +188,7 @@ begin
             CLK_n => CLK_n,
             A => A_i,
 			update_addr => update_addr,
+            A_Bank => A_Bank_i,
             DInst => DI,
             DI => DI_Reg,
             DO => DO,

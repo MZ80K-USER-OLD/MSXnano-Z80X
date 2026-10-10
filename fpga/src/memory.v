@@ -90,7 +90,33 @@ module memory_ctrl (
                 end
                 3'd1 : begin
                     enable_sdram <= 1;
-                    if ( mapper_req == 1 ) begin
+                    // Z80X24 Phase5: cpu_sdram_req must win arbitration over
+                    // mapper_req/megaram_req. cpu_sdram_req is only ever
+                    // asserted for a non-zero MMU-translated physical bank
+                    // (see fpga/top.v), which only happens while the CPU is
+                    // deliberately doing a 24bit-extended (HL/BC/DE/(IX+d)/
+                    // (IY+d)) access in M1/M2 mode. The 16bit bus_addr for
+                    // such an access is otherwise an ordinary Z80 address and
+                    // will very often also satisfy mapper_req (e.g. MSX-DOS2
+                    // typically runs its TPA out of Memory Mapper RAM), so if
+                    // mapper_req were checked first here it would silently
+                    // win every time, making cpu_sdram_dout/cpu_sdram_addr
+                    // effectively dead code (this was the actual Phase5
+                    // hardware bring-up bug: every extended-memory test read
+                    // back 00h because the real access/readback happened
+                    // against Memory Mapper RAM instead of the intended
+                    // extended SD-RAM window). Legacy M0-only software always
+                    // has cpu_sdram_req = 0, so this ordering has no effect on
+                    // existing MSX compatibility.
+                    if ( cpu_sdram_req == 1 ) begin
+    `ifndef SDRAM_32
+                        sdram_addr <= cpu_sdram_addr[21:0];
+    `else
+                        sdram_addr <= cpu_sdram_addr[22:0];
+    `endif
+                        sdram_write <= cpu_sdram_write;
+                    end
+                    else if ( mapper_req == 1 ) begin
     `ifndef SDRAM_32
                         sdram_addr <= mapper_addr[21:0];
     `else
@@ -98,21 +124,13 @@ module memory_ctrl (
     `endif
                         sdram_write <= mapper_write;
                     end
-                    else if ( megaram_req == 1 ) begin
+                    else begin
     `ifndef SDRAM_32
                         sdram_addr <= { 2'b10, megaram_addr[19:0] };
     `else
                         sdram_addr <= { 3'b10, megaram_addr[20:0] };
     `endif
                         sdram_write <= megaram_write;
-                    end
-                    else begin
-    `ifndef SDRAM_32
-                        sdram_addr <= cpu_sdram_addr[21:0];
-    `else
-                        sdram_addr <= cpu_sdram_addr[22:0];
-    `endif
-                        sdram_write <= cpu_sdram_write;
                     end
                     sdram_seq <= 3'd2;
                 end
@@ -126,14 +144,15 @@ module memory_ctrl (
                 3'd3 : begin
                     enable_sdram <= 1;
                     sdram_write <= 0;
-                    if ( mapper_req == 1 ) begin
+                    // Priority order must match state 3'd1 above.
+                    if ( cpu_sdram_req == 1 ) begin
+                        cpu_sdram_dout <= RamDbi;
+                    end
+                    else if ( mapper_req == 1 ) begin
                         mapper_dout <= RamDbi;
                     end
-                    else if ( megaram_req == 1 ) begin
-                        megaram_dout <= RamDbi;
-                    end
                     else begin
-                        cpu_sdram_dout <= RamDbi;
+                        megaram_dout <= RamDbi;
                     end
                     sdram_seq <= 3'd4;
                 end

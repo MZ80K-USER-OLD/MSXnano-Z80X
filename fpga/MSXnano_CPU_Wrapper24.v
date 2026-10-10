@@ -37,8 +37,14 @@ module MSXnano_CPU_Wrapper24 #(
 );
 
     wire [15:0] cpu_addr;
+    wire [7:0]  cpu_a_bank;
 
-    assign A = {8'b0, cpu_addr};
+    // Phase3: 24bit logical address = {bank byte, 16bit address}.
+    // cpu_a_bank is 00h for M0 and for PC/SP/direct(nn) accesses in M1/M2
+    // (see T80.vhd Set_Addr_To case), so this preserves the exact legacy
+    // {8'b0, cpu_addr} behaviour until register-indirect (HL/BC/DE/(IX+d)/
+    // (IY+d)) data accesses in M1/M2 start producing a non-zero bank byte.
+    assign A = {cpu_a_bank, cpu_addr};
 
     G80a  #(
         .Mode    (Mode),  // 0 => Z80, 1 => Fast Z80, 2 => 8080, 3 => GB
@@ -63,6 +69,7 @@ module MSXnano_CPU_Wrapper24 #(
         .BUSAK_n      (BUSAK_n),
         .A            (cpu_addr),
         .update_addr  (update_addr),
+        .A_Bank       (cpu_a_bank),
         .DI           (DI),
         .DO           (DO),
         .mode24       (mode24),

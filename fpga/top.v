@@ -399,6 +399,9 @@ wire [7:0] ex_bus_data;
     wire [7:0] cpu_bank_int;
     wire [7:0] cpu_bank_nvr;
     wire [7:0] cpu_bank_rst;
+    wire [7:0] mmu_physical_bank;
+    wire [7:0] mmu_dout;
+    wire       mmu_sel;
     assign ex_msel = msel;
     assign ex_bus_mp = bus_mp;
 //    assign msel = { msel_ff, ~ msel_ff };
@@ -625,10 +628,31 @@ wire [7:0] mapper_read_data =
     (bus_addr[1:0] == 2'b10) ? mapper_reg_fe :
                                mapper_reg_ff;
 
+// Phase4: MMU_DATA 24bit logical->physical bank translation (F0h/F1h).
+// cpu_addr24[23:16] is the Phase3 A_Bank (00h in M0, or for PC/SP/direct
+// addressing); mmu_physical_bank is the translated bank byte, not yet
+// wired into the physical SD-RAM address (that connection + real hardware
+// verification is Phase5 "MMU実機検証").
+MMU24 mmu24_0 (
+    .RESET_n       (bus_reset_n),
+    .CLK           (clk_54m),
+    .IORQ_n        (bus_iorq_n),
+    .M1_n          (bus_m1_n),
+    .RD_n          (bus_rd_n),
+    .WR_n          (bus_wr_n),
+    .Port_Addr     (bus_addr[7:0]),
+    .D_In          (bus_data),
+    .D_Out         (mmu_dout),
+    .D_OutEn       (mmu_sel),
+    .Logical_Bank  (cpu_addr24[23:16]),
+    .Physical_Bank (mmu_physical_bank)
+);
 
     always @ (posedge clk_54m) begin
         cpu_din <= 
                 (mapper_port_read==1) ? mapper_read_data :
+                (mmu_sel==1) ? mmu_dout :
+                (cpu_sdram_req==1) ? cpu_sdram_dout :
                 (psg_req_r == 1) ? psg_dout :
                 (ppi_portb_req_r == 1) ? keyboard_data :
                 `ifdef ENABLE_V9958
@@ -1169,12 +1193,73 @@ wire [7:0] mapper_read_data =
 reg [15:0] VrmDbi2;
 reg [7:0] megaram_dout;
 
+// Phase5: MMU extended-memory SD-RAM request (MSX_T80_24bit化_実装手順_V2
+// section 7 "Phase 5"). When the current data access translates, via
+// mmu24_0, to a non-zero physical bank, route the bus cycle straight to
+// the flat 24bit SD-RAM window (memory_ctrl's pre-existing cpu_sdram_*
+// port group) instead of the legacy MSX slot/BIOS/mapper decode below.
+// Legacy M0-only MSX software always has mmu_physical_bank = 00h (Phase3
+// forces A_Bank = 00h outside register-indirect M1/M2 accesses, and
+// MMU_DATA[00h] is fixed at 00h - see mmu24.vhd), so this path is never
+// taken by existing software and the legacy decode is unaffected.
+//
+// Per doc/jpn/SDRAMメモリマップ.md, 0x000000-0x5FFFFF is already occupied by
+// the legacy Memory Mapper (0x000000-0x3FFFFF) and MegaRAM/SCC
+// (0x400000-0x5FFFFF), and 0x600000-0x63FFFF is reserved for VDP VRAM
+// headroom. The only untouched region is 0x640000-0x7FFFFF (~1.75MB), so
+// this new client is based at CPU_SDRAM_BASE and limited to physical
+// banks 01h-1Bh (27 x 64KB = 0x1B0000, leaving the first 64KB of the free
+// region, 0x640000-0x64FFFF, spare) to guarantee it can never alias or
+// overflow into an existing client's region. physical bank 00h is already
+// excluded (legacy alias, see mmu24.vhd); banks above 1Bh are simply not
+// routed here yet (an access with such a bank reads back 8'hFF, same as
+// any other unmapped region, and writes are silently dropped) until a
+// larger dedicated SD-RAM allocation is carved out.
+localparam [23:0] CPU_SDRAM_BASE = 24'h640000;
+localparam [7:0]  CPU_SDRAM_BANK_MAX = 8'h1B;
+
+reg cpu_sdram_req_r;
+wire cpu_sdram_req;
+wire cpu_sdram_write;
+wire [23:0] cpu_sdram_addr;
+wire [7:0] cpu_sdram_dout;
+wire cpu_sdram_bank_in_range = (mmu_physical_bank != 8'h00) && (mmu_physical_bank <= CPU_SDRAM_BANK_MAX);
+
+always @ (posedge clk_54m) begin
+    cpu_sdram_req_r <= ( cpu_sdram_bank_in_range && bus_mreq_n == 0 &&
+                         (bus_rd_n == 0 || bus_wr_n == 0) && bus_rfsh_n == 1 ) ? 1 : 0;
+end
+assign cpu_sdram_req = cpu_sdram_req_r;
+assign cpu_sdram_write = cpu_sdram_req & ~bus_wr_n;
+assign cpu_sdram_addr = CPU_SDRAM_BASE + { mmu_physical_bank, bus_addr };
+
+// NOTE (fixed during Phase5 hardware bring-up): this request is qualified
+// purely by mmu_physical_bank and bus_mreq_n/bus_rd_n/bus_wr_n; it does
+// not exclude overlap with the legacy slot/BIOS/mapper decode below,
+// which is qualified independently by pri_slot_num/page_num and knows
+// nothing about mode24/bank registers. Because MSX-DOS2 typically runs
+// its TPA out of Memory Mapper RAM, a 24bit-extended access's 16bit
+// bus_addr will very often *also* satisfy mapper_req, so both mapper_req
+// and cpu_sdram_req can assert for the same bus cycle. memory_ctrl
+// (fpga/src/memory.v) now resolves this by giving cpu_sdram_req top
+// priority over mapper_req/megaram_req, since cpu_sdram_req is only ever
+// non-zero when the CPU deliberately performs a non-zero-bank 24bit
+// access; legacy M0-only software always has cpu_sdram_req = 0, so this
+// has no effect on existing MSX compatibility. Without this priority fix,
+// every extended-memory access silently landed on/read back Memory Mapper
+// RAM instead of the intended cpu_sdram_* window (observed as every
+// non-zero-bank test reading back 00h).
+
 memory_ctrl mem1 (
     .clk_27m(clk_54m),
     .clk_108m(clk_108m),
     .bus_reset_n(bus_reset_n ),
     .video_dhclk(VideoDHClk),
     .video_dlclk(VideoDLClk),
+
+    .cpu_sdram_req(cpu_sdram_req),
+    .cpu_sdram_write(cpu_sdram_write),
+    .cpu_sdram_addr(cpu_sdram_addr),
 
     .mapper_din(cpu_dout),
     .mapper_req(mapper_req),
@@ -1188,6 +1273,7 @@ memory_ctrl mem1 (
     .vram_addr(VdpAdr),
     .bus_rfsh_n(bus_rfsh_n),
 
+    .cpu_sdram_dout(cpu_sdram_dout),
     .mapper_dout(mapper_dout),
     .megaram_dout(megaram_dout),
     .vram_dout(VrmDbi2),
