@@ -1,13 +1,15 @@
 --
--- Phase12 self-checking testbench: JP.M0/M1/M2 addr16/24, CALL.M0/M1
--- addr16, RET.M
+-- Phase12 self-checking testbench: JP.M0/M1/M2 addr16/24, CALL.M0/M1/M2,
+-- RET.M
 -- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 14 "Phase 12";
 --  MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md section 5 and the roadmap's
 --  "CALL.MxはMSPへ4byte保存する" note)
 --
--- CALL.M2 addr24 (ED 98) is DEFERRED (needs 8 MCycles, exceeding the
--- 3bit MCycle counter's max of 7 - see AVAILABLE_INSTRUCTIONS.md section
--- 14) and is NOT covered by this testbench.
+-- CALL.M2 addr24 (ED 98) needs 8 MCycles (1 opcode + 3 addr24 fetch + 4
+-- frame push), which only became representable once MCycle was widened
+-- from 3 to 4 bits - see the dedicated report
+-- doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md
+-- for the full background. Test8/Test9 below cover it.
 --
 -- Instantiates the real T80 core (fpga/G80A/t80.vhd) and runs a small
 -- hand assembled program through a flat 64KB combinational memory model
@@ -51,7 +53,19 @@
 --     Test6: lands on A=0x5000 with mode24=M1(01).
 --   0x5000: RET.M (ED 99). Pops back, restoring mode24_r=M2(10) again.
 --     Test7: lands on A=0x300A (0x3006+4) with mode24=M2(10).
---   0x300A: HALT - end of program.
+--   0x300A: CALL.M2 02:6000h (ED 98). addr24 target (3byte lo/hi/bank),
+--     so this instruction is 5 bytes (ED 98 00 60 02). Pushes the SAME
+--     4byte frame shape as CALL.M0/M1 (MODE=02h[=M2, current mode],
+--     PC_B=00h[current bank],PC_H=30h,PC_L=0Fh - the address right after
+--     this 5byte instruction, 0x300A+5=0x300F) to 01:DFFF/DFFE/DFFD/
+--     DFFC, switches to bank02h:0x6000 (mode24 stays M2, but the fetched
+--     bank byte is ALWAYS applied unconditionally like JP.M2).
+--     Test8: lands on A=0x6000 with mode24=M2(10), bank_pc=02h; push
+--     frame verified.
+--   0x6000: RET.M (ED 99). Pops the frame back, restoring MSP24 to
+--     01:E000h, PC=0x300F, bank_pc=00h, mode24_r=M2(10).
+--     Test9: lands on A=0x300F with mode24=M2(10), bank_pc=00h.
+--   0x300F: HALT - end of program.
 --
 -- Run with GHDL:
 --   ghdl -a --std=08 ../t80_pack.vhd ../t80_mcode.vhd ../t80_alu.vhd ../t80_reg.vhd ../t80.vhd tb_phase12_mode_control.vhd
@@ -122,7 +136,9 @@ architecture sim of tb_phase12_mode_control is
         16#4000# => x"ED", 16#4001# => x"99",
         16#3006# => x"ED", 16#3007# => x"97", 16#3008# => x"00", 16#3009# => x"50",
         16#5000# => x"ED", 16#5001# => x"99",
-        16#300A# => x"76",
+        16#300A# => x"ED", 16#300B# => x"98", 16#300C# => x"00", 16#300D# => x"60", 16#300E# => x"02",
+        16#6000# => x"ED", 16#6001# => x"99",
+        16#300F# => x"76",
         others => x"00");
 
     -- Records A_Bank at the moment of each write, same technique as
@@ -297,7 +313,46 @@ begin
             report "Phase12: Test7 RET.M must restore mode24=M2(10), got " & to_hstring("00" & mode24)
             severity failure;
 
-        report "Phase12 mode-control (JP.Mx/CALL.M0/M1/RET.M) testbench: all assertions passed" severity note;
+        -- ---- Test8: CALL.M2 addr24 (ED 98) from M2/bank00h lands on
+        -- bank02h:0x6000 with mode24=M2, bank_pc=02h, and push frame
+        -- verified at 01:DFFF(MODE=02h)/DFFE(PC_B=00h)/DFFD(PC_H=30h)/
+        -- DFFC(PC_L=0Fh). This is the 8-MCycle instruction that only
+        -- became possible once MCycle was widened from 3 to 4 bits. ----
+        wait until A = x"6000" and M1_n = '0';
+        wait for 1 ns;
+        assert mode24 = "10"
+            report "Phase12: Test8 CALL.M2 addr24 must set mode24=M2(10), got " & to_hstring("00" & mode24)
+            severity failure;
+        assert bank_pc = x"02"
+            report "Phase12: Test8 CALL.M2 addr24 must apply fetched bank_pc=02h, got " & to_hstring(bank_pc)
+            severity failure;
+        assert mem(16#DFFF#) = x"02" and bank_mem(16#DFFF#) = x"01"
+            report "Phase12: Test8 CALL.M2 return-frame MODE byte mismatch at 01:DFFF, got data=" &
+                to_hstring(mem(16#DFFF#)) & " bank=" & to_hstring(bank_mem(16#DFFF#))
+            severity failure;
+        assert mem(16#DFFE#) = x"00" and bank_mem(16#DFFE#) = x"01"
+            report "Phase12: Test8 CALL.M2 return-frame PC_B byte mismatch at 01:DFFE, got data=" &
+                to_hstring(mem(16#DFFE#)) & " bank=" & to_hstring(bank_mem(16#DFFE#))
+            severity failure;
+        assert mem(16#DFFD#) = x"30" and bank_mem(16#DFFD#) = x"01"
+            report "Phase12: Test8 CALL.M2 return-frame PC_H byte mismatch at 01:DFFD, got " & to_hstring(mem(16#DFFD#))
+            severity failure;
+        assert mem(16#DFFC#) = x"0F" and bank_mem(16#DFFC#) = x"01"
+            report "Phase12: Test8 CALL.M2 return-frame PC_L byte mismatch at 01:DFFC, got " & to_hstring(mem(16#DFFC#))
+            severity failure;
+
+        -- ---- Test9: RET.M pops the CALL.M2 frame, restoring A=0x300F
+        -- with mode24=M2(10) and bank_pc=00h. ----
+        wait until A = x"300F" and M1_n = '0';
+        wait for 1 ns;
+        assert mode24 = "10"
+            report "Phase12: Test9 RET.M must restore mode24=M2(10), got " & to_hstring("00" & mode24)
+            severity failure;
+        assert bank_pc = x"00"
+            report "Phase12: Test9 RET.M must restore bank_pc=00h, got " & to_hstring(bank_pc)
+            severity failure;
+
+        report "Phase12 mode-control (JP.Mx/CALL.M0/M1/M2/RET.M) testbench: all assertions passed" severity note;
         std.env.stop;
     end process;
 

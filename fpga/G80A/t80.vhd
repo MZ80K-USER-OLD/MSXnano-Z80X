@@ -177,7 +177,7 @@ architecture rtl of T80 is
     signal Save_Mux         : std_logic_vector(7 downto 0);
 
     signal TState           : unsigned(2 downto 0);
-    signal MCycle           : std_logic_vector(2 downto 0);
+    signal MCycle           : std_logic_vector(3 downto 0);
     signal IntE_FF1         : std_logic;
     signal IntE_FF2         : std_logic;
     signal Halt_FF          : std_logic;
@@ -215,7 +215,7 @@ architecture rtl of T80 is
     signal DI_Reg           : std_logic_vector(7 downto 0);
     signal T_Res            : std_logic;
     signal XY_State         : std_logic_vector(1 downto 0);
-    signal Pre_XY_F_M       : std_logic_vector(2 downto 0);
+    signal Pre_XY_F_M       : std_logic_vector(3 downto 0);
     signal NextIs_XY_Fetch  : std_logic;
     -- Phase11: distinguishes "MCycle reached 111 because
     -- NextIs_XY_Fetch legitimately jumped here via the DD/FD+CB
@@ -248,10 +248,10 @@ architecture rtl of T80 is
     signal ALU_cpi_r        : std_logic;
     signal Save_ALU_r       : std_logic;
     signal PreserveC_r      : std_logic;
-    signal MCycles          : std_logic_vector(2 downto 0);
+    signal MCycles          : std_logic_vector(3 downto 0);
 
     -- Micro code outputs
-    signal MCycles_d        : std_logic_vector(2 downto 0);
+    signal MCycles_d        : std_logic_vector(3 downto 0);
     signal TStates          : std_logic_vector(2 downto 0);
     signal IntCycle         : std_logic;
     signal NMICycle         : std_logic;
@@ -287,6 +287,7 @@ architecture rtl of T80 is
     signal JumpM01          : std_logic;
     signal JumpM2           : std_logic;
     signal CallM01          : std_logic;
+    signal CallM2           : std_logic;
     signal RetM             : std_logic;
     signal RstP             : std_logic;
     signal LDZ              : std_logic;
@@ -367,6 +368,7 @@ begin
             JumpM01 => JumpM01,
             JumpM2 => JumpM2,
             CallM01 => CallM01,
+            CallM2 => CallM2,
             RetM => RetM,
             RstP => RstP,
             LDZ => LDZ,
@@ -427,8 +429,8 @@ begin
 
     NextIs_XY_Fetch <= '1' when XY_State /= "00" and XY_Ind = '0' and
                             ((Set_Addr_To = aXY) or
-                            (MCycle = "001" and IR = "11001011") or
-                            (MCycle = "001" and IR = "00110110")) else '0';
+                            (MCycle = "0001" and IR = "11001011") or
+                            (MCycle = "0001" and IR = "00110110")) else '0';
 
     Save_Mux <= BusB when ExchangeRp = '1' else
         DI_Reg when Save_ALU_r = '0' else
@@ -447,7 +449,7 @@ begin
             ISet <= "00";
             XY_State <= "00";
             IStatus <= "00";
-            MCycles <= "000";
+            MCycles <= "0000";
             DO <= "00000000";
             mode24_r <= "00";
             bank_bc_r <= (others => '0');
@@ -508,13 +510,13 @@ begin
 
             Arith16_r <= Arith16;
             PreserveC_r <= PreserveC;
-            if ISet = "10" and ALU_OP(2) = '0' and ALU_OP(0) = '1' and MCycle = "011" then
+            if ISet = "10" and ALU_OP(2) = '0' and ALU_OP(0) = '1' and MCycle = "0011" then
                 Z16_r <= '1';
             else
                 Z16_r <= '0';
             end if;
 
-            if MCycle  = "001" and TState(2) = '0' then
+            if MCycle  = "0001" and TState(2) = '0' then
             -- MCycle = 1 and TState = 1, 2, or 3
 
                 if TState = 2 and Wait_n = '1' then
@@ -579,7 +581,7 @@ begin
             else
             -- either (MCycle > 1) OR (MCycle = 1 AND TState > 3)
 
-                if MCycle = "110" and XY_State /= "00" then
+                if MCycle = "0110" and XY_State /= "00" then
                     XY_Ind <= '1';
                     if Prefix = "01" then
                         ISet <= "01";
@@ -775,6 +777,25 @@ begin
                         else
                             mode24_r <= "01";
                         end if;
+                    elsif CallM2 = '1' then
+                        -- Phase12: CALL.M2 addr24 (ED 98). The 4byte
+                        -- return frame (MODE/PC_B/PC_H/PC_L) was already
+                        -- pushed to MSP24 by the preceding write cycles
+                        -- (see the direct IR-match MSP24-decrement/MODE-
+                        -- PC_B-byte-DO block below). Target is the
+                        -- fetched addr24 (TmpAddr low/high via LDZ/LDW,
+                        -- TmpBank via LDB), and mode24_r ALWAYS switches
+                        -- to M2 unconditionally - like JP.M2, CALL.M2 is
+                        -- an explicit mode-switching call, not a same-
+                        -- mode far call (unlike CALL.L, which leaves
+                        -- mode24_r untouched).
+                        A(15 downto 8) <= TmpAddr(15 downto 8);
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        A_Bank_r <= TmpBank;
+                        PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        bank_pc_r <= TmpBank;
+                        mode24_r <= "10";
                     elsif RetM = '1' then
                         -- Phase12: RET.M (ED 99). TmpAddr holds the
                         -- latched low+high bytes (via LDZ/LDW at MCycle
@@ -797,7 +818,7 @@ begin
                         A <= "0000000001100110";
                         PC <= "0000000001100110";
                         bank_pc_r <= (others => '0');
-                    elsif MCycle = "011" and IntCycle = '1' and IStatus = "10" then
+                    elsif MCycle = "0011" and IntCycle = '1' and IStatus = "10" then
                         A(15 downto 8) <= I;
                         A(7 downto 0) <= TmpAddr(7 downto 0);
                         PC(15 downto 8) <= unsigned(I);
@@ -951,7 +972,7 @@ begin
                 end if;
 
                 if TState = 2 and Wait_n = '1' then
-                    if ISet = "01" and MCycle = "111" then
+                    if ISet = "01" and MCycle = "0111" then
                         IR <= DInst;
                     end if;
                     if JumpE = '1' then
@@ -1007,7 +1028,7 @@ begin
                 -- must be guarded to not corrupt TmpAddr/TmpBank for
                 -- unrelated instructions - see the matching t80_mcode.vhd
                 -- guard on the same MCycle=110/111 special-casing.
-                if TState = 3 and MCycle = "110" and XY_State /= "00" then
+                if TState = 3 and MCycle = "0110" and XY_State /= "00" then
                     TmpAddr <= std_logic_vector(signed(RegBusC) + signed(DI_Reg));
                     -- Phase2: 24bit address generator for (IX/IY+d).
                     -- M0 keeps plain 16bit wrap (bank unchanged); M1/M2 add
@@ -1028,7 +1049,7 @@ begin
                     end if;
                 end if;
 
-                if (TState = 2 and Wait_n = '1') or (TState = 4 and MCycle = "001") then
+                if (TState = 2 and Wait_n = '1') or (TState = 4 and MCycle = "0001") then
                     if IncDec_16(2 downto 0) = "111" then
                         -- Phase10: M2 active stack pointer = MSP24. This
                         -- is the matching half of the aSP->MSP24 address
@@ -1088,14 +1109,14 @@ begin
                 if ISet = "10" and XY_State = "00" then
                     case IR is
                     when x"C5" | x"D5" | x"E5" =>  -- PUSH24 BC/DE/HL
-                        if (TState = 4 and MCycle = "001") or
-                           (TState = 2 and Wait_n = '1' and (MCycle = "010" or MCycle = "011")) then
+                        if (TState = 4 and MCycle = "0001") or
+                           (TState = 2 and Wait_n = '1' and (MCycle = "0010" or MCycle = "0011")) then
                             bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
                         end if;
                     when x"C1" | x"D1" | x"E1" =>  -- POP24 BC/DE/HL
                         if TState = 2 and Wait_n = '1' and
-                           (MCycle = "010" or MCycle = "011" or MCycle = "100") then
+                           (MCycle = "0010" or MCycle = "0011" or MCycle = "0100") then
                             bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
                         end if;
@@ -1122,8 +1143,8 @@ begin
                         -- would still silently decrement MSP24 once with
                         -- no matching write, corrupting it for every
                         -- subsequent PUSH/CALL.L/RET.L.
-                        if ((TState = 3 and MCycle = "100") or
-                           (TState = 2 and Wait_n = '1' and (MCycle = "101" or MCycle = "110"))) and
+                        if ((TState = 3 and MCycle = "0100") or
+                           (TState = 2 and Wait_n = '1' and (MCycle = "0101" or MCycle = "0110"))) and
                            Set_Addr_To = aMSP then
                             bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
@@ -1134,7 +1155,7 @@ begin
                     -- mcycle shift is needed).
                     when x"C9" | x"C0" | x"C8" | x"D0" | x"D8" | x"E0" | x"E8" | x"F0" | x"F8" =>
                         if TState = 2 and Wait_n = '1' and
-                           (MCycle = "010" or MCycle = "011" or MCycle = "100") then
+                           (MCycle = "0010" or MCycle = "0011" or MCycle = "0100") then
                             bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
                         end if;
@@ -1150,8 +1171,22 @@ begin
                     -- M6 instead of M5/M6) since the whole push phase
                     -- starts one mcycle sooner here.
                     when x"96" | x"97" =>
-                        if (TState = 3 and MCycle = "011") or
-                           (TState = 2 and Wait_n = '1' and (MCycle = "100" or MCycle = "101" or MCycle = "110")) then
+                        if (TState = 3 and MCycle = "0011") or
+                           (TState = 2 and Wait_n = '1' and (MCycle = "0100" or MCycle = "0101" or MCycle = "0110")) then
+                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                        end if;
+                    -- Phase12: CALL.M2 addr24 MSP24 pointer adjustment.
+                    -- Same 4-decrement shape as CALL.M0/M1 above, but
+                    -- shifted one mcycle later throughout (M4/M5/M6/M7
+                    -- instead of M3/M4/M5/M6) since CALL.M2 fetches one
+                    -- extra (bank) byte: the first fires at TState=3 of
+                    -- M4 (this instruction's LAST fetch cycle, exactly
+                    -- like CALL.L's own M4), readying M5's (MODE byte)
+                    -- write address.
+                    when x"98" =>
+                        if (TState = 3 and MCycle = "0100") or
+                           (TState = 2 and Wait_n = '1' and (MCycle = "0101" or MCycle = "0110" or MCycle = "0111")) then
                             bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
                         end if;
@@ -1161,7 +1196,7 @@ begin
                     -- RET.L above just extended to MCycle=101(5) too.
                     when x"99" =>
                         if TState = 2 and Wait_n = '1' and
-                           (MCycle = "010" or MCycle = "011" or MCycle = "100" or MCycle = "101") then
+                           (MCycle = "0010" or MCycle = "0011" or MCycle = "0100" or MCycle = "0101") then
                             bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
                         end if;
@@ -1266,7 +1301,7 @@ begin
                 -- with no 1-cycle staging needed (unlike the HIGH/LOW
                 -- bytes in MCycle3/4, which DO go through the normal
                 -- Set_BusB_To path staged one mcycle ahead by mcode).
-                if ISet = "10" and MCycle = "010" then
+                if ISet = "10" and MCycle = "0010" then
                     case IR is
                     when x"C5" => DO <= bank_bc_r;
                     when x"D5" => DO <= bank_de_r;
@@ -1284,7 +1319,7 @@ begin
                 -- plain signal outside the register file. Same-cycle,
                 -- mcode's own Set_BusB_To<="1101" (PC-HIGH) staged THIS
                 -- cycle becomes DO at MCycle=6 via the normal pipeline.
-                if ISet = "10" and MCycle = "101" then
+                if ISet = "10" and MCycle = "0101" then
                     case IR is
                     when x"CD" | x"C4" | x"CC" | x"D4" | x"DC" | x"E4" | x"EC" | x"F4" | x"FC" => DO <= bank_pc_r;
                     when others => null;
@@ -1298,7 +1333,7 @@ begin
                 -- a plain 2bit signal outside the register file (zero-
                 -- extended to a byte; RET.M's matching T_Res branch only
                 -- reads back the low 2 bits).
-                if ISet = "10" and MCycle = "100" then
+                if ISet = "10" and MCycle = "0100" then
                     case IR is
                     when x"96" | x"97" => DO <= "000000" & mode24_r;
                     when others => null;
@@ -1311,9 +1346,32 @@ begin
                 -- CALL.L's own BANK-byte override above (mcode's own
                 -- Set_BusB_To<="1101" staged THIS cycle becomes DO at
                 -- MCycle=6 via the normal pipeline).
-                if ISet = "10" and MCycle = "101" then
+                if ISet = "10" and MCycle = "0101" then
                     case IR is
                     when x"96" | x"97" => DO <= bank_pc_r;
+                    when others => null;
+                    end case;
+                end if;
+                -- Phase12: CALL.M2 addr24 (ED 98) MODE-byte write
+                -- override. Same role as CALL.M0/M1's own MODE-byte
+                -- override above, shifted one mcycle later (MCycle=5 not
+                -- 4) since CALL.M2 has one extra fetch byte (3byte addr24
+                -- vs CALL.M0/M1's 2byte addr16).
+                if ISet = "10" and MCycle = "0101" then
+                    case IR is
+                    when x"98" => DO <= "000000" & mode24_r;
+                    when others => null;
+                    end case;
+                end if;
+                -- Phase12: CALL.M2 PC_B-byte (bank_pc_r) write override.
+                -- Same role as CALL.M0/M1's own PC_B-byte override above,
+                -- shifted one mcycle later (MCycle=6 not 5), for the same
+                -- reason as the MODE-byte override above. mcode's own
+                -- Set_BusB_To<="1101" staged THIS cycle becomes DO at
+                -- MCycle=7 via the normal pipeline.
+                if ISet = "10" and MCycle = "0110" then
+                    case IR is
+                    when x"98" => DO <= bank_pc_r;
                     when others => null;
                     end case;
                 end if;
@@ -1407,7 +1465,7 @@ begin
                     -- this mcycle's freshly read byte by T_Res, same timing
                     -- already relied on by the Phase6/Phase7 ACC-sourced
                     -- direct overrides above).
-                    if ISet = "10" and MCycle = "100" then
+                    if ISet = "10" and MCycle = "0100" then
                         case IR is
                         when x"C1" => bank_bc_r <= DI_Reg;
                         when x"D1" => bank_de_r <= DI_Reg;
@@ -1645,7 +1703,7 @@ begin
                 if (JumpXY = '1' or LDSPHL = '1') then
                     RegAddrC <= Alternate & "10";
                 end if;
-                if ((JumpXY = '1' or LDSPHL = '1') and XY_State /= "00") or (MCycle = "110" and XY_State /= "00") then
+                if ((JumpXY = '1' or LDSPHL = '1') and XY_State /= "00") or (MCycle = "0110" and XY_State /= "00") then
                     RegAddrC <= XY_State(1) & "11";
                 end if;
 
@@ -1678,7 +1736,7 @@ begin
                 if I_DJNZ = '1' and Save_ALU_r = '1' and Mode < 2 then
                     IncDecZ <= F_Out(Flag_Z);
                 end if;
-                if (TState = 2 or (TState = 3 and MCycle = "001")) and IncDec_16(2 downto 0) = "100" then
+                if (TState = 2 or (TState = 3 and MCycle = "0001")) and IncDec_16(2 downto 0) = "100" then
                     if ID16 = 0 then
                         IncDecZ <= '0';
                     else
@@ -1694,9 +1752,9 @@ begin
     RegAddrA <=
             -- 16 bit increment/decrement
             Alternate & IncDec_16(1 downto 0) when (TState = 2 or
-                (TState = 3 and MCycle = "001" and IncDec_16(2) = '1')) and XY_State = "00" else
+                (TState = 3 and MCycle = "0001" and IncDec_16(2) = '1')) and XY_State = "00" else
             XY_State(1) & "11" when (TState = 2 or
-                (TState = 3 and MCycle = "001" and IncDec_16(2) = '1')) and IncDec_16(1 downto 0) = "10" else
+                (TState = 3 and MCycle = "0001" and IncDec_16(2) = '1')) and IncDec_16(1 downto 0) = "10" else
             -- EX HL,DL
             Alternate & "10" when ExchangeDH = '1' and TState = 3 else
             Alternate & "01" when ExchangeDH = '1' and TState = 4 else
@@ -1733,7 +1791,7 @@ begin
             RegWEL <= '1';
         end if;
 
-        if IncDec_16(2) = '1' and ((TState = 2 and Wait_n = '1' and MCycle /= "001") or (TState = 3 and MCycle = "001")) then
+        if IncDec_16(2) = '1' and ((TState = 2 and Wait_n = '1' and MCycle /= "0001") or (TState = 3 and MCycle = "0001")) then
             case IncDec_16(1 downto 0) is
             when "00" | "01" | "10" =>
                 RegWEH <= '1';
@@ -1749,7 +1807,7 @@ begin
         -- (TState=4) of the ED-prefixed opcode-fetch MCycle; the
         -- destination address is set up one cycle ahead via RegAddrA_r
         -- above.
-        if ISet = "10" and MCycle = "001" and TState = 4 then
+        if ISet = "10" and MCycle = "0001" and TState = 4 then
             case IR is
             when x"06" | x"0E" | x"16" | x"1E" | x"36" | x"9C" | x"9F" =>
                 RegWEH <= '1';
@@ -1763,7 +1821,7 @@ begin
         -- process above; alu24_active/alu24_writeback already fold in the
         -- ISet="10"/XY_State="00"/HL-target-only guard (see the Phase8
         -- combinational process), so only MCycle/TState need checking here.
-        if MCycle = "001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
+        if MCycle = "0001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
             RegWEH <= '1';
             RegWEL <= '1';
         end if;
@@ -1785,14 +1843,14 @@ begin
             RegDIL <= RegBusA_r(7 downto 0);
         end if;
 
-        if IncDec_16(2) = '1' and ((TState = 2 and MCycle /= "001") or (TState = 3 and MCycle = "001")) then
+        if IncDec_16(2) = '1' and ((TState = 2 and MCycle /= "0001") or (TState = 3 and MCycle = "0001")) then
             RegDIH <= std_logic_vector(ID16(15 downto 8));
             RegDIL <= std_logic_vector(ID16(7 downto 0));
         end if;
 
         -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 register-pair writeback
         -- data source, paired with the RegWEH/RegWEL commit above.
-        if ISet = "10" and MCycle = "001" and TState = 4 then
+        if ISet = "10" and MCycle = "0001" and TState = 4 then
             case IR is
             when x"06" | x"0E" | x"16" | x"1E" =>
                 RegDIH <= RegBusB(15 downto 8);
@@ -1812,7 +1870,7 @@ begin
 
         -- Phase8: dedicated 24bit ALU writeback data source, paired with
         -- the RegWEH/RegWEL commit above.
-        if MCycle = "001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
+        if MCycle = "0001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
             RegDIH <= alu24_result24(15 downto 8);
             RegDIL <= alu24_result24(7 downto 0);
         end if;
@@ -1913,7 +1971,7 @@ begin
             RFSH_n <= '1';
         elsif CLK_n'event and CLK_n = '1' then
             if CEN = '1' then
-            if MCycle = "001" and ((TState = 2  and Wait_n = '1') or TState = 3) then
+            if MCycle = "0001" and ((TState = 2  and Wait_n = '1') or TState = 3) then
                 RFSH_n <= '0';
             else
                 RFSH_n <= '1';
@@ -1922,7 +1980,10 @@ begin
         end if;
     end process;
 
-    MC <= std_logic_vector(MCycle);
+    -- Phase12: MCycle is now 4 bits (to allow CALL.M2's 8th cycle), but the
+    -- external MC debug/monitor port stays 3 bits for compatibility with
+    -- g80a.vhd/T80s.vhd (which only ever test it against "001"). Truncate.
+    MC <= MCycle(2 downto 0);
     TS <= std_logic_vector(TState);
     mode24 <= mode24_r;
     A_Bank <= A_Bank_r;
@@ -1979,9 +2040,9 @@ begin
     process (RESET_n, CLK_n)
     begin
         if RESET_n = '0' then
-            MCycle <= "001";
+            MCycle <= "0001";
             TState <= "000";
-            Pre_XY_F_M <= "000";
+            Pre_XY_F_M <= "0000";
             XYF_Pending <= '0';
             Halt_FF <= '0';
             BusAck <= '0';
@@ -2022,7 +2083,7 @@ begin
             if IntCycle = '1' or NMICycle = '1' then
                 Halt_FF <= '0';
             end if;
-            if MCycle = "001" and TState = 2 and Wait_n = '1' then
+            if MCycle = "0001" and TState = 2 and Wait_n = '1' then
                 M1_n <= '1';
             end if;
             if BusReq_s = '1' and BusAck = '1' then
@@ -2038,7 +2099,7 @@ begin
                     else
                         TState <= "001";
                         if NextIs_XY_Fetch = '1' then
-                            MCycle <= "110";
+                            MCycle <= "0110";
                             Pre_XY_F_M <= MCycle;
                             -- Phase11: mark that MCycle is about to reach
                             -- "110"/"111" via this legitimate DD/FD+CB
@@ -2048,17 +2109,17 @@ begin
                             -- consumed below.
                             XYF_Pending <= '1';
                             if IR = "00110110" and Mode = 0 then
-                                Pre_XY_F_M <= "010";
+                                Pre_XY_F_M <= "0010";
                             end if;
-                        elsif (MCycle = "111" and XYF_Pending = '1') or
-                            (MCycle = "110" and Mode = 1 and ISet /= "01") then
+                        elsif (MCycle = "0111" and XYF_Pending = '1') or
+                            (MCycle = "0110" and Mode = 1 and ISet /= "01") then
                             MCycle <= std_logic_vector(unsigned(Pre_XY_F_M) + 1);
                             XYF_Pending <= '0';
                         elsif (MCycle = MCycles) or
                             No_BTR = '1' or
-                            (MCycle = "010" and I_DJNZ = '1' and IncDecZ = '1') then
+                            (MCycle = "0010" and I_DJNZ = '1' and IncDecZ = '1') then
                             M1_n <= '0';
-                            MCycle <= "001";
+                            MCycle <= "0001";
                             IntCycle <= '0';
                             NMICycle <= '0';
                             if NMI_s = '1' and Prefix = "00" then
@@ -2091,7 +2152,7 @@ begin
     begin
         Auto_Wait <= '0';
         if IntCycle = '1' or NMICycle = '1' then
-            if MCycle = "001" then
+            if MCycle = "0001" then
                 Auto_Wait <= '1';
             end if;
         end if;

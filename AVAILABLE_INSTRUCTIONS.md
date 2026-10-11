@@ -18,13 +18,13 @@
 | `ED 90` | `SET_M0` | 完全 Z80 互換モードへ移行 | 実装済み（HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成と連動。PC/SPアドレス生成はM0では元々plain 16bitのまま） |
 | `ED 91` | `SET_M1` | データアクセス拡張モードへ移行 | 実装済み（HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成と連動。PC/SPアドレス生成はM1では元々plain 16bitのまま、CPU仕様書V8どおり） |
 | `ED 92` | `SET_M2` | 24bit ネイティブ動作モードへ移行 | 実装済み（Phase10。HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成に加え、PC24命令フェッチとMSP24アクティブスタックポインタとも連動。M0/M1→M2遷移時は`PC_B`(`bank_pc_r`)を00hへリセットし、M2→M2（再実行）では保持。詳細は下記「8. M2基本動作」参照） |
-| `ED 93` | `JP.M0 addr16` | M0へモード遷移ジャンプ | 未実装 |
-| `ED 94` | `JP.M1 addr16` | M1へモード遷移ジャンプ | 未実装 |
-| `ED 95` | `JP.M2 addr24` | M2へモード遷移ジャンプ | 未実装 |
-| `ED 96` | `CALL.M0 addr16` | M0へモード遷移コール | 未実装 |
-| `ED 97` | `CALL.M1 addr16` | M1へモード遷移コール | 未実装 |
-| `ED 98` | `CALL.M2 addr24` | M2へモード遷移コール | 未実装 |
-| `ED 99` | `RET.M` | モード遷移フレームからの復帰 | 未実装 |
+| `ED 93` | `JP.M0 addr16` | M0へモード遷移ジャンプ | 実装済み（Phase12。詳細は下記「10. モード間制御」参照） |
+| `ED 94` | `JP.M1 addr16` | M1へモード遷移ジャンプ | 実装済み（Phase12。詳細は下記「10. モード間制御」参照） |
+| `ED 95` | `JP.M2 addr24` | M2へモード遷移ジャンプ | 実装済み（Phase12。詳細は下記「10. モード間制御」参照） |
+| `ED 96` | `CALL.M0 addr16` | M0へモード遷移コール | 実装済み（Phase12。詳細は下記「10. モード間制御」参照） |
+| `ED 97` | `CALL.M1 addr16` | M1へモード遷移コール | 実装済み（Phase12。詳細は下記「10. モード間制御」参照） |
+| `ED 98` | `CALL.M2 addr24` | M2へモード遷移コール | 実装済み（Phase12。詳細は下記「10. モード間制御」参照） |
+| `ED 99` | `RET.M` | モード遷移フレームからの復帰 | 実装済み（Phase12。詳細は下記「10. モード間制御」参照） |
 
 ---
 
@@ -346,7 +346,7 @@ Phase12「モード間制御」。`JP.Mx`/`CALL.Mx`は、通常のJP/CALLとは�
 | `ED 95` | `JP.M2 addr24` | M2へ切替えて24bit addrへジャンプ | 実装済み（GHDL検証済み） |
 | `ED 96` | `CALL.M0 addr16` | M0へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み） |
 | `ED 97` | `CALL.M1 addr16` | M1へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み） |
-| `ED 98` | `CALL.M2 addr24` | M2へ切替えてcall（MSPへ4byte frame保存） | **未実装（保留、下記参照）** |
+| `ED 98` | `CALL.M2 addr24` | M2へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み。Phase12-2参照） |
 | `ED 99` | `RET.M` | MSPから4byte frameを復元しPC24・モード両方を復帰 | 実装済み（GHDL検証済み） |
 
 ### 10.1 実装メモ
@@ -361,41 +361,46 @@ Phase12「モード間制御」。`JP.Mx`/`CALL.Mx`は、通常のJP/CALLとは�
   MSPへ4byte（`MSP+0=PC_L, MSP+1=PC_H, MSP+2=PC_B, MSP+3=MODE`、
   decrementしながら書き込み）を保存してからモードを切り替える。
   write順序・MSP24増減タイミングはPhase11のCALL.L（3byte版）に
-  「MODEバイトを先頭に追加」した形でそのまま拡張。
+  「MODEバイトを先頭に追加」した形でそのまま拡張。`CALL.M2`は
+  addr24（3byteフェッチ）な分だけ全体が1 mcycle後ろへシフトし、
+  合計8 MCycleを要する（下記10.2参照）。
 - **RET.M**: 4byte（LOW→HIGH→BANK→MODEの順、incrementしながら読み込み）
   をpopし、PC24とモード両方を復元する。他のPhase12命令（JP.Mx/CALL.Mx）
   がモードを固定値へ切り替えるのに対し、RET.Mだけはpopした値から
-  モードを復元する点が異なる。
+  モードを復元する点が異なる。CALL.M0/M1/M2のどれが積んだフレームでも
+  同じ構造（LOW/HIGH/BANK/MODE）なので、RET.M側に変更は不要。
 - GHDLテストベンチ:
   [tb_phase12_mode_control.vhd](fpga/G80A/test/tb_phase12_mode_control.vhd)
-  （JP.M0/M1/M2、CALL.M0/M1→RET.Mの往復2回を検証済み。4byte frame
+  （JP.M0/M1/M2、CALL.M0/M1/M2→RET.Mの往復3回を検証済み。4byte frame
   の内容・MSP24の正しい復元も確認済み）。
 
-### 10.2 既知の問題：CALL.M2 addr24は未実装（MCycle幅の上限）
+### 10.2 CALL.M2 addr24の実装（MCycle幅拡張による解決）
 
 **詳細な技術レポート**:
 [T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)
-（「さらに別種の制約」章を参照）。
+（「さらに別種の制約」章に経緯の詳細、および追記した解決内容を参照）。
 
 `CALL.M2 addr24`は、addr24ターゲットの読み込み（3byte）と4byte frame
 の書き込みを合わせて「1(opcode) + 3(fetch) + 4(push) = 8 MCycles」が
-必要になるが、T80コアの`MCycle`信号は3bit幅（表現できる最大値は7）で
-あり、**ハードウェア的にこれ以上拡張できない**。
+必要だが、当初T80コアの`MCycle`信号は3bit幅（表現できる最大値は7）
+だったため実装できず、保留としていた。
 
-Phase11のCALL.L実装時に発見・修正した「DD/FD+CB二重prefix専用のはずの
-`MCycle=110/111`無条件発火バグ」（`XY_State`ガードで解決済み）とは
-異なり、これは信号幅そのものの限界であり、同様の対症療法では解決
-できない。解決するには以下のいずれかが必要で、いずれもT80コア本体への
-比較的大きな変更を伴うため、現時点では保留とし、着手前に方針を
-別途相談する。
+その後、ユーザーとの相談の結果、**`MCycle`/`MCycles`信号を3bit→4bit
+へ拡張**する方針で解決した。既存の3bitビットリテラル比較・代入
+（t80.vhd/t80_mcode.vhdあわせて約150箇所）を機械的に`"0"`始まりの
+4bit表記へ置換（VHDLの固定長ビット文字列は長さ不一致があれば
+コンパイルエラーになるため、置換漏れは確実に検出できる）。外部
+デバッグ監視用の`MC`ポート（3bit、`g80a.vhd`/`T80s.vhd`が参照）は
+互換性のため変更せず、`MCycle`下位3bitを切り出して出力する形にした。
 
-- `MCycle`を4bit以上へ拡張する（t80_mcode.vhd全体の既存比較箇所
-  （100箇所以上）に影響するため、工数・リグレッションリスクが大きい）。
-- `CALL.M2`のフレーム構成・フェッチ方式を見直し、7 MCycle以内に
-  収まる代替実装にする（例: 4byte push相当の情報を分割する、等）。
+この拡張により、CALL.M0/M1と全く同じ構造（decrement-before-write、
+MODEバイトをbank_pc_rと同様の直接DOオーバーライドで書き込み）を
+1 mcycle後ろへシフトするだけでCALL.M2を実装できた。既存Phase2〜12の
+GHDL回帰テストは全てこの拡張後も変更なくパスしており、Gowin合成も
+クリーン（BSRAM使用率45/46=98%は変化なし）。
 
-`JP.M2`/`CALL.M0`/`CALL.M1`/`RET.M`は上記の制約を受けないため、
-既に実装・検証済み。
+`JP.M2`/`CALL.M0`/`CALL.M1`/`RET.M`はこの拡張以前から実装・検証済み
+だったが、拡張後も挙動に変化はない。
 
 ---
 
