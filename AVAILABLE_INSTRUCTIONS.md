@@ -207,10 +207,10 @@ CPU仕様書V8セクション2「MODE」が定義するM2モード（`PC: 24bit`
 | `ED B7` / `BF` | `JR.L P/M, e16` | 条件付き | 実装済み（GHDL検証済み） |
 | `ED C3` | `JP.L addr24` | 24bit無条件ジャンプ | 実装済み（GHDL検証済み。M2ではbank_pcへ即値のbankバイトを反映、M0/M1では3byte目は読み捨てbank00h扱い。詳細は下記「9.1 JP.L」参照） |
 | `ED C2/CA/D2/DA/E2/EA/F2/FA` | `JP.L cc, addr24` | 条件付き24bitジャンプ | 実装済み（GHDL検証済み。条件不成立時も3byteのアドレスは読み飛ばし、bank_pcは変化しない） |
-| `ED CD` | `CALL.L addr24` | MSPへPC24を3byte保存（M2専用） | 実装済み（GHDL検証済み。詳細は下記「9.2 CALL.L/RET.L」参照） |
-| `ED C4/CC/D4/DC/E4/EC/F4/FC` | `CALL.L cc, addr24` | 条件付きfar call（M2専用） | 実装済み（GHDL検証済み） |
-| `ED C9` | `RET.L` | MSPからPC24復元（M2専用） | 実装済み（GHDL検証済み） |
-| `ED C0/C8/D0/D8/E0/E8/F0/F8` | `RET.L cc` | 条件付きfar return（M2専用） | 実装済み（GHDL検証済み） |
+| `ED CD` | `CALL.L addr24` | MSPへPC24を3byte保存（M2専用） | 実装済み（GHDL検証済み。M2ではbank_pcへ即値のbankバイトを反映、M0/M1では3byte目は読み捨てbank_pc不変。詳細は下記「9.2 CALL.L/RET.L」参照） |
+| `ED C4/CC/D4/DC/E4/EC/F4/FC` | `CALL.L cc, addr24` | 条件付きfar call（M2専用） | 実装済み（GHDL検証済み。M0/M1での挙動はCALL.L addr24と同じ） |
+| `ED C9` | `RET.L` | MSPからPC24復元（M2専用） | 実装済み（GHDL検証済み。M2ではbank_pcへpopしたbankバイトを反映、M0/M1ではpopしたbankバイトを読み捨てbank_pc不変。詳細は下記「9.2 CALL.L/RET.L」参照） |
+| `ED C0/C8/D0/D8/E0/E8/F0/F8` | `RET.L cc` | 条件付きfar return（M2専用） | 実装済み（GHDL検証済み。M0/M1での挙動はRET.Lと同じ） |
 
 ### 9.1 JP.L / JP.L cc 実装メモ（Phase11着手）
 
@@ -255,6 +255,25 @@ far call/returnとして実装した。
   `CALL cc,nn`と同様に3byteのアドレスは最後まで読み進めるが、MSP24へは
   一切触れない（push phaseへ進まない）。`RET.L cc`は条件不成立時、
   即座に中断し（opcodeフェッチのみ）、MSP24は一切変化しない。
+- **M2専用ガード（追補）**: 当初実装では`CALL.L`/`RET.L`はモードに
+  関わらず常に読み込んだ/popしたbankバイトを`bank_pc`へ適用していたが、
+  これは`JP.L`/`JR.L`が共にM2のときだけ本来の24bit動作をする（M0/M1
+  では"degrade"する）という設計方針と食い違っていたため、追補修正した。
+  現在は`JP.L`/`JR.L`と同じく`mode24=M2`のときだけ`bank_pc`へ適用し、
+  M0/M1では3byte目（CALL.L側）/popしたbankバイト（RET.L側）を読み
+  飛ばす/消費するだけで`bank_pc`は変更しない。ただし「M0/M1での
+  degrade後の挙動」は`JP.L`とは異なる: `JP.L`は（普通の`JP nn`と同じ
+  「16bit即値→bank00h」ルールに合わせ）bank00hへリセットするのに対し、
+  `CALL.L`/`RET.L`はCALL/RETファミリーに属するため、ロードマップの
+  「通常CALL/RETは同一64KB segment内用、PC_B=不変」ルール（`Call`/
+  `JumpR`分岐と同じ）に合わせ、`bank_pc`を**変更せず保持**する（`JR.L`
+  のM0/M1 elseブランチと同じ"preserve"パターン）。3byteの読み込み/
+  push・popそのものは常に変わらず行われる（mode非依存の命令長・
+  タイミング）。
+  [tb_phase11_call_ret_l.vhd](fpga/G80A/test/tb_phase11_call_ret_l.vhd)
+  のTest9/Test10で、M0から`CALL.L`/`RET.L`を実行してもbank_pcが変化
+  しないこと（わざと異なるbankバイトをpopさせても無視されること）を
+  検証済み。
 - **既存のED CD/C9 opcodeスロットについて**: `ED CD`は元々未使用
   （NOP扱い）だったスロットを使用。`ED C9`は、JP.Lと同様にこのプロジェ
   クトでは到達しないR800 MULUBのopcodeスロット（`ED D9`とペア）を

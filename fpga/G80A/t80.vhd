@@ -707,10 +707,28 @@ begin
                         -- immediately.
                         A(15 downto 8) <= TmpAddr(15 downto 8);
                         A(7 downto 0) <= TmpAddr(7 downto 0);
-                        A_Bank_r <= TmpBank;
                         PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
-                        bank_pc_r <= TmpBank;
+                        if mode24_r = "10" then
+                            A_Bank_r <= TmpBank;
+                            bank_pc_r <= TmpBank;
+                        else
+                            -- CALL.L/RET.L are M2-only far calls per
+                            -- CPU仕様書V8/roadmap; outside M2 the fetched
+                            -- bank byte (and the 3byte return frame's own
+                            -- bank byte) is still read/pushed unchanged
+                            -- (mode-independent instruction encoding/
+                            -- length), but has no effect on bank_pc_r -
+                            -- CALL.L is in the CALL/RET family (not JP),
+                            -- so it follows the SAME "same 64KB segment,
+                            -- PC_B不変" rule as plain CALL/RET (JumpR/
+                            -- Call branches below), preserving bank_pc_r
+                            -- rather than resetting it to 00h like JP.L's
+                            -- own M0/M1 degrade does. A_Bank_r needs an
+                            -- explicit override here since the top-of-
+                            -- block default resets it to 00h.
+                            A_Bank_r <= bank_pc_r;
+                        end if;
                     elsif RetL = '1' then
                         -- Phase11: RET.L (ED C9 / ED C0/C8/D0/D8/E0/E8/F0/
                         -- F8). True 24bit far return: TmpAddr holds the
@@ -721,10 +739,20 @@ begin
                         -- capture pattern).
                         A(15 downto 8) <= TmpAddr(15 downto 8);
                         A(7 downto 0) <= TmpAddr(7 downto 0);
-                        A_Bank_r <= DI_Reg;
                         PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
-                        bank_pc_r <= DI_Reg;
+                        if mode24_r = "10" then
+                            A_Bank_r <= DI_Reg;
+                            bank_pc_r <= DI_Reg;
+                        else
+                            -- Outside M2: same reasoning as CALL.L above -
+                            -- the popped bank byte is still consumed
+                            -- (MSP24 still advances by 3, unchanged
+                            -- timing) but has no effect; bank_pc_r is
+                            -- preserved, matching plain RET's JumpR
+                            -- branch.
+                            A_Bank_r <= bank_pc_r;
+                        end if;
                     elsif JumpM01 = '1' then
                         -- Phase12: JP.M0 addr16 (ED 93) / JP.M1 addr16
                         -- (ED 94). Mode-switching jump: same TmpAddr-low

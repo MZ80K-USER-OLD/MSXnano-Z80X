@@ -57,7 +57,32 @@
 --   0x4004: RET.L Z (condition TRUE) - taken; final return to 0x0026
 --     with bank_pc=00h.
 --     Test8: lands on A=0x0026 with bank_pc=00h.
---   0x0028: HALT - end of program.
+--   0x0028: JP.L 0C:5000h (unconditional, still in M2) - sets bank_pc=0Ch
+--     as a recognizable precondition for the M0-guard tests below.
+--   0x5000: SET_M0 (bank_pc_r stays 0Ch, preserved - SET_M0/M1 never
+--     touch bank_pc_r, only SET_M2's M0/M1->M2 transition resets it).
+--   0x5002: CALL.L 07:6000h, now executing in M0 (not M2). Per the new
+--     mode24_r="10" guard (mirroring JP.L/JR.L's own M0/M1 degrade, but
+--     PRESERVING bank_pc_r like plain CALL/RET rather than resetting to
+--     00h like JP.L does - CALL.L/RET.L are in the CALL/RET family):
+--     the 16bit low part of the target (6000h) still takes effect and
+--     the 3byte return frame is still pushed (mode-independent
+--     instruction encoding/length), but the fetched bank byte (07h) has
+--     NO effect on bank_pc_r.
+--     Test9: lands on A=0x6000 with bank_pc STILL 0Ch (not 07h),
+--     mode24=M0(00); push frame (BANK=0Ch/HIGH=50h/LOW=07h) verified.
+--   0x6000: SET_M1 (prep for manually poking a fake RET.L frame;
+--     bank_pc_r stays 0Ch), then pokes a fresh 3byte frame directly into
+--     01:DFF0(LOW=55h)/DFF1(HIGH=60h)/DFF2(BANK=AAh - deliberately
+--     DIFFERENT from the current bank_pc_r=0Ch, so a broken/unguarded
+--     RET.L would be unambiguously caught), sets MSP24=01:DFF0h, then
+--     SET_M0 (bank_pc_r stays 0Ch) before executing RET.L.
+--   0x601F: RET.L, executing in M0 (not M2). Same guard as Test9: the
+--     popped 16bit low part (6055h) still takes effect, MSP24 still
+--     advances by 3, but the popped bank byte (AAh) has NO effect.
+--     Test10: lands on A=0x6055 with bank_pc STILL 0Ch (not AAh),
+--     mode24=M0(00).
+--   0x6055: HALT - end of program.
 --
 -- Run with GHDL:
 --   ghdl -a --std=08 ../t80_pack.vhd ../t80_mcode.vhd ../t80_alu.vhd ../t80_reg.vhd ../t80.vhd tb_phase11_call_ret_l.vhd
@@ -130,7 +155,28 @@ architecture sim of tb_phase11_call_ret_l is
         16#0020# => x"C5",
         16#0021# => x"ED", 16#0022# => x"CD", 16#0023# => x"00", 16#0024# => x"40", 16#0025# => x"05",
         16#0026# => x"3E", 16#0027# => x"DD",
-        16#0028# => x"76",
+        16#0028# => x"ED", 16#0029# => x"C3", 16#002A# => x"00", 16#002B# => x"50", 16#002C# => x"0C",
+        16#5000# => x"ED", 16#5001# => x"90",
+        16#5002# => x"ED", 16#5003# => x"CD", 16#5004# => x"00", 16#5005# => x"60", 16#5006# => x"07",
+        16#6000# => x"ED", 16#6001# => x"91",
+        16#6002# => x"21", 16#6003# => x"F0", 16#6004# => x"DF",
+        16#6005# => x"3E", 16#6006# => x"01",
+        16#6007# => x"ED", 16#6008# => x"24",
+        16#6009# => x"3E", 16#600A# => x"55",
+        16#600B# => x"77",
+        16#600C# => x"23",
+        16#600D# => x"3E", 16#600E# => x"60",
+        16#600F# => x"77",
+        16#6010# => x"23",
+        16#6011# => x"3E", 16#6012# => x"AA",
+        16#6013# => x"77",
+        16#6014# => x"21", 16#6015# => x"F0", 16#6016# => x"DF",
+        16#6017# => x"3E", 16#6018# => x"01",
+        16#6019# => x"ED", 16#601A# => x"24",
+        16#601B# => x"ED", 16#601C# => x"35",
+        16#601D# => x"ED", 16#601E# => x"90",
+        16#601F# => x"ED", 16#6020# => x"C9",
+        16#6055# => x"76",
         16#1000# => x"ED", 16#1001# => x"C9",
         16#2000# => x"ED", 16#2001# => x"C9",
         16#3000# => x"76",
@@ -343,6 +389,49 @@ begin
         wait for 1 ns;
         assert bank_pc = x"00"
             report "Phase11: Test8 RET.L Z (condition true) must restore bank_pc=00h, got " & to_hstring(bank_pc)
+            severity failure;
+
+        -- ---- Test9: CALL.L addr24 executed OUTSIDE M2 (M0, set up via
+        -- JP.L 0C:5000h + SET_M0) must still jump to the 16bit low part
+        -- of the target and still push the 3byte return frame, but must
+        -- NOT apply the fetched bank byte (07h) to bank_pc - bank_pc
+        -- must stay at the 0Ch precondition set by the preceding JP.L
+        -- (mirrors plain CALL/RET's "same 64KB segment, PC_B不変" rule,
+        -- same family as JumpR/Call, unlike JP.L's own "reset to 00h"
+        -- M0/M1 degrade). ----
+        wait until A = x"6000" and M1_n = '0';
+        wait for 1 ns;
+        assert bank_pc = x"0C"
+            report "Phase11: Test9 CALL.L addr24 outside M2 must NOT apply the fetched bank byte, bank_pc must stay 0Ch, got " & to_hstring(bank_pc)
+            severity failure;
+        assert mode24 = "00"
+            report "Phase11: Test9 must still be in M0(00), got " & to_hstring("00" & mode24)
+            severity failure;
+        assert mem(16#DFFB#) = x"0C" and bank_mem(16#DFFB#) = x"01"
+            report "Phase11: Test9 CALL.L return-frame BANK byte mismatch at 01:DFFB, got data=" &
+                to_hstring(mem(16#DFFB#)) & " bank=" & to_hstring(bank_mem(16#DFFB#))
+            severity failure;
+        assert mem(16#DFFA#) = x"50" and bank_mem(16#DFFA#) = x"01"
+            report "Phase11: Test9 CALL.L return-frame HIGH byte mismatch at 01:DFFA, got " & to_hstring(mem(16#DFFA#))
+            severity failure;
+        assert mem(16#DFF9#) = x"07" and bank_mem(16#DFF9#) = x"01"
+            report "Phase11: Test9 CALL.L return-frame LOW byte mismatch at 01:DFF9, got " & to_hstring(mem(16#DFF9#))
+            severity failure;
+
+        -- ---- Test10: RET.L executed OUTSIDE M2 (M0, after manually
+        -- poking a fake 3byte frame at 01:DFF0/DFF1/DFF2 with a
+        -- deliberately WRONG bank byte AAh - different from the current
+        -- bank_pc=0Ch - so an unguarded RET.L would be unambiguously
+        -- caught) must still jump to the popped 16bit low part (6055h)
+        -- and still advance MSP24 by 3, but must NOT apply the popped
+        -- bank byte (AAh) - bank_pc must stay at 0Ch. ----
+        wait until A = x"6055" and M1_n = '0';
+        wait for 1 ns;
+        assert bank_pc = x"0C"
+            report "Phase11: Test10 RET.L outside M2 must NOT apply the popped bank byte, bank_pc must stay 0Ch, got " & to_hstring(bank_pc)
+            severity failure;
+        assert mode24 = "00"
+            report "Phase11: Test10 must still be in M0(00), got " & to_hstring("00" & mode24)
             severity failure;
 
         report "Phase11 CALL.L/RET.L testbench: all assertions passed" severity note;
