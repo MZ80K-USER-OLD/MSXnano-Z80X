@@ -138,6 +138,9 @@ architecture rtl of T80 is
     constant aIOA   : std_logic_vector(2 downto 0) := "100";
     constant aSP    : std_logic_vector(2 downto 0) := "101";
     constant aZI    : std_logic_vector(2 downto 0) := "110";
+    -- Phase9: MSP24 (PUSH24/POP24) address source; must match the aMSP
+    -- constant added to t80_mcode.vhd.
+    constant aMSP   : std_logic_vector(2 downto 0) := "011";
 
     -- Registers
     signal ACC, F           : std_logic_vector(7 downto 0);
@@ -593,6 +596,17 @@ begin
                             A(7 downto 0) <= DI_Reg;
                         when aSP =>
                             A <= std_logic_vector(SP);
+                        when aMSP =>
+                            -- Phase9: PUSH24/POP24 (ED C1/C5/D1/D5/E1/E5)
+                            -- address source. MSP24 is always a 24bit
+                            -- pointer (unlike aSP/plain SP), regardless of
+                            -- mode24_r, since it is a new Z80X24-only
+                            -- register with no M0 legacy meaning - see the
+                            -- MSP/bank_msp_r decrement/increment logic
+                            -- below for how these settle one cycle ahead
+                            -- of this read.
+                            A <= std_logic_vector(MSP);
+                            A_Bank_r <= bank_msp_r;
                         when aBC =>
                             if Mode = 3 and IORQ_i = '1' then
                                 -- Memory map I/O on GBZ80
@@ -701,6 +715,48 @@ begin
                     end if;
                 end if;
 
+                -- Phase9: PUSH24/POP24 (ED C1/C5/D1/D5/E1/E5) MSP24 pointer
+                -- adjustment (MSX_T80_24bit化_実装手順_V2 section 11
+                -- "Phase 9"; CPU仕様書V8 section 9 "Stack"). Kept entirely
+                -- separate from the SP/IncDec_16 mechanism just above (MSP
+                -- is a plain signal outside the register file, with its
+                -- own dedicated 24bit pointer including bank_msp_r - not
+                -- one of the 4 register-pairs IncDec_16 already encodes),
+                -- so this cannot regress any existing 16bit inc/dec/PUSH/
+                -- POP behaviour. Uses Addr24_Dec/Addr24_Inc (t80_pack.vhd,
+                -- already anticipated for this exact purpose since Phase2)
+                -- so the bank byte correctly carries/borrows together with
+                -- the low 16bit word.
+                --
+                -- PUSH24 decrements BEFORE each of its 3 writes (BANK at
+                -- MSP-1, HIGH at MSP-2, LOW at final MSP-3); POP24
+                -- increments AFTER each of its 3 reads (LOW at MSP, HIGH at
+                -- MSP+1, BANK at MSP+2, final MSP+3). Trigger timing
+                -- mirrors the SP mechanism above: the first PUSH24
+                -- decrement fires at TState=4 of the extended MCycle=1 (so
+                -- it settles via aMSP's T_Res-triggered address readout,
+                -- in time for MCycle=2's first write); all other
+                -- decrements/increments fire at TState=2 of the mcycle
+                -- that precedes the mcycle needing the updated address/
+                -- final value.
+                if ISet = "10" and XY_State = "00" then
+                    case IR is
+                    when x"C5" | x"D5" | x"E5" =>  -- PUSH24 BC/DE/HL
+                        if (TState = 4 and MCycle = "001") or
+                           (TState = 2 and Wait_n = '1' and (MCycle = "010" or MCycle = "011")) then
+                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                        end if;
+                    when x"C1" | x"D1" | x"E1" =>  -- POP24 BC/DE/HL
+                        if TState = 2 and Wait_n = '1' and
+                           (MCycle = "010" or MCycle = "011" or MCycle = "100") then
+                            bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                            MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                        end if;
+                    when others => null;
+                    end case;
+                end if;
+
                 if LDSPHL = '1' then
                     SP <= unsigned(RegBusC);
                 end if;
@@ -777,6 +833,25 @@ begin
                     DO(3 downto 0) <= BusB(7 downto 4);
                     DO(7 downto 4) <= BusA(3 downto 0);
                 end if;
+                -- Phase9: PUSH24 BC/DE/HL (ED C5/D5/E5) BANK-byte write
+                -- override. This is the FIRST of the 3 bytes written
+                -- (MCycle=2, at the MSP24 address already decremented once
+                -- - see the MSP24 adjustment block below), so it bypasses
+                -- the normal Set_BusB_To/BusB staging path entirely (which
+                -- only knows how to source 16bit register-file pairs, not
+                -- the separate 8bit bank_xx_r signals): bank_bc_r/
+                -- bank_de_r/bank_hl_r are read directly here, same-cycle,
+                -- with no 1-cycle staging needed (unlike the HIGH/LOW
+                -- bytes in MCycle3/4, which DO go through the normal
+                -- Set_BusB_To path staged one mcycle ahead by mcode).
+                if ISet = "10" and MCycle = "010" then
+                    case IR is
+                    when x"C5" => DO <= bank_bc_r;
+                    when x"D5" => DO <= bank_de_r;
+                    when x"E5" => DO <= bank_hl_r;
+                    when others => null;
+                    end case;
+                end if;
             end if;
 
             if T_Res = '1' then
@@ -842,6 +917,26 @@ begin
                         F(Flag_N) <= alu24_sub;
                         F(Flag_P) <= alu24_overflow;
                         F(Flag_C) <= alu24_carry;
+                    end if;
+
+                    -- Phase9: POP24 BC/DE/HL (ED C1/D1/E1) BANK-byte read
+                    -- capture. This is the LAST of the 3 bytes read
+                    -- (MCycle=4); unlike the LOW/HIGH bytes (which commit
+                    -- into the register file one mcycle later via the
+                    -- normal Read_To_Reg_r pipeline below, exactly like
+                    -- plain POP qq), bank_xx_r is a plain signal outside
+                    -- the register file, so it can be captured directly,
+                    -- same-cycle, straight from DI_Reg (which already holds
+                    -- this mcycle's freshly read byte by T_Res, same timing
+                    -- already relied on by the Phase6/Phase7 ACC-sourced
+                    -- direct overrides above).
+                    if ISet = "10" and MCycle = "100" then
+                        case IR is
+                        when x"C1" => bank_bc_r <= DI_Reg;
+                        when x"D1" => bank_de_r <= DI_Reg;
+                        when x"E1" => bank_hl_r <= DI_Reg;
+                        when others => null;
+                        end case;
                     end if;
 
                 Read_To_Reg_r(3 downto 0) <= Set_BusA_To;

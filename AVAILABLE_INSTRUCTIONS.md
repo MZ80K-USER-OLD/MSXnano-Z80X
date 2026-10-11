@@ -135,11 +135,46 @@ DD/FD ED80〜8B。80〜82=LD16 load、83〜85=LD16 store、86〜88=LD24 load、8
 
 | オペコード | 命令 | 状態 |
 |---|---|---|
-| `ED C5` / `C1` | `PUSH24` / `POP24 BC` | 未実装 |
-| `ED D5` / `D1` | `PUSH24` / `POP24 DE` | 未実装 |
-| `ED E5` / `E1` | `PUSH24` / `POP24 HL` | 未実装 |
-| `DD ED E5` / `E1` | `PUSH24` / `POP24 IX` | 未実装 |
-| `FD ED E5` / `E1` | `PUSH24` / `POP24 IY` | 未実装 |
+| `ED C5` / `C1` | `PUSH24` / `POP24 BC` | 実装済み（GHDL検証済み、実機確認済み。ただし単一物理bank内でのみ。下記「既知の問題」参照） |
+| `ED D5` / `D1` | `PUSH24` / `POP24 DE` | 実装済み（同上） |
+| `ED E5` / `E1` | `PUSH24` / `POP24 HL` | 実装済み（同上） |
+| `DD ED E5` / `E1` | `PUSH24` / `POP24 IX` | 未実装（DD/ED二重プレフィクスの命令デコード拡張が必要、Phase7のLD24 HL,IX/IYと同様の理由で次フェーズに繰り越し） |
+| `FD ED E5` / `E1` | `PUSH24` / `POP24 IY` | 未実装（同上） |
+
+- PUSH24はMSP24（`bank_msp_r`+`MSP`、Phase7で新設）を1ずつ3回デクリメントしながらBANK→HIGH→LOWの順でメモリへ書き込み、POP24は逆にLOW→HIGH→BANKの順で読み出しながら1ずつ3回インクリメントします。最終的なMSP24はPUSH24で-3、POP24で+3となり、互いに逆操作として往復が可能です。
+- バンクバイトとの繰り上がり/繰り下がりは[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Addr24_Dec`/`Addr24_Inc`（Phase2で追加、Phase9向けに既に用意されていたもの）を使って計算されるため、16bitワードの境界（0000h⇔FFFFh）をまたぐ際にバンクバイトも正しく繰り上がり/繰り下がりします。
+- LOW/HIGH byteの読み書きは、既存のBC/DE/HLレジスタファイル書き込み機構（`Read_To_Reg`/`Set_BusA_To`、`Set_BusB_To`経由のBusB staging）をそのまま再利用しており、通常のPUSH qq/POP qqと全く同じ仕組みです。BANK byteのみ、レジスタファイル外の`bank_bc_r`/`bank_de_r`/`bank_hl_r`信号を対象とするため、[t80.vhd](fpga/G80A/t80.vhd)内で直接の書き込み（PUSH側はDOへの直接上書き、POP側は`DI_Reg`からの直接キャプチャ）として実装されています。アドレス生成には新規の`Set_Addr_To`値`aMSP`（従来未使用だった`"011"`を割り当て）を追加しましたが、既存の`aSP`/`aBC`/`aDE`等の経路には一切手を加えていません。
+- フラグ（F）は変更されません（Z80標準のPUSH/POPと同様）。
+- GHDLテストベンチ: [tb_phase9_push24_pop24.vhd](fpga/G80A/test/tb_phase9_push24_pop24.vhd)（PUSH24→POP24の往復、バンク境界またぎ時の繰り下がり、F不変を含めて検証済み）。
+
+### 既知の問題: bank境界をまたぐPUSH24/POP24で実機フリーズを確認（未解決）
+
+1回のPUSH24/POP24呼出しの中で物理bankが変化するシナリオ（例:
+MSP24=02:0001hからPUSH24を実行し、3回のデクリメントで
+02:0001→02:0000→01:FFFF（bank繰り下がり）→01:FFFEとbankをまたぐ）を
+[Project/Push24Test](../Project/Push24Test)で実機検証したところ、
+**先行するTest5完了直後にシステムがフリーズする現象を確認しました**
+（画面にプログラム起動時のバナーが再表示された後、応答不能に。PCが暴走し
+プログラム先頭付近へ飛んだ可能性が高い）。GHDLシミュレーション
+（`tb_phase9_push24_pop24.vhd`）では同じシナリオが問題なくPASSしているため、
+実機固有の問題と判断されます。
+
+原因として、1命令内で連続する3回のメモリアクセス（BANK/HIGH/LOW
+byte）がそれぞれ異なる物理bankへルーティングされる経路が、Phase3/5で
+検証済みの既存拡張メモリアクセス（`(HL)`/`(BC)`/`(DE)`/`(IX+d)`。いずれも
+1命令につき拡張アクセスは1回のみ）では一度も検証されていなかったこと、
+および本プロジェクトのSD-RAMコントローラ（[memory.v](fpga/src/memory.v)・
+sdram.v）にはCPU側へのWAIT状態生成機構が存在しない（[top.v](fpga/top.v)の
+`ex_bus_wait_n`は常時`1'b1`固定）ため、bank切替にコントローラ側の処理が
+間に合わずアドレス生成が一時的に乱れ、意図しない領域（bank00h＝実行中
+プログラム自身の空間や、BIOS/割込みベクタ等）を破壊した可能性が疑われます。
+
+根本原因の特定には[memory.v](fpga/src/memory.v)・sdram.vのSD-RAMタイミング
+のより詳細な調査が必要で、**現時点では未解決**です。[Project/Push24Test](../Project/Push24Test)
+の実機テストプログラムは、この問題が判明した時点でbank境界をまたぐ
+シナリオを削除し、常に単一物理bank内で完結するテストのみに修正済みです。
+PUSH24/POP24を単一物理bank内で使う限りは実機で正常動作を確認済みですが、
+bank境界をまたぐ使用は本問題が解決されるまで避けてください。
 
 ---
 

@@ -149,6 +149,12 @@ architecture rtl of T80_MCode is
         constant aIOA   : std_logic_vector(2 downto 0) := "100";
         constant aSP    : std_logic_vector(2 downto 0) := "101";
         constant aZI    : std_logic_vector(2 downto 0) := "110";
+        -- Phase9: MSP24 (PUSH24/POP24) address source. "011" was the only
+        -- unused value among the 8 possible Set_Addr_To encodings, so it is
+        -- reused here with no risk of colliding with aNone/aBC/aDE/aXY/
+        -- aIOA/aSP/aZI above. See t80.vhd's matching aMSP case (in the
+        -- Set_Addr_To interpretation block) for how this drives A/A_Bank.
+        constant aMSP   : std_logic_vector(2 downto 0) := "011";
 
         function is_cc_true(
                 F : std_logic_vector(7 downto 0);
@@ -1575,15 +1581,80 @@ begin
                                 |                                            "10101100"|"10101101"|"10101110"|"10101111"
                                 |                                            "10110100"|"10110101"|"10110110"|"10110111"
                                 |                                            "10111100"|"10111101"|"10111110"|"10111111"
-                                |"11000000"|           "11000010"|           "11000100"|"11000101"|"11000110"|"11000111"
+                                |"11000000"|           "11000010"|           "11000100"|           "11000110"|"11000111"
                                 |"11001000"|           "11001010"|"11001011"|"11001100"|"11001101"|"11001110"|"11001111"
-                                |"11010000"|           "11010010"|"11010011"|"11010100"|"11010101"|"11010110"|"11010111"
+                                |"11010000"|           "11010010"|"11010011"|"11010100"|           "11010110"|"11010111"
                                 |"11011000"|           "11011010"|"11011011"|"11011100"|"11011101"|"11011110"|"11011111"
-                                |"11100000"|"11100001"|"11100010"|"11100011"|"11100100"|"11100101"|"11100110"|"11100111"
+                                |"11100000"|           "11100010"|"11100011"|"11100100"|           "11100110"|"11100111"
                                 |"11101000"|"11101001"|"11101010"|"11101011"|"11101100"|"11101101"|"11101110"|"11101111"
                                 |"11110000"|"11110001"|"11110010"|           "11110100"|"11110101"|"11110110"|"11110111"
                                 |"11111000"|"11111001"|"11111010"|"11111011"|"11111100"|"11111101"|"11111110"|"11111111" =>
                                 null; -- NOP, undocumented
+                        when "11000101"|"11010101"|"11100101" =>
+                                -- Phase9: PUSH24 BC/DE/HL (ED C5/D5/E5)
+                                -- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 11
+                                --  "Phase 9"; CPU仕様書V8 section 9 "Stack"). Writes
+                                -- BANK/HIGH/LOW (in that order, decrementing MSP24
+                                -- before each byte) via the new aMSP address source.
+                                -- MSP24 decrement itself, and the BANK-byte DO
+                                -- override, are both handled directly in t80.vhd
+                                -- (keyed on IR/MCycle, mirroring the Phase7/8
+                                -- direct-IR-match pattern) rather than here, since
+                                -- MSP/bank_msp_r are plain signals outside both the
+                                -- register file and the existing IncDec_16/Set_BusB_To
+                                -- encodings. DD/FD (IX/IY) variants are deferred (same
+                                -- scope limitation as Phase7's LD24 HL,IX/IY - see
+                                -- AVAILABLE_INSTRUCTIONS.md) due to the existing
+                                -- DD/FD+ED dual-prefix XY_State reset limitation.
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        TStates <= "101";
+                                        Set_Addr_To <= aMSP;
+                                when 2 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To(2 downto 1) <= DPair;
+                                        Set_BusB_To(0) <= '0';  -- stage HIGH byte for MCycle3's write
+                                        Set_BusB_To(3) <= '0';
+                                        Write <= '1';
+                                when 3 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To(2 downto 1) <= DPair;
+                                        Set_BusB_To(0) <= '1';  -- stage LOW byte for MCycle4's write
+                                        Set_BusB_To(3) <= '0';
+                                        Write <= '1';
+                                when 4 =>
+                                        Write <= '1';
+                                when others => null;
+                                end case;
+                        when "11000001"|"11010001"|"11100001" =>
+                                -- Phase9: POP24 BC/DE/HL (ED C1/D1/E1). Reads
+                                -- LOW/HIGH/BANK (in that order, incrementing MSP24
+                                -- after each byte) via the same aMSP address source.
+                                -- LOW/HIGH bytes commit into the register file via
+                                -- the existing generic Read_To_Reg/Set_BusA_To
+                                -- mechanism (identical to plain POP qq); the BANK
+                                -- byte capture and all three MSP24 increments are
+                                -- handled directly in t80.vhd. DD/FD (IX/IY)
+                                -- variants deferred, see the PUSH24 comment above.
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        Set_Addr_To <= aMSP;
+                                when 2 =>
+                                        Set_Addr_To <= aMSP;
+                                        Read_To_Reg <= '1';
+                                        Set_BusA_To(2 downto 1) <= DPair;
+                                        Set_BusA_To(0) <= '1';  -- LOW byte dest
+                                when 3 =>
+                                        Set_Addr_To <= aMSP;
+                                        Read_To_Reg <= '1';
+                                        Set_BusA_To(2 downto 1) <= DPair;
+                                        Set_BusA_To(0) <= '0';  -- HIGH byte dest
+                                when 4 =>
+                                        null; -- BANK byte capture + MSP increments: see t80.vhd
+                                when others => null;
+                                end case;
                         when "01111110"|"01111111" =>
                                 -- NOP, undocumented
                                 null;
@@ -1954,7 +2025,7 @@ begin
                                         TStates <= "101";
                                 when others => null;
                                 end case;
-                        when "11000001"|"11001001"|"11010001"|"11011001" =>
+                        when "11001001"|"11011001" =>
                                 --R800 MULUB
                                 null;
                         when "11000011"|"11110011" =>
