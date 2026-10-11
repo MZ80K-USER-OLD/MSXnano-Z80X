@@ -271,6 +271,11 @@ far call/returnとして実装した。
 
 #### T80コア側で発見・修正した前提条件（既存バグ、Phase11で表面化）
 
+**詳細な技術レポート**:
+[T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)
+（発見経緯・根本原因・修正箇所5箇所の詳細、Phase12で発覚した
+`MCycle`幅そのものの上限についてもまとめてある。T80コア保守担当者向け）。
+
 CALL.L/RET.Lの実装過程で、T80コア本体（`fpga/G80A/t80.vhd`・
 `fpga/G80A/t80_mcode.vhd`）に存在していた、**DD/FD+CBの二重prefix
 継続処理専用のはずのロジックが、`MCycle`の値（110/111=6/7）だけで無条件
@@ -367,6 +372,10 @@ Phase12「モード間制御」。`JP.Mx`/`CALL.Mx`は、通常のJP/CALLとは�
   の内容・MSP24の正しい復元も確認済み）。
 
 ### 10.2 既知の問題：CALL.M2 addr24は未実装（MCycle幅の上限）
+
+**詳細な技術レポート**:
+[T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)
+（「さらに別種の制約」章を参照）。
 
 `CALL.M2 addr24`は、addr24ターゲットの読み込み（3byte）と4byte frame
 の書き込みを合わせて「1(opcode) + 3(fetch) + 4(push) = 8 MCycles」が
