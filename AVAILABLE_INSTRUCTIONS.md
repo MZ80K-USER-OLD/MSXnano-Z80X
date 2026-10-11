@@ -127,6 +127,49 @@ DD/FD ED80〜8B。80〜82=LD16 load、83〜85=LD16 store、86〜88=LD24 load、8
 | `DD/FD ED 8A` | `LD24 (IX/IY+d), DE` | 未実装 |
 | `DD/FD ED 8B` | `LD24 (IX/IY+d), HL` | 未実装 |
 
+### 6.1 LEA.L（V4仕様書21.2で新規追加、PEA.Lは不採用）
+
+| オペコード | 命令 | 内容 | 状態 |
+|---|---|---|---|
+| `DD/FD ED 68 d` | `LEA.L HL,(IX/IY+d)` | 実効アドレスをHL24へロード（メモリアクセス無し） | 実装済み（GHDL検証済み、実機未検証） |
+| `DD/FD ED 69 d` | `LEA.L DE,(IX/IY+d)` | 実効アドレスをDE24へロード（メモリアクセス無し） | 実装済み（GHDL検証済み、実機未検証） |
+| `DD/FD ED 6A d` | (PEA.L、不採用) | デコードしない | 未定義命令としてNOP扱い（意図的） |
+
+`IX/IY + sign_extend(d)`を計算し、結果をHL24/DE24の全24bitへロードする
+（実効アドレスへの実際のメモリアクセスは発生しない）。M0では16bit wrap
+かつbankは強制的に00h、M1/M2では24bit wrap（bank境界のcarry/borrowを
+含む）。F・IX/IY・SP/MSPは不変。
+
+**本プロジェクトで初めてのDD/FD+ED二重プレフィクス対応命令**。それ以前の
+全てのZ80X24拡張命令は単一EDプレフィクスのみで完結していた（Phase7の
+`LD24 HL,IX`やPhase9の`PUSH24 IX`等、DD/FD+ED二重プレフィクスが必要な
+命令は全てこの制約により未実装のまま保留されていた）。
+
+- **実装方式**: 既存の`XY_State`（DD/FD+CB用）とは完全に独立した新規
+  ラッチ信号`LeaXY`（[t80.vhd](fpga/G80A/t80.vhd)）を新設。EDプレフィクス
+  認識時、`XY_State`自体は**従来どおり**無条件に`"00"`へリセットする
+  （この挙動を変更すると、既存の全ED系拡張命令が暗黙に依存している
+  `XY_State="00"`ガード、および`RegAddrA_r`/`RegAddrB_r`の
+  "H/L→IX/IY"リダイレクト機構と衝突するリスクがあったため、Phase8の
+  コメントで既に指摘されていたこのリスクを避けるため、既存シグナルには
+  触れず新規シグナルを追加する設計とした）。`LeaXY`はリセット**直前**の
+  `XY_State`値を捕捉するため、DD/FDが直前にあったかどうかを安全に後から
+  判定できる。
+- **オペコード再利用**: `ED 68`/`ED 69`は元々標準Z80の`IN L,(C)`/
+  `OUT (C),L`。`LeaXY/="00"`（DD/FD直後）のときだけLEA.Lとして分岐し、
+  `LeaXY="00"`（DD/FD無し、単独ED）のときは従来どおり`IN r,(C)`/
+  `OUT (C),r`として動作する（[t80_mcode.vhd](fpga/G80A/t80_mcode.vhd)の
+  該当ディスパッチ内でif分岐、既存のIN/OUT処理コード自体は無変更）。
+- **3 MCycle構成**: M1(opcode、DD/FD+ED+68/69)、M2(変位dフェッチ+実効
+  アドレス計算、既存の(IX+d)と同じ`Addr24_AddDisp8`関数を再利用)、
+  M3(HL24/DE24・bankバイトへの書込み、Phase7のHL24 hub転送と同じ
+  `RegAddrA_r`/`RegWEH`/`RegWEL`/`RegDIH`/`RegDIL`機構を再利用)。
+- GHDLテストベンチ: [tb_lea_l.vhd](fpga/G80A/test/tb_lea_l.vhd)（M0での
+  bank強制00h、M1/M2でのbank carry/borrow、FFFFFF+1の24bit全体wrap、
+  d=±128相当の極値、IX/IY・F不変、および**裸の`ED 68`/`ED 69`
+  （`IN r,(C)`/`OUT (C),r`）が一切影響を受けないことの回帰確認**を含め
+  全8ケース検証済み）。
+
 ---
 
 ## 7. 24bit Stack（PUSH24 / POP24）

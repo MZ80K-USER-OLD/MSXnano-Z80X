@@ -215,6 +215,21 @@ architecture rtl of T80 is
     signal DI_Reg           : std_logic_vector(7 downto 0);
     signal T_Res            : std_logic;
     signal XY_State         : std_logic_vector(1 downto 0);
+    -- New (V4 21.2, LEA.L): latches XY_State at the moment an ED prefix
+    -- is recognized, BEFORE XY_State itself is (unconditionally, exactly
+    -- as before) reset to "00". This is a deliberately SEPARATE, isolated
+    -- signal rather than simply "stop resetting XY_State on ED" - every
+    -- existing ED-prefixed Z80X24 opcode (Phase1-12) relies on XY_State
+    -- being reset to "00" immediately on ED (both as an explicit
+    -- "XY_State=00" dispatch guard in many places, AND implicitly via
+    -- the RegAddrA_r/RegAddrB_r "H/L -> IX/IY" redirect mechanism further
+    -- below, which triggers whenever XY_State/="00" regardless of ISet -
+    -- see the Phase8 ALU comment on this exact risk). Preserving
+    -- XY_State itself across ED would silently reintroduce that risk for
+    -- every other ED opcode. LeaXY instead gives ONLY the new LEA.L
+    -- dispatch (ED 68/69, t80_mcode.vhd) a memory of "was this ED
+    -- immediately preceded by DD/FD", with zero effect on anything else.
+    signal LeaXY            : std_logic_vector(1 downto 0);
     signal Pre_XY_F_M       : std_logic_vector(3 downto 0);
     signal NextIs_XY_Fetch  : std_logic;
     -- Phase11: distinguishes "MCycle reached 111 because
@@ -339,6 +354,7 @@ begin
             NMICycle => NMICycle,
             IntCycle => IntCycle,
             XY_State => XY_State,
+            LeaXY => LeaXY,
             MCycles => MCycles_d,
             TStates => TStates,
             Prefix => Prefix,
@@ -448,6 +464,7 @@ begin
             IR <= "00000000";
             ISet <= "00";
             XY_State <= "00";
+            LeaXY <= "00";
             IStatus <= "00";
             MCycles <= "0000";
             DO <= "00000000";
@@ -567,6 +584,15 @@ begin
                             end if;
                         else
                             if Prefix = "10" then
+                                -- Capture XY_State (reflecting any
+                                -- immediately-preceding DD/FD) into
+                                -- LeaXY for the new LEA.L dispatch
+                                -- (t80_mcode.vhd), BEFORE the
+                                -- unconditional reset below - see LeaXY's
+                                -- declaration comment for why this is a
+                                -- separate signal rather than preserving
+                                -- XY_State itself.
+                                LeaXY <= XY_State;
                                 XY_State <= "00";
                                 XY_Ind <= '0';
                             end if;
@@ -1077,6 +1103,33 @@ begin
                     end if;
                 end if;
 
+                -- New (V4 21.2): LEA.L HL,(IX/IY+d) (DD/FD ED 68 d) / LEA.L
+                -- DE,(IX/IY+d) (DD/FD ED 69 d) effective-address computation.
+                -- Reuses the exact same TmpAddr low-16bit expression as
+                -- (IX/IY+d) above, keyed on LeaXY instead of XY_State (see
+                -- LeaXY's declaration comment). Unlike (IX/IY+d), which
+                -- leaves TmpBank at bank_ix_r/bank_iy_r's raw value in M0
+                -- (harmless there since A_Bank_r never applies it in M0
+                -- anyway), LEA.L's TmpBank is DIRECTLY committed into
+                -- bank_hl_r/bank_de_r (a real, persistent, programmer-
+                -- visible register) at M3 below, so M0 must force it to
+                -- 00h here to match "M0では16bit wrap+bank00" (V4 21.2.3) -
+                -- copying bank_ix_r/iy_r's raw value would incorrectly leak
+                -- a bank byte into HL_B/DE_B even in full Z80-compat mode.
+                if ISet = "10" and TState = 3 and MCycle = "0010" and
+                   (IR = x"68" or IR = x"69") and LeaXY /= "00" then
+                    TmpAddr <= std_logic_vector(signed(RegBusC) + signed(DI_Reg));
+                    if mode24_r = "00" then
+                        TmpBank <= (others => '0');
+                    else
+                        if LeaXY(1) = '0' then
+                            TmpBank <= Addr24_AddDisp8(bank_ix_r, RegBusC, DI_Reg)(23 downto 16);
+                        else
+                            TmpBank <= Addr24_AddDisp8(bank_iy_r, RegBusC, DI_Reg)(23 downto 16);
+                        end if;
+                    end if;
+                end if;
+
                 if (TState = 2 and Wait_n = '1') or (TState = 4 and MCycle = "0001") then
                     if IncDec_16(2 downto 0) = "111" then
                         -- Phase10: M2 active stack pointer = MSP24. This
@@ -1454,6 +1507,25 @@ begin
                         when x"9C" => bank_hl_r <= bank_int_r;  -- LD24 HL,IVR
                         when x"9E" => NVR <= unsigned(RegBusB); bank_nvr_r <= bank_hl_r; -- LD24 NVR,HL
                         when x"9F" => bank_hl_r <= bank_nvr_r;  -- LD24 HL,NVR
+                        -- New (V4 21.2): LEA.L HL/DE,(IX/IY+d) bank-byte
+                        -- writeback, paired with the RegWEH/RegWEL/
+                        -- RegDIH/RegDIL low-16bit commit above. Must
+                        -- explicitly check MCycle="0011" (M3) - this
+                        -- "if T_Res='1' then if ISet=\"10\" then case IR
+                        -- is..." block is otherwise unconditioned on
+                        -- MCycle (every other entry here is a 1-cycle
+                        -- instruction, so T_Res only ever fires once for
+                        -- them; LEA.L's own M1's T_Res would ALSO match
+                        -- "IR=x68/x69" here without this guard, before
+                        -- TmpBank has even been computed at M2).
+                        when x"68" =>
+                            if MCycle = "0011" then
+                                bank_hl_r <= TmpBank;
+                            end if;
+                        when x"69" =>
+                            if MCycle = "0011" then
+                                bank_de_r <= TmpBank;
+                            end if;
                         when others => null;
                         end case;
                     end if;
@@ -1685,6 +1757,27 @@ begin
                         RegAddrA_r <= Alternate & "00";    -- dest BC
                     when x"1E" =>
                         RegAddrA_r <= Alternate & "01";    -- dest DE
+                    when x"68" =>
+                        -- New (V4 21.2): LEA.L HL,(IX/IY+d) destination.
+                        -- Only when LeaXY/="00" (DD/FD genuinely preceded
+                        -- this ED) - otherwise this is bare "ED 68" (IN
+                        -- L,(C)), whose own destination already comes out
+                        -- correctly via the Set_BusA_To-driven override
+                        -- above (harmless either way, since both yield
+                        -- "Alternate&\"10\"" for L/HL, but the explicit
+                        -- guard keeps the intent unambiguous).
+                        if LeaXY /= "00" then
+                            RegAddrA_r <= Alternate & "10";    -- dest HL
+                        end if;
+                    when x"69" =>
+                        -- New (V4 21.2): LEA.L DE,(IX/IY+d) destination.
+                        -- Bare "ED 69" (OUT (C),L) never triggers a
+                        -- register-file write (OUT only reads via
+                        -- Set_BusB_To, never asserts RegWEH/RegWEL), so
+                        -- this override is inert when LeaXY="00".
+                        if LeaXY /= "00" then
+                            RegAddrA_r <= Alternate & "01";    -- dest DE
+                        end if;
                     when others => null;
                     end case;
                     case IR is
@@ -1733,6 +1826,16 @@ begin
                 end if;
                 if ((JumpXY = '1' or LDSPHL = '1') and XY_State /= "00") or (MCycle = "0110" and XY_State /= "00") then
                     RegAddrC <= XY_State(1) & "11";
+                end if;
+                -- New (V4 21.2): LEA.L HL/DE,(IX/IY+d) EA-base read. Must
+                -- check LeaXY/="00" (not just ISet/IR) to avoid colliding
+                -- with the SAME IR=68h/69h values' OTHER meaning (bare
+                -- "ED 68"/"ED 69" = standard Z80 IN L,(C)/OUT (C),L, which
+                -- legitimately also reaches MCycle="0010" for its own I/O
+                -- cycle - LeaXY="00" there since no DD/FD preceded it).
+                if ISet = "10" and MCycle = "0010" and
+                   (IR = x"68" or IR = x"69") and LeaXY /= "00" then
+                    RegAddrC <= LeaXY(1) & "11";
                 end if;
 
                 -- Phase8: dedicated 24bit ALU dest (HL) read. RegBusA_r is
@@ -1800,7 +1903,7 @@ begin
 
     process (Save_ALU_r, Auto_Wait_t1, ALU_OP_r, Read_To_Reg_r,
             ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR,
-            alu24_active, alu24_writeback)
+            alu24_active, alu24_writeback, T_Res)
     begin
         RegWEH <= '0';
         RegWEL <= '0';
@@ -1853,11 +1956,25 @@ begin
             RegWEH <= '1';
             RegWEL <= '1';
         end if;
+
+        -- New (V4 21.2): LEA.L HL/DE,(IX/IY+d) writeback. Committed at
+        -- T_Res of M3 (MCycle=0011) - unlike Phase7's 1-cycle hub
+        -- transfers above, MCycle="0011" is never reached by bare "ED
+        -- 68"/"ED 69" (IN r,(C)/OUT (C),r only ever use MCycles=2), so no
+        -- additional LeaXY check is needed here to disambiguate.
+        if ISet = "10" and MCycle = "0011" and T_Res = '1' then
+            case IR is
+            when x"68" | x"69" =>
+                RegWEH <= '1';
+                RegWEL <= '1';
+            when others => null;
+            end case;
+        end if;
     end process;
 
     process (Save_Mux, RegBusB, RegBusA_r, ID16,
             ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR, MSP, IVR, NVR,
-            alu24_active, alu24_writeback, alu24_result24)
+            alu24_active, alu24_writeback, alu24_result24, T_Res, TmpAddr)
     begin
         RegDIH <= Save_Mux;
         RegDIL <= Save_Mux;
@@ -1901,6 +2018,19 @@ begin
         if MCycle = "0001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
             RegDIH <= alu24_result24(15 downto 8);
             RegDIL <= alu24_result24(7 downto 0);
+        end if;
+
+        -- New (V4 21.2): LEA.L HL/DE,(IX/IY+d) writeback data source,
+        -- paired with the RegWEH/RegWEL commit above. TmpAddr already
+        -- holds the computed EA low-16bit word (see the TState=3/MCycle=
+        -- 0010 computation block above).
+        if ISet = "10" and MCycle = "0011" and T_Res = '1' then
+            case IR is
+            when x"68" | x"69" =>
+                RegDIH <= TmpAddr(15 downto 8);
+                RegDIL <= TmpAddr(7 downto 0);
+            when others => null;
+            end case;
         end if;
     end process;
 

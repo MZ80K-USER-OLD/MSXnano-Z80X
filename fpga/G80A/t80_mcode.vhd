@@ -88,6 +88,15 @@ entity T80_MCode is
                 NMICycle    : in std_logic;
                 IntCycle    : in std_logic;
                 XY_State    : in std_logic_vector(1 downto 0);
+                -- New (V4 21.2): captures XY_State at the moment an ED
+                -- prefix is recognized (latched in t80.vhd, independent
+                -- of XY_State itself which continues to reset to "00" on
+                -- every ED exactly as before - see t80.vhd for the full
+                -- rationale). "00" = bare ED (no preceding DD/FD); "01"/
+                -- "10" = DD/FD immediately preceded this ED (IX/IY).
+                -- Consulted only by the ED 68/69 (LEA.L) dispatch below;
+                -- every other ED-prefixed opcode is unaffected.
+                LeaXY       : in std_logic_vector(1 downto 0);
                 MCycles     : out std_logic_vector(3 downto 0);
                 TStates     : out std_logic_vector(2 downto 0);
                 Prefix      : out std_logic_vector(1 downto 0); -- None,CB,ED,DD/FD
@@ -289,7 +298,7 @@ architecture rtl of T80_MCode is
 
 begin
 
-        process (IR, ISet, MCycle, F, NMICycle, IntCycle, XY_State)
+        process (IR, ISet, MCycle, F, NMICycle, IntCycle, XY_State, LeaXY)
                 variable DDD : std_logic_vector(2 downto 0);
                 variable SSS : std_logic_vector(2 downto 0);
                 variable DPair : std_logic_vector(1 downto 0);
@@ -2535,36 +2544,78 @@ begin
                                 when others => null;
                                 end case;
                         when "01000000"|"01001000"|"01010000"|"01011000"|"01100000"|"01101000"|"01110000"|"01111000" =>
-                                -- IN r,(C)
-                                MCycles <= "0010";
-                                case to_integer(unsigned(MCycle)) is
-                                when 1 =>
-                                        Set_Addr_To <= aBC;
-                                when 2 =>
-                                        IORQ <= '1';
-                                        if IR(5 downto 3) /= "110" then
-                                                Read_To_Reg <= '1';
-                                                Set_BusA_To(2 downto 0) <= IR(5 downto 3);
-                                        end if;
-                                        I_INRC <= '1';
-                                when others =>
-                                end case;
+                                if IR = "01101000" and LeaXY /= "00" then
+                                        -- New (V4 21.2): LEA.L HL,(IX/IY+d)
+                                        -- (DD/FD ED 68 d). M1=this opcode
+                                        -- byte (recognized via LeaXY,
+                                        -- latched in t80.vhd when this ED
+                                        -- was immediately preceded by DD/
+                                        -- FD - see t80.vhd's LeaXY comment);
+                                        -- M2=fetch displacement d (Inc_PC
+                                        -- here, EA computed into TmpAddr/
+                                        -- TmpBank at M2's T_Res directly in
+                                        -- t80.vhd); M3=register-file
+                                        -- writeback (also handled directly
+                                        -- in t80.vhd - RegAddrA_r/RegWEH/
+                                        -- RegWEL/RegDIH/RegDIL/bank_hl_r).
+                                        -- No memory access at the effective
+                                        -- address (LEA, not a dereference).
+                                        -- Bare "ED 68" (LeaXY="00", no
+                                        -- preceding DD/FD) falls through to
+                                        -- the unchanged IN r,(C) path below.
+                                        MCycles <= "0011";
+                                        case to_integer(unsigned(MCycle)) is
+                                        when 2 =>
+                                                Inc_PC <= '1';
+                                        when others => null;
+                                        end case;
+                                else
+                                        -- IN r,(C)
+                                        MCycles <= "0010";
+                                        case to_integer(unsigned(MCycle)) is
+                                        when 1 =>
+                                                Set_Addr_To <= aBC;
+                                        when 2 =>
+                                                IORQ <= '1';
+                                                if IR(5 downto 3) /= "110" then
+                                                        Read_To_Reg <= '1';
+                                                        Set_BusA_To(2 downto 0) <= IR(5 downto 3);
+                                                end if;
+                                                I_INRC <= '1';
+                                        when others =>
+                                        end case;
+                                end if;
                         when "01000001"|"01001001"|"01010001"|"01011001"|"01100001"|"01101001"|"01110001"|"01111001" =>
-                                -- OUT (C),r
-                                -- OUT (C),0
-                                MCycles <= "0010";
-                                case to_integer(unsigned(MCycle)) is
-                                when 1 =>
-                                        Set_Addr_To <= aBC;
-                                        Set_BusB_To(2 downto 0) <= IR(5 downto 3);
-                                        if IR(5 downto 3) = "110" then
-                                                Set_BusB_To(3) <= '1';
-                                        end if;
-                                when 2 =>
-                                        Write <= '1';
-                                        IORQ <= '1';
-                                when others =>
-                                end case;
+                                if IR = "01101001" and LeaXY /= "00" then
+                                        -- New (V4 21.2): LEA.L DE,(IX/IY+d)
+                                        -- (DD/FD ED 69 d). Same shape as
+                                        -- LEA.L HL above; see its comment.
+                                        -- Bare "ED 69" (LeaXY="00") falls
+                                        -- through to the unchanged OUT
+                                        -- (C),r path below.
+                                        MCycles <= "0011";
+                                        case to_integer(unsigned(MCycle)) is
+                                        when 2 =>
+                                                Inc_PC <= '1';
+                                        when others => null;
+                                        end case;
+                                else
+                                        -- OUT (C),r
+                                        -- OUT (C),0
+                                        MCycles <= "0010";
+                                        case to_integer(unsigned(MCycle)) is
+                                        when 1 =>
+                                                Set_Addr_To <= aBC;
+                                                Set_BusB_To(2 downto 0) <= IR(5 downto 3);
+                                                if IR(5 downto 3) = "110" then
+                                                        Set_BusB_To(3) <= '1';
+                                                end if;
+                                        when 2 =>
+                                                Write <= '1';
+                                                IORQ <= '1';
+                                        when others =>
+                                        end case;
+                                end if;
                         when "10100010" | "10101010" | "10110010" | "10111010" =>
                                 -- INI, IND, INIR, INDR
                                 MCycles <= "0100";

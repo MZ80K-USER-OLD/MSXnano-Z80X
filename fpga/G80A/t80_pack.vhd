@@ -197,6 +197,7 @@ package T80_Pack is
         NMICycle    : in std_logic;
         IntCycle    : in std_logic;
         XY_State    : in  std_logic_vector(1 downto 0);
+        LeaXY       : in  std_logic_vector(1 downto 0);
         MCycles     : out std_logic_vector(3 downto 0);
         TStates     : out std_logic_vector(2 downto 0);
         Prefix      : out std_logic_vector(1 downto 0); -- None,BC,ED,DD/FD
