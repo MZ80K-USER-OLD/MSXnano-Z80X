@@ -360,13 +360,13 @@ Phase12「モード間制御」。`JP.Mx`/`CALL.Mx`は、通常のJP/CALLとは�
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
-| `ED 93` | `JP.M0 addr16` | M0へ切替えて16bit addrへジャンプ | 実装済み（GHDL検証済み） |
-| `ED 94` | `JP.M1 addr16` | M1へ切替えて16bit addrへジャンプ | 実装済み（GHDL検証済み） |
-| `ED 95` | `JP.M2 addr24` | M2へ切替えて24bit addrへジャンプ | 実装済み（GHDL検証済み） |
-| `ED 96` | `CALL.M0 addr16` | M0へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み） |
-| `ED 97` | `CALL.M1 addr16` | M1へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み） |
-| `ED 98` | `CALL.M2 addr24` | M2へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み。Phase12-2参照） |
-| `ED 99` | `RET.M` | MSPから4byte frameを復元しPC24・モード両方を復帰 | 実装済み（GHDL検証済み） |
+| `ED 93` | `JP.M0 addr16` | M0へ切替えて16bit addrへジャンプ | 実装済み（GHDL検証済み・実機確認済み） |
+| `ED 94` | `JP.M1 addr16` | M1へ切替えて16bit addrへジャンプ | 実装済み（GHDL検証済み・実機確認済み） |
+| `ED 95` | `JP.M2 addr24` | M2へ切替えて24bit addrへジャンプ | 実装済み（GHDL検証済み・実機確認済み） |
+| `ED 96` | `CALL.M0 addr16` | M0へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み・実機確認済み） |
+| `ED 97` | `CALL.M1 addr16` | M1へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み・実機確認済み） |
+| `ED 98` | `CALL.M2 addr24` | M2へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み・実機確認済み。Phase12-2参照） |
+| `ED 99` | `RET.M` | MSPから4byte frameを復元しPC24・モード両方を復帰 | 実装済み（GHDL検証済み・実機確認済み） |
 
 ### 10.1 実装メモ
 
@@ -392,6 +392,13 @@ Phase12「モード間制御」。`JP.Mx`/`CALL.Mx`は、通常のJP/CALLとは�
   [tb_phase12_mode_control.vhd](fpga/G80A/test/tb_phase12_mode_control.vhd)
   （JP.M0/M1/M2、CALL.M0/M1/M2→RET.Mの往復3回を検証済み。4byte frame
   の内容・MSP24の正しい復元も確認済み）。
+- **実機検証済み**: [Project/P12Test](../Project/P12Test)のMSX-DOS(2)用
+  テストプログラム`P12TEST.COM`で、JP.M0/M1/M2（bank02hへの実行マーカー
+  方式を含む）・CALL.M0/M1/M2（RET.Mとの往復、bank02hへの往復を含む）の
+  全8チェックが実機（Tang Nano）で2026年10月にPASSしました
+  （`PASS=08 FAIL=00`）。これにより、MCycle幅拡張（3bit→4bit）で
+  追加実装した`CALL.M2`も含め、Phase12のモード間制御命令群すべてが
+  実機で動作することが確認できました。
 
 ### 10.2 CALL.M2 addr24の実装（MCycle幅拡張による解決）
 
