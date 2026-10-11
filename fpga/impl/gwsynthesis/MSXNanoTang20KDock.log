@@ -1,0 +1,554 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jt2413.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl2.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_acc.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_csr.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_div.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_eg.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_eg_cnt.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_eg_comb.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_eg_ctrl.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_eg_final.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_eg_pure.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_eg_step.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_exprom.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_lfo.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_logsin.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_mmr.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_noise.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_op.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_pg.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_pg_comb.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_pg_inc.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_pg_rhy.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_pg_sum.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_pm.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_reg.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_reg_ch.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_sh.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_sh_rst.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_single_acc.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_slot_cnt.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopl_timers.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopll_mmr.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopll_reg.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\jtopl\jtopll_reg_ch.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_max.v'
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_max.v":2)
+ERROR (EX3928) : Module 'pulse_max' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_max.v":75)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_max.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_min.v'
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_min.v":2)
+ERROR (EX3928) : Module 'pulse_min' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_min.v":75)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\pulse_min_max\pulse_min.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\bios_msx2p.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\gowin\clk_108p.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\gowin_clkdiv\gowin_clkdiv.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\impulse.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\logo_fm.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\megaram.v'
+ERROR (EX3805) : Concurrent assignment to a non-net 'megaram_sel_memory' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\megaram.v":43)
+ERROR (EX3928) : Module 'megaram_scc' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\megaram.v":162)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\megaram.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\memory.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\msx2p_debug.v'
+Analyzing included file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\print.v'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\msx2p_debug.v":509)
+Back to file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\msx2p_debug.v'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\msx2p_debug.v":509)
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\rtc.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\psg_filter.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\subrom_msx2p.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\uart_tx.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\fpga_companion.v'
+Undeclared symbol 'spi_io_dout', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\fpga_companion.v":75)
+Undeclared symbol 'system_leds', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\fpga_companion.v":133)
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\hid.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\mcu_spi_new.v'
+ERROR (EX3620) : Declarations are not allowed in an unnamed block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\mcu_spi_new.v":86)
+ERROR (EX3928) : Module 'mcu_spi' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\mcu_spi_new.v":125)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\mcu_spi_new.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\sys_ctrl.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\crc16.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\dpram.v'
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\dpram.v":3)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\dpram.v":4)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\dpram.v":21)
+WARN  (EX2208) : Illegal integral type argument in math function 'pow()', expected real type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\dpram.v":21)
+ERROR (EX3928) : Module 'dpram' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\dpram.v":48)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\dpram.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\flash.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\pinfilter.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv'
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":335)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":335)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":338)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":339)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":338)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":339)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":344)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":345)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":344)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":345)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":391)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":391)
+ERROR (EX3928) : Module 'sd_reader' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv":462)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sd_reader.sv' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sdcmd_ctrl.sv'
+ERROR (EX3675) : Non-net port 'sdcmdin' cannot be of mode input("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sdcmd_ctrl.sv":15)
+ERROR (EX3928) : Module 'sdcmd_ctrl' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sdcmd_ctrl.sv":145)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\wondertang\sdcmd_ctrl.sv' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v'
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":45)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":54)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":57)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":60)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":28)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":35)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":36)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":38)
+WARN  (EX2208) : Illegal integral type argument in math function 'pow()', expected real type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":38)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":40)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":41)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":42)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":43)
+ERROR (EX3812) : 'cdiv' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":53)
+ERROR (EX3928) : Module 'CLOCK_DIV' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v":67)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\clockdiv.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\gowin\clk_135.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv'
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":20)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":23)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":24)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":26)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":38)
+ERROR (EX3863) : Syntax error near '}'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":39)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":41)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":42)
+ERROR (EX3863) : Syntax error near ')'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":42)
+WARN  (EX2950) : Extra semicolon is not allowed here in this dialect, use SystemVerilog mode instead("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":42)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":45)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":68)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":8)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":11)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":11)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":12)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":12)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":13)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":13)
+ERROR (EX3246) : Invalid initialization in declaration("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":13)
+WARN  (EX3618) : Illegal initial value of output port 'clk_audio_counter_wrap' for module 'audio_clock_regeneration_packet' ignored("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":13)
+WARN  (EX2495) : Illegal initialization of non-singular port 'clk_audio_counter_wrap'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_clock_regeneration_packet.sv":13)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv'
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":44)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":48)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":7)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":8)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":9)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":10)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":11)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":14)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":14)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":15)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":15)
+WARN  (EX3373) : Port 'sub' must not be declared to be an array("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":15)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":19)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":20)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":21)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":23)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":24)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":25)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":33)
+ERROR (EX3805) : Concurrent assignment to a non-net 'packet_bytes' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_info_frame.sv":35)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv'
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":81)
+ERROR (EX3863) : Syntax error near 'begin'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":84)
+ERROR (EX2656) : Verilog 2001 keyword 'begin' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":84)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":88)
+ERROR (EX3863) : Syntax error near 'begin'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":96)
+ERROR (EX2656) : Verilog 2001 keyword 'begin' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":96)
+ERROR (EX3863) : Syntax error near '}'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":98)
+ERROR (EX3863) : Syntax error near '}'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":98)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":103)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":13)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":16)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":19)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":22)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":25)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":28)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":32)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":35)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":38)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\audio_sample_packet.sv":41)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv'
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":45)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":70)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":74)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":7)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":8)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":9)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":10)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":11)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":12)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":13)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":14)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":15)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":16)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":17)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":18)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":19)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":20)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":21)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\auxiliary_video_information_info_frame.sv":24)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv'
+ERROR (EX3863) : Syntax error near 'begin'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":194)
+ERROR (EX2656) : Verilog 2001 keyword 'begin' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":194)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":199)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":201)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":203)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":217)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":233)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":251)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":260)
+ERROR (EX3863) : Syntax error near 'begin'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":269)
+ERROR (EX2656) : Verilog 2001 keyword 'begin' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":269)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":272)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":274)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":280)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":285)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":321)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":335)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":336)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\hdmi.sv":337)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv'
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":15)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":20)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":27)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":55)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":67)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":75)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":77)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":80)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":83)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":5)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":5)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":6)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":6)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":7)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":7)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":8)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":8)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":9)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":9)
+WARN  (EX3373) : Port 'sub' must not be declared to be an array("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_assembler.sv":9)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv'
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":63)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":68)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":75)
+ERROR (EX3863) : Syntax error near '}'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":76)
+ERROR (EX3863) : Syntax error near 'begin'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":83)
+ERROR (EX2656) : Verilog 2001 keyword 'begin' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":83)
+ERROR (EX3863) : Syntax error near '}'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":87)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":93)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":100)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":101)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":104)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":109)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":118)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":126)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":128)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":131)
+ERROR (EX3863) : Syntax error near '}'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":131)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":135)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\packet_picker.sv":151)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv'
+ERROR (EX3183) : Parameter initial value cannot be omitted in this mode of Verilog("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":6)
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":5)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":9)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":9)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":10)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":10)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":11)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":11)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":12)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":12)
+WARN  (EX3373) : Port 'tmds_internal' must not be declared to be an array("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":12)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":13)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":13)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":14)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":14)
+ERROR (EX3928) : Module 'serializer' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv":300)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\serializer.sv' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv'
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":36)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":40)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":45)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":49)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":54)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":58)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":7)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":8)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":9)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":12)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":12)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":13)
+ERROR (EX3872) : 'logic' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":13)
+WARN  (EX3373) : Port 'sub' must not be declared to be an array("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":13)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":16)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":17)
+ERROR (EX3444) : 'bit' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":18)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":26)
+ERROR (EX3805) : Concurrent assignment to a non-net 'packet_bytes' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":28)
+ERROR (EX3444) : 'byte' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\source_product_description_info_frame.sv":31)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv'
+ERROR (EX3863) : Syntax error near 'signed'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":22)
+ERROR (EX2656) : Verilog 2001 keyword 'signed' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":22)
+ERROR (EX3863) : Syntax error near 'signed'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":30)
+ERROR (EX2656) : Verilog 2001 keyword 'signed' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":30)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":36)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":37)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":38)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":39)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":40)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":41)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":42)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":43)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":44)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":45)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":47)
+ERROR (EX3863) : Syntax error near 'begin'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":55)
+ERROR (EX2656) : Verilog 2001 keyword 'begin' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":55)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":59)
+ERROR (EX3863) : Syntax error near '='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\hdmi\tmds_channel.sv":60)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\memory_controller.v'
+ERROR (EX3444) : 'int' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\memory_controller.v":3)
+ERROR (EX3928) : Module 'memory_controller' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\memory_controller.v":110)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\memory_controller.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v'
+ERROR (EX3805) : Concurrent assignment to a non-net 'SDRAM_A' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v":102)
+ERROR (EX3805) : Concurrent assignment to a non-net 'SDRAM_BA' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v":103)
+ERROR (EX3805) : Concurrent assignment to a non-net 'SDRAM_nWE' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v":104)
+ERROR (EX3805) : Concurrent assignment to a non-net 'SDRAM_nRAS' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v":105)
+ERROR (EX3805) : Concurrent assignment to a non-net 'SDRAM_nCAS' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v":106)
+ERROR (EX3805) : Concurrent assignment to a non-net 'SDRAM_DQM' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v":107)
+ERROR (EX3928) : Module 'sdram' is ignored due to previous errors("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v":293)
+Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\sdram.v' ignored due to errors
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v'
+Undeclared symbol 'clk_108m', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":67)
+Undeclared symbol 'clk_108m_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":68)
+Undeclared symbol 'rst_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":134)
+Undeclared symbol 'clk_135', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":139)
+Undeclared symbol 'cpuclk_w', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":362)
+ERROR (EX3863) : Syntax error near '@'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":396)
+ERROR (EX3863) : Syntax error near '<='("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":404)
+Undeclared symbol 'clk_audio_w', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":429)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":110)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":111)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":391)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":392)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":393)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":394)
+ERROR (EX3812) : 'vdp_cx' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":401)
+ERROR (EX3812) : 'vdp_cy' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":401)
+ERROR (EX3812) : 'pal_mode' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":402)
+ERROR (EX3812) : 'cx_ntsc' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":402)
+ERROR (EX3812) : 'cy_ntsc' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":402)
+ERROR (EX3812) : 'pal_mode' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":403)
+ERROR (EX3812) : 'cx_pal' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":403)
+ERROR (EX3812) : 'cy_pal' is not a constant("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":403)
+ERROR (EX3994) : Cannot assign to memory 'audio_sample_word_w' directly("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":445)
+ERROR (EX3998) : Cannot access memory 'audio_sample_word' directly("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":445)
+ERROR (EX3444) : 'logic' is an unknown type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\v9958_top.v":447)
+Sorry, too many errors..
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vram.v'
+Analyzing Verilog file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v'
+Undeclared symbol 'ex_bus_clk_3m6', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":169)
+WARN  (EX3638) : 'ex_bus_clk_3m6' is already implicitly declared on line 169("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":264)
+ERROR (EX3863) : Syntax error near '+'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":286)
+Undeclared symbol 'ex_msel', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":373)
+Undeclared symbol 'ex_bus_mp', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":374)
+Undeclared symbol 'ex_bus_m1_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":462)
+Undeclared symbol 'ex_bus_rfsh_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":463)
+Undeclared symbol 'ex_bus_data_reverse_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":464)
+Undeclared symbol 'ex_bus_rd_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":636)
+Undeclared symbol 'ex_bus_wr_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":638)
+Undeclared symbol 'ex_bus_iorq_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":639)
+Undeclared symbol 'ex_bus_mreq_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":640)
+Undeclared symbol 'flash_wait_n', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":734)
+Undeclared symbol 'vdp_int', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":739)
+WARN  (EX3638) : 'vdp_int' is already implicitly declared on line 739("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":983)
+Undeclared symbol 'audio_sample', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1014)
+Undeclared symbol 'config_enable_scanlines', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1023)
+Undeclared symbol 'VrmDbi2', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1032)
+WARN  (EX3638) : 'VrmDbi2' is already implicitly declared on line 1032("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1107)
+Undeclared symbol 'megaram_req', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1120)
+Undeclared symbol 'megaram_wrt', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1121)
+Undeclared symbol 'megaram_addr', assumed default net type 'wire'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1123)
+WARN  (EX2830) : Data object 'psgPB' is already declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1165)
+Previous declaration of 'psgPB' is from here("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1158)
+WARN  (EX3671) : Second declaration of 'psgPB' is ignored("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1165)
+WARN  (EX3796) : 'psgPB' was previously declared with a range("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1165)
+WARN  (EX3638) : 'megaram_req' is already implicitly declared on line 1120("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1298)
+WARN  (EX3638) : 'megaram_wrt' is already implicitly declared on line 1121("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1299)
+WARN  (EX3638) : 'megaram_addr' is already implicitly declared on line 1123("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1300)
+WARN  (EX3638) : 'audio_sample' is already implicitly declared on line 1014("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1341)
+WARN  (EX3638) : 'config_enable_scanlines' is already implicitly declared on line 1023("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1385)
+ERROR (EX3863) : Syntax error near 'begin'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1460)
+ERROR (EX2656) : Verilog 2001 keyword 'begin' used in incorrect context("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1460)
+WARN  (EX2950) : Extra semicolon is not allowed here in this dialect, use SystemVerilog mode instead("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1471)
+WARN  (EX3638) : 'flash_wait_n' is already implicitly declared on line 734("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1543)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1757)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1758)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1759)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1757)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1758)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1759)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1762)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1763)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1762)
+WARN  (EX3012) : Empty statement in sequential block("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1763)
+ERROR (EX3863) : Syntax error near '''("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1803)
+WARN  (EX2830) : Data object 'swio_req' is already declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1839)
+Previous declaration of 'swio_req' is from here("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1836)
+WARN  (EX3671) : Second declaration of 'swio_req' is ignored("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":1839)
+ERROR (EX3872) : 'ex_msel' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":373)
+ERROR (EX3872) : 'ex_bus_mp' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":374)
+ERROR (EX3805) : Concurrent assignment to a non-net 'bus_mp' is not permitted("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":395)
+ERROR (EX3872) : 'ex_bus_m1_n' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":462)
+ERROR (EX3872) : 'ex_bus_rfsh_n' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":463)
+ERROR (EX3872) : 'ex_bus_data_reverse_n' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":464)
+ERROR (EX3872) : 'vdp_csr_n' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":475)
+ERROR (EX3872) : 'vdp_csw_n' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":475)
+ERROR (EX3872) : 'ex_bus_rd_n' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":636)
+ERROR (EX3872) : 'ex_bus_wr_n' is not declared("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\top.v":638)
+Sorry, too many errors..
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_pack.vhd'
+Analyzing package 't80_pack'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_pack.vhd":58)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\T80s.vhd'
+Analyzing entity 't80s'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\T80s.vhd":73)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\T80s.vhd":102)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\g80a.vhd'
+Analyzing entity 'g80a'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\g80a.vhd":69)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\g80a.vhd":99)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80.vhd'
+Analyzing entity 't80'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80.vhd":73)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80.vhd":114)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_alu.vhd'
+Analyzing entity 't80_alu'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_alu.vhd":65)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_alu.vhd":92)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_mcode.vhd'
+Analyzing entity 't80_mcode'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_mcode.vhd":71)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_mcode.vhd":143)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_reg.vhd'
+Analyzing entity 't80_reg'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_reg.vhd":61)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\G80A\t80_reg.vhd":81)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\PSG_YM2149\YM2149.vhdl'
+Analyzing entity 'ym2149'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\PSG_YM2149\YM2149.vhdl":62)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\PSG_YM2149\YM2149.vhdl":94)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\denoise\denoise.vhd'
+Analyzing entity 'denoise'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\denoise\denoise.vhd":5)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\denoise\denoise.vhd":15)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\monostable\monostable.vhd'
+Analyzing entity 'monostable'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\monostable\monostable.vhd":7)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\monostable\monostable.vhd":18)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\gowin_clkdiv2\gowin_clkdiv2.vhd'
+Analyzing entity 'gowin_clkdiv2'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\gowin_clkdiv2\gowin_clkdiv2.vhd":13)
+Analyzing architecture 'behavioral'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\gowin_clkdiv2\gowin_clkdiv2.vhd":21)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd'
+Analyzing entity 'lpf1'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":39)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":52)
+Analyzing entity 'lpf2'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":102)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":115)
+Analyzing entity 'interpo_mul'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":183)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":194)
+Analyzing entity 'interpo'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":206)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\lpf.vhd":219)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\scc_wave2.vhd'
+Analyzing entity 'scc_wave_mul'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\scc_wave2.vhd":39)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\scc_wave2.vhd":47)
+Analyzing entity 'scc_mix_mul'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\scc_wave2.vhd":59)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\scc_wave2.vhd":67)
+Analyzing entity 'scc_wave2'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\scc_wave2.vhd":79)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\scc_wave2.vhd":94)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_package.vhd'
+Analyzing package 'vdp_package'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_package.vhd":82)
+WARN  (EX4319) : Shared variables must be of a protected type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_package.vhd":116)
+WARN  (EX4319) : Shared variables must be of a protected type("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_package.vhd":117)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\swioports.vhd'
+Analyzing entity 'switched_io_ports'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\swioports.vhd":38)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\ocm\swioports.vhd":125)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\usb_keyboard_msx.vhd'
+Analyzing entity 'usb_keyboard_msx'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\usb_keyboard_msx.vhd":9)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\src\usb\usb_keyboard_msx.vhd":28)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\ram.vhd'
+Analyzing entity 'ram'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\ram.vhd":37)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\ram.vhd":47)
+Analyzing entity 'palette_rb'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\ram.vhd":73)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\ram.vhd":83)
+Analyzing entity 'palette_g'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\ram.vhd":128)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\ram.vhd":138)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp.vhd'
+Analyzing entity 'vdp'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp.vhd":254)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp.vhd":312)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_colordec.vhd'
+Analyzing entity 'vdp_colordec'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_colordec.vhd":68)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_colordec.vhd":114)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_command.vhd'
+Analyzing entity 'vdp_command'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_command.vhd":67)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_command.vhd":105)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_doublebuf.vhd'
+Analyzing entity 'vdp_doublebuf'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_doublebuf.vhd":80)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_doublebuf.vhd":96)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_graphic123m.vhd'
+Analyzing entity 'vdp_graphic123m'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_graphic123m.vhd":86)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_graphic123m.vhd":117)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_graphic4567.vhd'
+Analyzing entity 'vdp_graphic4567'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_graphic4567.vhd":97)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_graphic4567.vhd":137)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_hvcounter.vhd'
+Analyzing entity 'vdp_hvcounter'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_hvcounter.vhd":67)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_hvcounter.vhd":90)
+WARN  (EX4967) : Cannot read from 'out' object 'hdmi_reset', use 'buffer' or 'inout' instead("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_hvcounter.vhd":160)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_interrupt.vhd'
+Analyzing entity 'vdp_interrupt'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_interrupt.vhd":65)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_interrupt.vhd":82)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_linebuf.vhd'
+Analyzing entity 'vdp_linebuf'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_linebuf.vhd":89)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_linebuf.vhd":99)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_ntsc_pal.vhd'
+Analyzing entity 'vdp_ntsc_pal'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_ntsc_pal.vhd":96)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_ntsc_pal.vhd":119)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_register.vhd'
+Analyzing entity 'vdp_register'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_register.vhd":89)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_register.vhd":205)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_spinforam.vhd'
+Analyzing entity 'vdp_spinforam'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_spinforam.vhd":88)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_spinforam.vhd":98)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_sprite.vhd'
+Analyzing entity 'vdp_sprite'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_sprite.vhd":183)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_sprite.vhd":233)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_ssg.vhd'
+Analyzing entity 'vdp_ssg'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_ssg.vhd":69)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_ssg.vhd":111)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_text12.vhd'
+Analyzing entity 'vdp_text12'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_text12.vhd":104)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_text12.vhd":137)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_vga.vhd'
+Analyzing entity 'vdp_vga'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_vga.vhd":102)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_vga.vhd":131)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_wait_control.vhd'
+Analyzing entity 'vdp_wait_control'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_wait_control.vhd":59)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vdp_wait_control.vhd":78)
+Analyzing VHDL file 'D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vencode.vhd'
+Analyzing entity 'vencode'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vencode.vhd":37)
+Analyzing architecture 'rtl'("D:\Users\HeroineFactory\Documents\GIT\MSXNano-Z80X\fpga\tn_vdp_v3_v9958\src\vdp\vencode.vhd":57)
+GowinSynthesis finish
