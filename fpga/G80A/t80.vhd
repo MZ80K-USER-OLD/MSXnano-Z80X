@@ -453,6 +453,19 @@ begin
         ALU_Q;
 
     process (RESET_n, CLK_n)
+        -- LUT reduction: every Addr24_Inc/Addr24_Dec/Addr24_AddDisp16 call
+        -- site below previously called the SAME function TWICE with
+        -- IDENTICAL arguments (once sliced to (23 downto 16) for the bank
+        -- byte, once to (15 downto 0) for the 16bit word) - two separate
+        -- non-blocking assignments to two different target signals, which
+        -- synthesis does not always recognize as one shared computation.
+        -- This single process-local variable lets each occurrence compute
+        -- the 24bit result ONCE and split it, halving the number of 24bit
+        -- adders these sites need (12 occurrences total: PC24 fetch
+        -- auto-increment x2, JR.L displacement add, and MSP24 adjustment
+        -- for the generic SP/IncDec_16 path, PUSH24/POP24, CALL.L/RET.L,
+        -- CALL.M0/M1/CALL.M2/RET.M).
+        variable addr24_tmp : std_logic_vector(23 downto 0);
     begin
         if RESET_n = '0' then
             PC <= (others => '0');  -- Program Counter
@@ -559,8 +572,9 @@ begin
                         -- below, which only consult bank_pc_r when
                         -- mode24_r="10").
                         if mode24_r = "10" then
-                            bank_pc_r <= Addr24_Inc(bank_pc_r, std_logic_vector(PC))(23 downto 16);
-                            PC <= unsigned(Addr24_Inc(bank_pc_r, std_logic_vector(PC))(15 downto 0));
+                            addr24_tmp := Addr24_Inc(bank_pc_r, std_logic_vector(PC));
+                            bank_pc_r <= addr24_tmp(23 downto 16);
+                            PC <= unsigned(addr24_tmp(15 downto 0));
                         else
                             PC <= PC + 1;
                         end if;
@@ -1045,8 +1059,9 @@ begin
                         -- anticipated for exactly this purpose since
                         -- Phase2).
                         if mode24_r = "10" then
-                            bank_pc_r <= Addr24_AddDisp16(bank_pc_r, std_logic_vector(PC), TmpAddr)(23 downto 16);
-                            PC <= unsigned(Addr24_AddDisp16(bank_pc_r, std_logic_vector(PC), TmpAddr)(15 downto 0));
+                            addr24_tmp := Addr24_AddDisp16(bank_pc_r, std_logic_vector(PC), TmpAddr);
+                            bank_pc_r <= addr24_tmp(23 downto 16);
+                            PC <= unsigned(addr24_tmp(15 downto 0));
                         else
                             PC <= unsigned(signed(PC) + signed(TmpAddr));
                         end if;
@@ -1058,8 +1073,9 @@ begin
                         -- immediate data) of the SAME instruction, equally
                         -- part of ordinary sequential instruction fetching.
                         if mode24_r = "10" then
-                            bank_pc_r <= Addr24_Inc(bank_pc_r, std_logic_vector(PC))(23 downto 16);
-                            PC <= unsigned(Addr24_Inc(bank_pc_r, std_logic_vector(PC))(15 downto 0));
+                            addr24_tmp := Addr24_Inc(bank_pc_r, std_logic_vector(PC));
+                            bank_pc_r <= addr24_tmp(23 downto 16);
+                            PC <= unsigned(addr24_tmp(15 downto 0));
                         else
                             PC <= PC + 1;
                         end if;
@@ -1147,11 +1163,13 @@ begin
                         -- register completely untouched by M2 execution.
                         if mode24_r = "10" then
                             if IncDec_16(3) = '1' then
-                                bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                                MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                                addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
+                                bank_msp_r <= addr24_tmp(23 downto 16);
+                                MSP <= unsigned(addr24_tmp(15 downto 0));
                             else
-                                bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                                MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                                addr24_tmp := Addr24_Inc(bank_msp_r, std_logic_vector(MSP));
+                                bank_msp_r <= addr24_tmp(23 downto 16);
+                                MSP <= unsigned(addr24_tmp(15 downto 0));
                             end if;
                         else
                             if IncDec_16(3) = '1' then
@@ -1192,14 +1210,16 @@ begin
                     when x"C5" | x"D5" | x"E5" =>  -- PUSH24 BC/DE/HL
                         if (TState = 4 and MCycle = "0001") or
                            (TState = 2 and Wait_n = '1' and (MCycle = "0010" or MCycle = "0011")) then
-                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
                     when x"C1" | x"D1" | x"E1" =>  -- POP24 BC/DE/HL
                         if TState = 2 and Wait_n = '1' and
                            (MCycle = "0010" or MCycle = "0011" or MCycle = "0100") then
-                            bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                            MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            addr24_tmp := Addr24_Inc(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
                     -- Phase11: CALL.L addr24 / CALL.L cc,addr24 MSP24
                     -- pointer adjustment, same pattern as PUSH24 above
@@ -1227,8 +1247,9 @@ begin
                         if ((TState = 3 and MCycle = "0100") or
                            (TState = 2 and Wait_n = '1' and (MCycle = "0101" or MCycle = "0110"))) and
                            Set_Addr_To = aMSP then
-                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
                     -- Phase11: RET.L / RET.L cc MSP24 pointer adjustment,
                     -- identical pattern to POP24 above (RET.L's pop phase
@@ -1237,8 +1258,9 @@ begin
                     when x"C9" | x"C0" | x"C8" | x"D0" | x"D8" | x"E0" | x"E8" | x"F0" | x"F8" =>
                         if TState = 2 and Wait_n = '1' and
                            (MCycle = "0010" or MCycle = "0011" or MCycle = "0100") then
-                            bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                            MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            addr24_tmp := Addr24_Inc(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
                     -- Phase12: CALL.M0/M1 addr16 MSP24 pointer adjustment.
                     -- 4 decrements (one more than CALL.L's 3, for the
@@ -1254,8 +1276,9 @@ begin
                     when x"96" | x"97" =>
                         if (TState = 3 and MCycle = "0011") or
                            (TState = 2 and Wait_n = '1' and (MCycle = "0100" or MCycle = "0101" or MCycle = "0110")) then
-                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
                     -- Phase12: CALL.M2 addr24 MSP24 pointer adjustment.
                     -- Same 4-decrement shape as CALL.M0/M1 above, but
@@ -1268,8 +1291,9 @@ begin
                     when x"98" =>
                         if (TState = 3 and MCycle = "0100") or
                            (TState = 2 and Wait_n = '1' and (MCycle = "0101" or MCycle = "0110" or MCycle = "0111")) then
-                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
                     -- Phase12: RET.M MSP24 pointer adjustment. 4
                     -- increments (one more than RET.L's 3, for the extra
@@ -1278,8 +1302,9 @@ begin
                     when x"99" =>
                         if TState = 2 and Wait_n = '1' and
                            (MCycle = "0010" or MCycle = "0011" or MCycle = "0100" or MCycle = "0101") then
-                            bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
-                            MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            addr24_tmp := Addr24_Inc(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
                     when others => null;
                     end case;
