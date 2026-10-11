@@ -15,9 +15,9 @@
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
-| `ED 90` | `SET_M0` | 完全 Z80 互換モードへ移行 | 実装済み（HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成と連動、PC/SPアドレス生成とは未連動） |
-| `ED 91` | `SET_M1` | データアクセス拡張モードへ移行 | 実装済み（HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成と連動、PC/SPアドレス生成とは未連動） |
-| `ED 92` | `SET_M2` | 24bit ネイティブ動作モードへ移行 | 実装済み（HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成と連動、PC/SPアドレス生成とは未連動） |
+| `ED 90` | `SET_M0` | 完全 Z80 互換モードへ移行 | 実装済み（HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成と連動。PC/SPアドレス生成はM0では元々plain 16bitのまま） |
+| `ED 91` | `SET_M1` | データアクセス拡張モードへ移行 | 実装済み（HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成と連動。PC/SPアドレス生成はM1では元々plain 16bitのまま、CPU仕様書V8どおり） |
+| `ED 92` | `SET_M2` | 24bit ネイティブ動作モードへ移行 | 実装済み（Phase10。HL/BC/DE/(IX+d)/(IY+d)の24bitデータアドレス生成に加え、PC24命令フェッチとMSP24アクティブスタックポインタとも連動。M0/M1→M2遷移時は`PC_B`(`bank_pc_r`)を00hへリセットし、M2→M2（再実行）では保持。詳細は下記「8. M2基本動作」参照） |
 | `ED 93` | `JP.M0 addr16` | M0へモード遷移ジャンプ | 未実装 |
 | `ED 94` | `JP.M1 addr16` | M1へモード遷移ジャンプ | 未実装 |
 | `ED 95` | `JP.M2 addr24` | M2へモード遷移ジャンプ | 未実装 |
@@ -178,7 +178,25 @@ bank境界をまたぐ使用は本問題が解決されるまで避けてくだ�
 
 ---
 
-## 8. 24bit制御（JR.L / JP.L / CALL.L / RET.L）
+## 8. M2基本動作（PC24フェッチ / MSPアクティブスタック）
+
+CPU仕様書V8セクション2「MODE」が定義するM2モード（`PC: 24bit`、`Active stack: MSP24`）の基本動作。新規opcodeの追加ではなく、既存のT80共有機構（PC自動インクリメント、`aSP`アドレス生成、SP用`IncDec_16`機構）がM2実行時にのみ条件分岐で経路を切り替える形で実装されています。
+
+| 項目 | 内容 | 状態 |
+|---|---|---|
+| PC24命令フェッチ | M2では`PC24={bank_pc_r,PC}`として、通常の命令フェッチ（オペコードbyte・オペランドbyteの自動インクリメント）が[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Addr24_Inc`経由で24bit演算になり、PCが0xFFFF→0x0000をまたぐ際に`bank_pc_r`が正しく繰り上がる | 実装済み（GHDL検証済み、実機未検証） |
+| `SET_M2`のPC_B挙動 | M0/M1→M2遷移時は`bank_pc_r`を00hへリセットし、M2→M2（既にM2の状態での再実行）では`bank_pc_r`を保持（CPU仕様書V8「SET_M2はM0/M1→M2でPC_B<-00h、M2→M2ではPC_B保持」） | 実装済み（GHDL検証済み、実機未検証） |
+| MSP24アクティブスタック | M2では、既存のZ80標準`PUSH qq`/`POP qq`/`EX (SP),HL/IX/IY`/`CALL`/`CALL cc`/`RET`/`RET cc`/`RST p`が、通常のSPではなくMSP24（`bank_msp_r`+`MSP`）を使うようになる。転送byte数は2byteのまま（bank byte自体はPUSH24/POP24と異なりdataとして転送されない）で、MSP24自体は[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Addr24_Dec`/`Addr24_Inc`で64KB境界をまたいで正しく繰り上がり/繰り下がりする | 実装済み（GHDL検証済み、実機未検証） |
+
+- 実装は、既存の`aSP`（Set_Addr_To）ケースと、SP用`IncDec_16(2 downto 0)="111"`インクリメント/デクリメント機構の両方に`if mode24_r = "10" then ... (MSP24側) ... else ... (従来のSP) ... end if;`を追加しただけで、[t80_mcode.vhd](fpga/G80A/t80_mcode.vhd)には一切手を加えていません。これにより、`aSP`を使う既存命令（PUSH/POP qq、EX (SP),HL/IX/IY、CALL/CALL cc/RET/RET cc/RST p、および未実装のPhase13 M2割込みが実装されるまで暫定的にこの2byte機構へフォールスルーするNMI/INT(IM2)/RETI/RETN）が自動的にMSP24対応になります。
+- 既存のZ80標準`SP`レジスタ自体はM2実行中も一切変更されません（GHDLテストベンチで`ADD HL,SP`トリックを使い、M2でのPUSH/POP前後でSPが完全に不変であることを確認済み）。
+- PC24のバンクbyteが影響するのは「通常の順次フェッチ」のみです。`JP`/`JR`/`CALL`/`RST`等の分岐・ジャンプ命令は、CPU仕様書V8の「既存Z80命令が16bit即値アドレスを生成する場合はbank00と解釈する」規定に従い、ジャンプ/コール先は引き続きbank00hへ固定されます（`bank_pc_r`もこれらの命令の直後に00hへリセットされ、次の命令フェッチが正しいバンクを使えるようにしています）。ただし、これらの命令自身のPCアドレス計算（JR/DJNZの相対変位、ブロック転送命令の繰り返し用アドレス補正等）自体を24bit対応にする作業はPhase11「M2制御フロー」の範囲として未着手です。M2でJR/DJNZ等が64KB境界をまたぐケースでは`bank_pc_r`が正しく追従しない既知の制限があります。
+- 新規追加した割込み関連opcode(`DD/FD ED26/2E`相当の二重プレフィクス、JP.L/CALL.L/RET.L等)は本フェーズの対象外です。M2割込み（IRQ→IVR24、NMI→NVR24、4byte MSP frame）はPhase13の範囲で、現状のNMI/INT(IM2)/RETI/RETNは上記の2byte MSP機構へ暫定的にフォールスルーするのみで、Phase13仕様の4byte frameとは一致しません。
+- GHDLテストベンチ: [tb_phase10_m2_basic.vhd](fpga/G80A/test/tb_phase10_m2_basic.vhd)（SET_M2のPC_Bリセット/保持、PC24の64KB境界またぎ時の繰り上がり、MSP24を使った通常PUSH/POPの2byte転送とSP不変を検証済み）。
+
+---
+
+## 9. 24bit制御（JR.L / JP.L / CALL.L / RET.L）
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
@@ -196,7 +214,7 @@ bank境界をまたぐ使用は本問題が解決されるまで避けてくだ�
 
 ---
 
-## 9. RST拡張（RST.L）
+## 10. RST拡張（RST.L）
 
 `RST_B`がRST.L用8bit bankレジスタ（上記「2. バンクレジスタ」参照）。M0/M1では対応する通常Z80 RST（return PCは16bit）、M2ではreturn PC24をMSPへ3byte pushし`PC24={RST_B,00h,vector}`。
 
@@ -211,7 +229,7 @@ bank境界をまたぐ使用は本問題が解決されるまで避けてくだ�
 
 ---
 
-## 10. 割り込み（M2拡張）
+## 11. 割り込み（M2拡張）
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
@@ -221,7 +239,7 @@ bank境界をまたぐ使用は本問題が解決されるまで避けてくだ�
 
 ---
 
-## 11. 標準 Z80 ブロック転送 / I/O
+## 12. 標準 Z80 ブロック転送 / I/O
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
@@ -233,11 +251,11 @@ bank境界をまたぐ使用は本問題が解決されるまで避けてくだ�
 
 ---
 
-## 12. バンクマッピング / MMU I/O ポート
+## 13. バンクマッピング / MMU I/O ポート
 
 **デフォルトビルドの標準仕様（MMUなし）:** 24bit論理アドレスのバンクバイト（A23:A16、`A_Bank`/`cpu_addr24[23:16]`）は、変換テーブルを介さず**そのまま**物理バンクバイトとして使われます（straight-through mapping、[top.v](fpga/top.v)の`assign mmu_physical_bank = cpu_addr24[23:16];`）。論理bank00h（Z80互換空間）は例外的に既存のMSX互換スロット/BIOS/マッパー経路をそのまま使い、常に読み書き可能です。それ以外の論理bank（01h〜1Bh、27バンク）はそのまま同じ値の物理bankとしてSD-RAM拡張メモリ領域（詳細は[SDRAMメモリマップ.md](doc/jpn/SDRAMメモリマップ.md)2.2章）へ直結され、write protectionなしで常に読み書き可能です。F0h/F1h/F2h等のMMU I/Oポートはデフォルトビルドには存在しません。
 
-### 12.1 オプション機能：MMU（論理→物理バンク変換・write protection）
+### 13.1 オプション機能：MMU（論理→物理バンク変換・write protection）
 
 24bit論理アドレスのバンクバイトを物理バンクへ変換するLUT（[mmu24.vhd](fpga/G80A/mmu24.vhd)）を、オプションの追加機能として用意しています。変換そのものは非同期lookupで、追加のWAIT/T-stateは発生しません。**本リポジトリに実装・GHDL検証済みの状態で同梱されていますが、デフォルトビルドの`top.v`からは呼び出されておらず（`MSXNanoTang20K_Z80X24.gprj`でも`enable="0"`）、合成結果には含まれません。** これは、Tang Nano 20K上の現在のFPGA面積配分ではブートROM等の既存IPがBSRAMを全消費しており、MMUの256エントリテーブルがLUTベースの distributed RAMへfallbackしてLUT/Register使用率をそれぞれ約12〜13ポイント押し上げていたためです。BSRAMに余裕のある構成では、`mmu24.vhd`冒頭コメントおよび[top.v](fpga/top.v)の該当コメントの手順に従って再度有効化できます。
 

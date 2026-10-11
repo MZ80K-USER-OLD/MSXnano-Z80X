@@ -491,7 +491,24 @@ begin
                     end if;
 
                     if Jump = '0' and Call = '0' and NMICycle = '0' and IntCycle = '0' and not (Halt_FF = '1' or Halt = '1') then
-                        PC <= PC + 1;
+                        -- Phase10: M2 PC24 fetch. In M2, PC is a true
+                        -- 24bit counter (PC24={bank_pc_r,PC}); the normal
+                        -- opcode-fetch auto-increment must carry/borrow
+                        -- into bank_pc_r when PC wraps 0xFFFF->0x0000,
+                        -- using the same Addr24_Inc function already used
+                        -- by Phase9's MSP24 and Phase3's IX/IY+d (see
+                        -- t80_pack.vhd). M0/M1 keep the original plain
+                        -- 16bit PC+1 (bank_pc_r is simply unused for
+                        -- fetch addressing in those modes - see the
+                        -- Set_Addr_To "others"/aXY NextIs_XY_Fetch cases
+                        -- below, which only consult bank_pc_r when
+                        -- mode24_r="10").
+                        if mode24_r = "10" then
+                            bank_pc_r <= Addr24_Inc(bank_pc_r, std_logic_vector(PC))(23 downto 16);
+                            PC <= unsigned(Addr24_Inc(bank_pc_r, std_logic_vector(PC))(15 downto 0));
+                        else
+                            PC <= PC + 1;
+                        end if;
                     end if;
 
                     if IntCycle = '1' and IStatus = "01" then
@@ -546,20 +563,39 @@ begin
                         A(7 downto 0) <= TmpAddr(7 downto 0);
                         PC(15 downto 8) <= unsigned(DI_Reg);
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        -- Phase10: JP/JR cc nn and other instructions that
+                        -- generate a plain 16bit immediate target always
+                        -- mean bank00h, in every mode (CPU仕様書V8 section 5:
+                        -- "M2で既存Z80命令が16bit即値メモリアドレスを生成する
+                        -- 場合はbank00と解釈する"). bank_pc_r must be kept in
+                        -- sync here (not just the A_Bank_r default above),
+                        -- since the NEXT instruction's own PC24 auto-
+                        -- increment reads bank_pc_r directly - leaving it
+                        -- stale here would corrupt every subsequent fetch
+                        -- after a jump executed in M2. JP (HL)/(IX)/(IY)
+                        -- (JumpXY) and CALL/RST targets (Call/RstP) below
+                        -- get the same treatment for the same reason. Far
+                        -- jump/call variants (JP.L/CALL.L, Phase11) are not
+                        -- implemented yet and are unaffected by this.
+                        bank_pc_r <= (others => '0');
                     elsif JumpXY = '1' then
                         A <= RegBusC;
                         PC <= unsigned(RegBusC);
+                        bank_pc_r <= (others => '0');
                     elsif Call = '1' or RstP = '1' then
                         A <= TmpAddr;
                         PC <= unsigned(TmpAddr);
+                        bank_pc_r <= (others => '0');
                     elsif MCycle = MCycles and NMICycle = '1' then
                         A <= "0000000001100110";
                         PC <= "0000000001100110";
+                        bank_pc_r <= (others => '0');
                     elsif MCycle = "011" and IntCycle = '1' and IStatus = "10" then
                         A(15 downto 8) <= I;
                         A(7 downto 0) <= TmpAddr(7 downto 0);
                         PC(15 downto 8) <= unsigned(I);
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        bank_pc_r <= (others => '0');
                     else
                         case Set_Addr_To is
                         when aXY =>
@@ -573,6 +609,15 @@ begin
                             else
                                 if NextIs_XY_Fetch = '1' then
                                     A <= std_logic_vector(PC);
+                                    -- Phase10: fetching the DD/FD-prefixed
+                                    -- opcode's own next byte is still part
+                                    -- of ordinary sequential instruction
+                                    -- fetch, so it needs PC24/bank_pc_r in
+                                    -- M2 exactly like the generic "when
+                                    -- others" fetch case below.
+                                    if mode24_r = "10" then
+                                        A_Bank_r <= bank_pc_r;
+                                    end if;
                                 else
                                     A <= TmpAddr;
                                     -- Phase3: (IX/IY+d) effective address;
@@ -595,7 +640,28 @@ begin
                             end if;
                             A(7 downto 0) <= DI_Reg;
                         when aSP =>
-                            A <= std_logic_vector(SP);
+                            -- Phase10: M2 active stack pointer = MSP24
+                            -- (CPU仕様書V8 section 2/9: "M2 Active stack =
+                            -- MSP24"). This single case covers every
+                            -- existing Z80 instruction that already goes
+                            -- through aSP - PUSH/POP qq, EX (SP),HL/IX/IY,
+                            -- CALL/RET/RET cc/RST p, and (incidentally,
+                            -- still non-functional pending Phase13's M2
+                            -- interrupt frame) NMI/INT/RETI - with zero
+                            -- t80_mcode.vhd changes. Only the low 16bit
+                            -- word is used as the Z80-style stack address;
+                            -- the physical bank comes from bank_msp_r (see
+                            -- the SP/MSP adjustment mechanism below for the
+                            -- matching Addr24_Dec/Addr24_Inc carry/borrow
+                            -- across 64KB, mirroring Phase9's PUSH24/POP24
+                            -- but applied once per byte instead of the
+                            -- bank byte also being transferred as data).
+                            if mode24_r = "10" then
+                                A <= std_logic_vector(MSP);
+                                A_Bank_r <= bank_msp_r;
+                            else
+                                A <= std_logic_vector(SP);
+                            end if;
                         when aMSP =>
                             -- Phase9: PUSH24/POP24 (ED C1/C5/D1/D5/E1/E5)
                             -- address source. MSP24 is always a 24bit
@@ -634,6 +700,16 @@ begin
                             end if;
                         when others =>
                             A <= std_logic_vector(PC);
+                            -- Phase10: generic opcode-fetch / operand-byte
+                            -- fetch address (M1 cycles and most multi-byte
+                            -- operand reads). This is the main path that
+                            -- needs PC24/bank_pc_r in M2; M0/M1 keep the
+                            -- existing plain-16bit behaviour (A_Bank_r
+                            -- stays at its 00h default from the top of
+                            -- this block).
+                            if mode24_r = "10" then
+                                A_Bank_r <= bank_pc_r;
+                            end if;
                         end case;
                     end if;
 
@@ -674,7 +750,18 @@ begin
                     if JumpE = '1' then
                         PC <= unsigned(signed(PC) + signed(DI_Reg));
                     elsif Inc_PC = '1' then
-                        PC <= PC + 1;
+                        -- Phase10: M2 PC24 fetch, same Addr24_Inc carry
+                        -- treatment as the opcode-fetch auto-increment
+                        -- above - this is the auto-increment used while
+                        -- fetching subsequent bytes (operands, displacement,
+                        -- immediate data) of the SAME instruction, equally
+                        -- part of ordinary sequential instruction fetching.
+                        if mode24_r = "10" then
+                            bank_pc_r <= Addr24_Inc(bank_pc_r, std_logic_vector(PC))(23 downto 16);
+                            PC <= unsigned(Addr24_Inc(bank_pc_r, std_logic_vector(PC))(15 downto 0));
+                        else
+                            PC <= PC + 1;
+                        end if;
                     end if;
                     if BTR_r = '1' then
                         PC <= PC - 2;
@@ -707,10 +794,33 @@ begin
 
                 if (TState = 2 and Wait_n = '1') or (TState = 4 and MCycle = "001") then
                     if IncDec_16(2 downto 0) = "111" then
-                        if IncDec_16(3) = '1' then
-                            SP <= SP - 1;
+                        -- Phase10: M2 active stack pointer = MSP24. This
+                        -- is the matching half of the aSP->MSP24 address
+                        -- redirect above: every existing Z80 instruction
+                        -- that increments/decrements "SP" via this shared
+                        -- mechanism (PUSH/POP qq, EX (SP),HL/IX/IY, CALL/
+                        -- RET/RET cc/RST p, and incidentally NMI/INT/RETI
+                        -- pending Phase13) adjusts MSP24 instead when in
+                        -- M2, using the same Addr24_Dec/Addr24_Inc 24bit
+                        -- carry/borrow already used by Phase9's PUSH24/
+                        -- POP24 - so a deep M2 stack can correctly span
+                        -- multiple 64KB banks. Only bank_msp_r/MSP are
+                        -- touched here (never SP), keeping M0/M1's SP
+                        -- register completely untouched by M2 execution.
+                        if mode24_r = "10" then
+                            if IncDec_16(3) = '1' then
+                                bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                                MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            else
+                                bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                                MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                            end if;
                         else
-                            SP <= SP + 1;
+                            if IncDec_16(3) = '1' then
+                                SP <= SP - 1;
+                            else
+                                SP <= SP + 1;
+                            end if;
                         end if;
                     end if;
                 end if;
@@ -859,7 +969,19 @@ begin
                         case IR is
                         when x"90" => mode24_r <= "00";
                         when x"91" => mode24_r <= "01";
-                        when x"92" => mode24_r <= "10";
+                        when x"92" =>
+                            mode24_r <= "10";
+                            -- Phase10: SET_M2 (CPU仕様書V8 section 2:
+                            -- "SET_M2はM0/M1→M2でPC_B<-00h、M2→M2では
+                            -- PC_B保持"). mode24_r here still holds the
+                            -- PRE-transition value (non-blocking read,
+                            -- same cycle as the mode24_r<="10" write
+                            -- above), so "/= 10" correctly distinguishes
+                            -- M0/M1->M2 (reset bank_pc_r) from a redundant
+                            -- M2->M2 SET_M2 (leave bank_pc_r untouched).
+                            if mode24_r /= "10" then
+                                bank_pc_r <= (others => '0');
+                            end if;
                         when x"04" => bank_bc_r <= ACC;    -- LD BC_B,A
                         when x"14" => bank_de_r <= ACC;    -- LD DE_B,A
                         when x"24" => bank_hl_r <= ACC;    -- LD HL_B,A

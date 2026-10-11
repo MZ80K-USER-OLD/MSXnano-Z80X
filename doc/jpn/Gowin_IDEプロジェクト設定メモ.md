@@ -11,6 +11,13 @@ IDEのプロジェクトファイルには永続化されず、**IDEのローカ
 
 設定場所はいずれも Gowin IDE メニューの **Project → Configuration** ダイアログ。
 
+## 発生履歴（再発確認）
+
+- **2026-10-11**: Phase10実装後にプロジェクトを開いたところ、Verilog Language（System
+  Verilog 2017）・Topモジュール（`top`）・Dual-Purpose Pin（Use MSPI/SSPI as
+  GPIO）の3設定すべてが未設定状態（デフォルトに戻った状態）になっていることを確認。やはり
+  `.gprj`/`.gprj.user`のどちらにも保存されない、IDEローカル状態のみの設定であることが再確認された。本ドキュメントの下記設定値どおりに都度復元が必要。
+
 ## 1. Dual-Purpose Pin（Place & Route タブ）
 
 **設定箇所:** Project → Configuration → Place & Route → Dual-Purpose Pin
