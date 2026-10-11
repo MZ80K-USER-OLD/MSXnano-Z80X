@@ -142,6 +142,40 @@ entity T80_MCode is
                 -- from MSP24 (same read order as Phase9's POP24) and
                 -- jumps to it.
                 RetL        : out std_logic;
+                -- Phase12: JP.M0/M1 addr16 (ED 93/94). Mode-switching
+                -- jump: identical fetch/trigger shape to plain 'Jump'
+                -- (TmpAddr low via LDZ + DI_Reg high, no 3rd byte so no
+                -- LDW needed), but ALSO unconditionally switches
+                -- mode24_r to M0/M1 (distinguished by IR in t80.vhd) and
+                -- resets bank_pc_r to 00h (CPU仕様書V8 roadmap Phase12
+                -- "モード間制御" - addr16 targets are always bank00h).
+                JumpM01     : out std_logic;
+                -- Phase12: JP.M2 addr24 (ED 95). Same 3byte fetch shape
+                -- as JP.L (TmpAddr low/high via LDZ/LDW + DI_Reg bank),
+                -- but UNCONDITIONALLY switches mode24_r to M2 and applies
+                -- the fetched bank byte (unlike JP.L, which only applies
+                -- the bank byte when ALREADY in M2 and leaves mode24_r
+                -- untouched).
+                JumpM2      : out std_logic;
+                -- Phase12: CALL.M0/M1 addr16 (ED 96/97). Same 2byte
+                -- fetch shape as plain 'CALL nn' (TmpAddr low/high via
+                -- LDZ/LDW), but pushes a 4byte return frame (MODE/PC_B/
+                -- PC_H/PC_L, same decrement-before-write pattern as
+                -- Phase11's CALL.L with MODE prepended - CPU仕様書V8
+                -- roadmap Phase12 "CALL.MxはMSPへ4byte保存する") to MSP24,
+                -- then switches mode24_r to M0/M1 (distinguished by IR)
+                -- and resets bank_pc_r to 00h. CALL.M2 addr24 (ED 98,
+                -- needing an 8th MCycle beyond the 3bit MCycle counter's
+                -- max of 7) is deferred - see AVAILABLE_INSTRUCTIONS.md.
+                CallM01     : out std_logic;
+                -- Phase12: RET.M (ED 99). Pops the matching 4byte frame
+                -- (LOW/HIGH/BANK/MODE, same increment-after-read pattern
+                -- as Phase11's RET.L with MODE appended) from MSP24 and
+                -- restores BOTH PC24 and mode24_r from the popped MODE
+                -- byte (the only one of these new Phase12 opcodes that
+                -- restores a previously-saved mode rather than hardcoding
+                -- M0/M1/M2).
+                RetM        : out std_logic;
                 RstP        : out std_logic;
                 LDZ         : out std_logic;
                 LDW         : out std_logic;
@@ -288,6 +322,10 @@ begin
                 Call <= '0';
                 CallL <= '0';
                 RetL <= '0';
+                JumpM01 <= '0';
+                JumpM2 <= '0';
+                CallM01 <= '0';
+                RetM <= '0';
                 RstP <= '0';
                 LDZ <= '0';
                 LDW <= '0';
@@ -1646,8 +1684,9 @@ begin
 
                                 |"10000000"|"10000001"|"10000010"|"10000011"|"10000100"|"10000101"|"10000110"|"10000111"
                                 |"10001000"|"10001001"|"10001010"|"10001011"|"10001100"|"10001101"|"10001110"|"10001111"
-                                |"10010000"|"10010001"|"10010010"|"10010011"|"10010100"|"10010101"|"10010110"|"10010111"
-                                |"10011000"|"10011001"|"10011010"|"10011011"|"10011100"|"10011101"|"10011110"|"10011111"
+                                |"10010000"|"10010001"|"10010010"
+                                |"10011000"
+                                |"10011010"|"10011011"|"10011100"|"10011101"|"10011110"|"10011111"
                                 |                                            "10100100"|"10100101"|"10100110"
                                 |                                            "10101100"|"10101101"|"10101110"
                                 |                                            "10110100"|"10110101"|"10110110"
@@ -1661,6 +1700,170 @@ begin
                                 |"11110001"|"11110101"|"11110110"|"11110111"
                                 |"11111001"|"11111011"|"11111101"|"11111110"|"11111111" =>
                                 null; -- NOP, undocumented
+                        -- Phase12: ED 98 (CALL.M2 addr24) is DEFERRED -
+                        -- needs 8 MCycles (1 opcode + 3 addr24 fetch + 4
+                        -- frame push), exceeding the 3bit MCycle
+                        -- counter's max representable value of 7 (see
+                        -- AVAILABLE_INSTRUCTIONS.md section 14 for the
+                        -- full writeup). Left as NOP/undocumented for now.
+                        when "10010011" =>
+                                -- Phase12: JP.M0 addr16 (ED 93). Mode-
+                                -- switching jump: identical 3cycle fetch/
+                                -- trigger shape to plain 'JP nn' (M2=low
+                                -- byte+LDZ, M3=high byte - DI_Reg used
+                                -- directly, no LDW needed since there is
+                                -- no 3rd byte - +JumpM01). t80.vhd's
+                                -- JumpM01 branch checks IR to decide M0 vs
+                                -- M1 and always resets bank_pc_r to 00h
+                                -- (addr16 target = bank00h, CPU仕様書V8's
+                                -- general rule).
+                                MCycles <= "011";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        JumpM01 <= '1';
+                                when others => null;
+                                end case;
+                        when "10010100" =>
+                                -- Phase12: JP.M1 addr16 (ED 94). Same
+                                -- shape as JP.M0 above; see the JumpM01
+                                -- comment there and its t80.vhd branch for
+                                -- how M0 vs M1 is distinguished (via IR).
+                                MCycles <= "011";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        JumpM01 <= '1';
+                                when others => null;
+                                end case;
+                        when "10010101" =>
+                                -- Phase12: JP.M2 addr24 (ED 95). Same
+                                -- 3byte fetch shape as JP.L (M2=low+LDZ,
+                                -- M3=high+LDW, M4=bank+JumpM2). Unlike
+                                -- JP.L, JumpM2 ALWAYS switches mode24_r to
+                                -- M2 and ALWAYS applies the fetched bank
+                                -- byte (CPU仕様書V8 roadmap Phase12
+                                -- "モード間制御" - this is an explicit
+                                -- mode-switching jump, not a same-mode
+                                -- far jump).
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                when 4 =>
+                                        Inc_PC <= '1';
+                                        JumpM2 <= '1';
+                                when others => null;
+                                end case;
+                        when "10010110" =>
+                                -- Phase12: CALL.M0 addr16 (ED 96). Same
+                                -- 2byte fetch shape as plain 'CALL nn'
+                                -- (M2=low+LDZ, M3=high+LDW, overlapping
+                                -- M3 with the first MSP24 decrement
+                                -- exactly like Phase11's CALL.L does one
+                                -- mcycle later for its 3byte fetch), then
+                                -- pushes a 4byte return frame (MODE/PC_B/
+                                -- PC_H/PC_L, same decrement-before-write
+                                -- pattern as CALL.L with MODE prepended)
+                                -- at M4/M5/M6/M7. t80.vhd's CallM01 branch
+                                -- checks IR to decide M0 vs M1 and resets
+                                -- bank_pc_r to 00h (addr16 target).
+                                MCycles <= "111";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                        TStates <= "100";
+                                        Set_Addr_To <= aMSP;
+                                when 4 =>
+                                        Set_Addr_To <= aMSP;
+                                        Write <= '1';
+                                when 5 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1101";
+                                        Write <= '1';
+                                when 6 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1100";
+                                        Write <= '1';
+                                when 7 =>
+                                        Write <= '1';
+                                        CallM01 <= '1';
+                                when others => null;
+                                end case;
+                        when "10010111" =>
+                                -- Phase12: CALL.M1 addr16 (ED 97). Same
+                                -- shape as CALL.M0 above; see the
+                                -- CallM01 comment there.
+                                MCycles <= "111";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                        TStates <= "100";
+                                        Set_Addr_To <= aMSP;
+                                when 4 =>
+                                        Set_Addr_To <= aMSP;
+                                        Write <= '1';
+                                when 5 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1101";
+                                        Write <= '1';
+                                when 6 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1100";
+                                        Write <= '1';
+                                when 7 =>
+                                        Write <= '1';
+                                        CallM01 <= '1';
+                                when others => null;
+                                end case;
+                        when "10011001" =>
+                                -- Phase12: RET.M (ED 99). Pops the
+                                -- matching 4byte frame (LOW/HIGH/BANK/
+                                -- MODE, same increment-after-read pattern
+                                -- as Phase11's RET.L with MODE appended -
+                                -- M1 mirrors RET.L's own (TStates<=101,
+                                -- Set_Addr_To<=aMSP) shape) from MSP24 and
+                                -- restores BOTH PC24 and mode24_r from
+                                -- the popped MODE byte - the only one of
+                                -- these Phase12 opcodes that restores a
+                                -- previously-saved mode rather than
+                                -- hardcoding M0/M1/M2.
+                                MCycles <= "101";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        TStates <= "101";
+                                        Set_Addr_To <= aMSP;
+                                when 2 =>
+                                        Set_Addr_To <= aMSP;
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Set_Addr_To <= aMSP;
+                                        LDW <= '1';
+                                when 4 =>
+                                        Set_Addr_To <= aMSP;
+                                        LDB <= '1';
+                                when 5 =>
+                                        RetM <= '1';
+                                when others => null;
+                                end case;
                         when "00011000" =>
                                 -- Phase11: JR.L e16 (ED 18). Unconditional
                                 -- PC24-relative jump with a 16bit (not

@@ -224,6 +224,10 @@ package T80_Pack is
         Call        : out std_logic;
         CallL       : out std_logic;
         RetL        : out std_logic;
+        JumpM01     : out std_logic;
+        JumpM2      : out std_logic;
+        CallM01     : out std_logic;
+        RetM        : out std_logic;
         RstP        : out std_logic;
         LDZ         : out std_logic;
         LDW         : out std_logic;

@@ -328,7 +328,69 @@ GHDLテストベンチ:
 
 ---
 
-## 10. RST拡張（RST.L）
+## 10. モード間制御（JP.Mx / CALL.Mx / RET.M）
+
+Phase12「モード間制御」。`JP.Mx`/`CALL.Mx`は、通常のJP/CALLとは異なり
+ジャンプ/コールと同時にモード（M0/M1/M2）自体を切り替える専用命令。
+`RET.M`はその対になる復帰命令で、戻り先のモードもフレームから復元する。
+
+| オペコード | 命令 | 内容 | 状態 |
+|---|---|---|---|
+| `ED 93` | `JP.M0 addr16` | M0へ切替えて16bit addrへジャンプ | 実装済み（GHDL検証済み） |
+| `ED 94` | `JP.M1 addr16` | M1へ切替えて16bit addrへジャンプ | 実装済み（GHDL検証済み） |
+| `ED 95` | `JP.M2 addr24` | M2へ切替えて24bit addrへジャンプ | 実装済み（GHDL検証済み） |
+| `ED 96` | `CALL.M0 addr16` | M0へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み） |
+| `ED 97` | `CALL.M1 addr16` | M1へ切替えてcall（MSPへ4byte frame保存） | 実装済み（GHDL検証済み） |
+| `ED 98` | `CALL.M2 addr24` | M2へ切替えてcall（MSPへ4byte frame保存） | **未実装（保留、下記参照）** |
+| `ED 99` | `RET.M` | MSPから4byte frameを復元しPC24・モード両方を復帰 | 実装済み（GHDL検証済み） |
+
+### 10.1 実装メモ
+
+- **JP.Mx**: `JP.M0`/`JP.M1`はaddr16（2byte）、`JP.M2`はaddr24（3byte、
+  bankバイト込み）をジャンプ先として読み込み、同時に`mode24`
+  （モードレジスタ）を強制的に切り替える。`JP.L`と異なり、現在の
+  モードに関わらず常にモード切替え・bankバイト適用を行う（`JP.L`は
+  既にM2のときだけbankバイトを反映し、モード自体は変更しない）。
+  addr16ターゲット（JP.M0/M1）は常にbank00h扱い。
+- **CALL.Mx**: ジャンプ先読み込みは`JP.Mx`と同じだが、戻り先として
+  MSPへ4byte（`MSP+0=PC_L, MSP+1=PC_H, MSP+2=PC_B, MSP+3=MODE`、
+  decrementしながら書き込み）を保存してからモードを切り替える。
+  write順序・MSP24増減タイミングはPhase11のCALL.L（3byte版）に
+  「MODEバイトを先頭に追加」した形でそのまま拡張。
+- **RET.M**: 4byte（LOW→HIGH→BANK→MODEの順、incrementしながら読み込み）
+  をpopし、PC24とモード両方を復元する。他のPhase12命令（JP.Mx/CALL.Mx）
+  がモードを固定値へ切り替えるのに対し、RET.Mだけはpopした値から
+  モードを復元する点が異なる。
+- GHDLテストベンチ:
+  [tb_phase12_mode_control.vhd](fpga/G80A/test/tb_phase12_mode_control.vhd)
+  （JP.M0/M1/M2、CALL.M0/M1→RET.Mの往復2回を検証済み。4byte frame
+  の内容・MSP24の正しい復元も確認済み）。
+
+### 10.2 既知の問題：CALL.M2 addr24は未実装（MCycle幅の上限）
+
+`CALL.M2 addr24`は、addr24ターゲットの読み込み（3byte）と4byte frame
+の書き込みを合わせて「1(opcode) + 3(fetch) + 4(push) = 8 MCycles」が
+必要になるが、T80コアの`MCycle`信号は3bit幅（表現できる最大値は7）で
+あり、**ハードウェア的にこれ以上拡張できない**。
+
+Phase11のCALL.L実装時に発見・修正した「DD/FD+CB二重prefix専用のはずの
+`MCycle=110/111`無条件発火バグ」（`XY_State`ガードで解決済み）とは
+異なり、これは信号幅そのものの限界であり、同様の対症療法では解決
+できない。解決するには以下のいずれかが必要で、いずれもT80コア本体への
+比較的大きな変更を伴うため、現時点では保留とし、着手前に方針を
+別途相談する。
+
+- `MCycle`を4bit以上へ拡張する（t80_mcode.vhd全体の既存比較箇所
+  （100箇所以上）に影響するため、工数・リグレッションリスクが大きい）。
+- `CALL.M2`のフレーム構成・フェッチ方式を見直し、7 MCycle以内に
+  収まる代替実装にする（例: 4byte push相当の情報を分割する、等）。
+
+`JP.M2`/`CALL.M0`/`CALL.M1`/`RET.M`は上記の制約を受けないため、
+既に実装・検証済み。
+
+---
+
+## 11. RST拡張（RST.L）
 
 `RST_B`がRST.L用8bit bankレジスタ（上記「2. バンクレジスタ」参照）。M0/M1では対応する通常Z80 RST（return PCは16bit）、M2ではreturn PC24をMSPへ3byte pushし`PC24={RST_B,00h,vector}`。
 
@@ -343,7 +405,7 @@ GHDLテストベンチ:
 
 ---
 
-## 11. 割り込み（M2拡張）
+## 12. 割り込み（M2拡張）
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
@@ -353,7 +415,7 @@ GHDLテストベンチ:
 
 ---
 
-## 12. 標準 Z80 ブロック転送 / I/O
+## 13. 標準 Z80 ブロック転送 / I/O
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
@@ -365,11 +427,11 @@ GHDLテストベンチ:
 
 ---
 
-## 13. バンクマッピング / MMU I/O ポート
+## 14. バンクマッピング / MMU I/O ポート
 
 **デフォルトビルドの標準仕様（MMUなし）:** 24bit論理アドレスのバンクバイト（A23:A16、`A_Bank`/`cpu_addr24[23:16]`）は、変換テーブルを介さず**そのまま**物理バンクバイトとして使われます（straight-through mapping、[top.v](fpga/top.v)の`assign mmu_physical_bank = cpu_addr24[23:16];`）。論理bank00h（Z80互換空間）は例外的に既存のMSX互換スロット/BIOS/マッパー経路をそのまま使い、常に読み書き可能です。それ以外の論理bank（01h〜1Bh、27バンク）はそのまま同じ値の物理bankとしてSD-RAM拡張メモリ領域（詳細は[SDRAMメモリマップ.md](doc/jpn/SDRAMメモリマップ.md)2.2章）へ直結され、write protectionなしで常に読み書き可能です。F0h/F1h/F2h等のMMU I/Oポートはデフォルトビルドには存在しません。
 
-### 13.1 オプション機能：MMU（論理→物理バンク変換・write protection）
+### 14.1 オプション機能：MMU（論理→物理バンク変換・write protection）
 
 24bit論理アドレスのバンクバイトを物理バンクへ変換するLUT（[mmu24.vhd](fpga/G80A/mmu24.vhd)）を、オプションの追加機能として用意しています。変換そのものは非同期lookupで、追加のWAIT/T-stateは発生しません。**本リポジトリに実装・GHDL検証済みの状態で同梱されていますが、デフォルトビルドの`top.v`からは呼び出されておらず（`MSXNanoTang20K_Z80X24.gprj`でも`enable="0"`）、合成結果には含まれません。** これは、Tang Nano 20K上の現在のFPGA面積配分ではブートROM等の既存IPがBSRAMを全消費しており、MMUの256エントリテーブルがLUTベースの distributed RAMへfallbackしてLUT/Register使用率をそれぞれ約12〜13ポイント押し上げていたためです。BSRAMに余裕のある構成では、`mmu24.vhd`冒頭コメントおよび[top.v](fpga/top.v)の該当コメントの手順に従って再度有効化できます。
 

@@ -282,6 +282,12 @@ architecture rtl of T80 is
     -- Phase11: see matching CallL/RetL comments in t80_mcode.vhd's entity port.
     signal CallL            : std_logic;
     signal RetL             : std_logic;
+    -- Phase12: see matching JumpM01/JumpM2/CallM01/RetM comments in
+    -- t80_mcode.vhd's entity port.
+    signal JumpM01          : std_logic;
+    signal JumpM2           : std_logic;
+    signal CallM01          : std_logic;
+    signal RetM             : std_logic;
     signal RstP             : std_logic;
     signal LDZ              : std_logic;
     signal LDW              : std_logic;
@@ -358,6 +364,10 @@ begin
             Call => Call,
             CallL => CallL,
             RetL => RetL,
+            JumpM01 => JumpM01,
+            JumpM2 => JumpM2,
+            CallM01 => CallM01,
+            RetM => RetM,
             RstP => RstP,
             LDZ => LDZ,
             LDW => LDW,
@@ -713,6 +723,76 @@ begin
                         PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
                         bank_pc_r <= DI_Reg;
+                    elsif JumpM01 = '1' then
+                        -- Phase12: JP.M0 addr16 (ED 93) / JP.M1 addr16
+                        -- (ED 94). Mode-switching jump: same TmpAddr-low
+                        -- + DI_Reg-high shape as plain 'Jump' above
+                        -- (no 3rd byte so no bank). ALWAYS resets
+                        -- bank_pc_r to 00h (addr16 target = bank00h, same
+                        -- rule as plain JP/JR/CALL/RST) and ALWAYS
+                        -- switches mode24_r - IR still holds the current
+                        -- opcode (93 vs 94) at this T_Res, distinguishing
+                        -- which target mode to switch to.
+                        A(15 downto 8) <= DI_Reg;
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        PC(15 downto 8) <= unsigned(DI_Reg);
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        bank_pc_r <= (others => '0');
+                        if IR = x"93" then
+                            mode24_r <= "00";
+                        else
+                            mode24_r <= "01";
+                        end if;
+                    elsif JumpM2 = '1' then
+                        -- Phase12: JP.M2 addr24 (ED 95). Same 3byte
+                        -- target shape as JP.L (TmpAddr low/high + DI_Reg
+                        -- bank), but UNCONDITIONALLY switches mode24_r to
+                        -- M2 and applies the fetched bank byte (unlike
+                        -- JP.L, which only does so when already in M2).
+                        A(15 downto 8) <= TmpAddr(15 downto 8);
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        A_Bank_r <= DI_Reg;
+                        PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        bank_pc_r <= DI_Reg;
+                        mode24_r <= "10";
+                    elsif CallM01 = '1' then
+                        -- Phase12: CALL.M0 addr16 (ED 96) / CALL.M1 addr16
+                        -- (ED 97). The 4byte return frame (MODE/PC_B/
+                        -- PC_H/PC_L) was already pushed to MSP24 by the
+                        -- preceding write cycles (see the direct IR-match
+                        -- MSP24-decrement/MODE-PC_B-byte-DO block below,
+                        -- mirroring Phase11's CALL.L with MODE prepended).
+                        -- Target is a plain 16bit immediate (TmpAddr,
+                        -- latched via LDZ/LDW) = bank00h, and mode24_r
+                        -- ALWAYS switches per IR (93/94-style distinction,
+                        -- here 96=M0/97=M1).
+                        A <= TmpAddr;
+                        PC <= unsigned(TmpAddr);
+                        bank_pc_r <= (others => '0');
+                        if IR = x"96" then
+                            mode24_r <= "00";
+                        else
+                            mode24_r <= "01";
+                        end if;
+                    elsif RetM = '1' then
+                        -- Phase12: RET.M (ED 99). TmpAddr holds the
+                        -- latched low+high bytes (via LDZ/LDW at MCycle
+                        -- 2/3), TmpBank holds the latched bank byte (via
+                        -- LDB at MCycle 4), and DI_Reg holds the
+                        -- freshly-read MODE byte at this MCycle=5 T_Res.
+                        -- Unlike every other Phase12 opcode (which
+                        -- hardcode their target mode), RET.M restores
+                        -- mode24_r from the POPPED value, since it is
+                        -- reversing whatever CALL.Mx originally switched
+                        -- away from.
+                        A(15 downto 8) <= TmpAddr(15 downto 8);
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        A_Bank_r <= TmpBank;
+                        PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        bank_pc_r <= TmpBank;
+                        mode24_r <= DI_Reg(1 downto 0);
                     elsif MCycle = MCycles and NMICycle = '1' then
                         A <= "0000000001100110";
                         PC <= "0000000001100110";
@@ -1058,6 +1138,33 @@ begin
                             bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
                         end if;
+                    -- Phase12: CALL.M0/M1 addr16 MSP24 pointer adjustment.
+                    -- 4 decrements (one more than CALL.L's 3, for the
+                    -- extra MODE byte): the first fires at TState=3 of M3
+                    -- (M3 is this instruction's LAST fetch cycle, extended
+                    -- via TStates=100 one mcycle earlier than CALL.L's
+                    -- own M4, since CALL.M0/M1 only fetch 2 target bytes
+                    -- not 3), readying M4's (MODE byte) write address; the
+                    -- other 3 mirror CALL.L's own TState=2,Wait_n=1
+                    -- pattern, just one mcycle earlier throughout (M4/M5/
+                    -- M6 instead of M5/M6) since the whole push phase
+                    -- starts one mcycle sooner here.
+                    when x"96" | x"97" =>
+                        if (TState = 3 and MCycle = "011") or
+                           (TState = 2 and Wait_n = '1' and (MCycle = "100" or MCycle = "101" or MCycle = "110")) then
+                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                        end if;
+                    -- Phase12: RET.M MSP24 pointer adjustment. 4
+                    -- increments (one more than RET.L's 3, for the extra
+                    -- MODE byte), identical TState=2,Wait_n=1 pattern to
+                    -- RET.L above just extended to MCycle=101(5) too.
+                    when x"99" =>
+                        if TState = 2 and Wait_n = '1' and
+                           (MCycle = "010" or MCycle = "011" or MCycle = "100" or MCycle = "101") then
+                            bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                            MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                        end if;
                     when others => null;
                     end case;
                 end if;
@@ -1180,6 +1287,33 @@ begin
                 if ISet = "10" and MCycle = "101" then
                     case IR is
                     when x"CD" | x"C4" | x"CC" | x"D4" | x"DC" | x"E4" | x"EC" | x"F4" | x"FC" => DO <= bank_pc_r;
+                    when others => null;
+                    end case;
+                end if;
+                -- Phase12: CALL.M0 addr16 (ED 96) / CALL.M1 addr16 (ED
+                -- 97) MODE-byte write override. This is the FIRST of the
+                -- 4 return-frame bytes written (MCycle=4, at the MSP24
+                -- address already decremented once), bypassing the
+                -- normal Set_BusB_To/BusB staging path since mode24_r is
+                -- a plain 2bit signal outside the register file (zero-
+                -- extended to a byte; RET.M's matching T_Res branch only
+                -- reads back the low 2 bits).
+                if ISet = "10" and MCycle = "100" then
+                    case IR is
+                    when x"96" | x"97" => DO <= "000000" & mode24_r;
+                    when others => null;
+                    end case;
+                end if;
+                -- Phase12: CALL.M0/M1 PC_B-byte (bank_pc_r, the CURRENT
+                -- bank being called FROM) write override. This is the
+                -- SECOND return-frame byte written (MCycle=5), same
+                -- same-cycle-override + next-cycle-stage pattern as
+                -- CALL.L's own BANK-byte override above (mcode's own
+                -- Set_BusB_To<="1101" staged THIS cycle becomes DO at
+                -- MCycle=6 via the normal pipeline).
+                if ISet = "10" and MCycle = "101" then
+                    case IR is
+                    when x"96" | x"97" => DO <= bank_pc_r;
                     when others => null;
                     end case;
                 end if;
