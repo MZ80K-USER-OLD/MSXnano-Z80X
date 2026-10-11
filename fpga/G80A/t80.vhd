@@ -275,6 +275,8 @@ architecture rtl of T80 is
     -- Phase11: see matching JumpR comment in t80_mcode.vhd's entity port.
     signal JumpR            : std_logic;
     signal JumpE            : std_logic;
+    -- Phase11: see matching JumpEL comment in t80_mcode.vhd's entity port.
+    signal JumpEL           : std_logic;
     signal JumpXY           : std_logic;
     signal Call             : std_logic;
     -- Phase11: see matching CallL/RetL comments in t80_mcode.vhd's entity port.
@@ -351,6 +353,7 @@ begin
             JumpL => JumpL,
             JumpR => JumpR,
             JumpE => JumpE,
+            JumpEL => JumpEL,
             JumpXY => JumpXY,
             Call => Call,
             CallL => CallL,
@@ -873,6 +876,25 @@ begin
                     end if;
                     if JumpE = '1' then
                         PC <= unsigned(signed(PC) + signed(DI_Reg));
+                    elsif JumpEL = '1' then
+                        -- Phase11: JR.L e16 / JR.L cc,e16 (ED 18/20/28/30/
+                        -- 38/A7/AF/B7/BF). TmpAddr holds the latched
+                        -- 16bit signed displacement (via LDZ/LDW at
+                        -- MCycle 2/3). M0/M1 keep a plain 16bit wrap
+                        -- (CPU仕様書V8/roadmap Phase11 "JR.LはM2では...
+                        -- bank境界を跨ぐ" implies M0/M1 do NOT - mirrors
+                        -- JP.L's own M0/M1 "degrade to plain" treatment),
+                        -- M2 does a true 24bit PC24+displacement add that
+                        -- carries/borrows into bank_pc_r via the existing
+                        -- Addr24_AddDisp16 helper (t80_pack.vhd, already
+                        -- anticipated for exactly this purpose since
+                        -- Phase2).
+                        if mode24_r = "10" then
+                            bank_pc_r <= Addr24_AddDisp16(bank_pc_r, std_logic_vector(PC), TmpAddr)(23 downto 16);
+                            PC <= unsigned(Addr24_AddDisp16(bank_pc_r, std_logic_vector(PC), TmpAddr)(15 downto 0));
+                        else
+                            PC <= unsigned(signed(PC) + signed(TmpAddr));
+                        end if;
                     elsif Inc_PC = '1' then
                         -- Phase10: M2 PC24 fetch, same Addr24_Inc carry
                         -- treatment as the opcode-fetch auto-increment

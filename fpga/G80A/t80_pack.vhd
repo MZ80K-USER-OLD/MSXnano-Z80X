@@ -219,6 +219,7 @@ package T80_Pack is
         JumpL       : out std_logic;
         JumpR       : out std_logic;
         JumpE       : out std_logic;
+        JumpEL      : out std_logic;
         JumpXY      : out std_logic;
         Call        : out std_logic;
         CallL       : out std_logic;

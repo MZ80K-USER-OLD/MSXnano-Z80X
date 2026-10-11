@@ -200,11 +200,11 @@ CPU仕様書V8セクション2「MODE」が定義するM2モード（`PC: 24bit`
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
-| `ED 18` | `JR.L e16` | M2=PC24相対、M0/M1=PC16相対 | 未実装 |
-| `ED 20` / `28` | `JR.L NZ/Z, e16` | 条件付き | 未実装 |
-| `ED 30` / `38` | `JR.L NC/C, e16` | 条件付き | 未実装 |
-| `ED A7` / `AF` | `JR.L PO/PE, e16` | 条件付き | 未実装 |
-| `ED B7` / `BF` | `JR.L P/M, e16` | 条件付き | 未実装 |
+| `ED 18` | `JR.L e16` | M2=PC24相対、M0/M1=PC16相対 | 実装済み（GHDL検証済み。詳細は下記「9.3 JR.L」参照） |
+| `ED 20` / `28` | `JR.L NZ/Z, e16` | 条件付き | 実装済み（GHDL検証済み） |
+| `ED 30` / `38` | `JR.L NC/C, e16` | 条件付き | 実装済み（GHDL検証済み） |
+| `ED A7` / `AF` | `JR.L PO/PE, e16` | 条件付き | 実装済み（GHDL検証済み） |
+| `ED B7` / `BF` | `JR.L P/M, e16` | 条件付き | 実装済み（GHDL検証済み） |
 | `ED C3` | `JP.L addr24` | 24bit無条件ジャンプ | 実装済み（GHDL検証済み。M2ではbank_pcへ即値のbankバイトを反映、M0/M1では3byte目は読み捨てbank00h扱い。詳細は下記「9.1 JP.L」参照） |
 | `ED C2/CA/D2/DA/E2/EA/F2/FA` | `JP.L cc, addr24` | 条件付き24bitジャンプ | 実装済み（GHDL検証済み。条件不成立時も3byteのアドレスは読み飛ばし、bank_pcは変化しない） |
 | `ED CD` | `CALL.L addr24` | MSPへPC24を3byte保存（M2専用） | 実装済み（GHDL検証済み。詳細は下記「9.2 CALL.L/RET.L」参照） |
@@ -298,6 +298,33 @@ GHDLテストベンチ:
 [tb_phase11_call_ret_l.vhd](fpga/G80A/test/tb_phase11_call_ret_l.vhd)
 （無条件/条件成立/条件不成立のCALL.L・RET.L双方、複数回の呼び出し
 ネストを経てもMSP24が正しく復元されることを検証済み）。
+
+### 9.3 JR.L / JR.L cc 実装メモ（Phase11完了）
+
+`JR.L`/`JR.L cc`は、Phase11「M2制御フロー」の最後のピースとして実装し、
+これでPhase11は完了した。
+
+- **16bit符号付き変位**: 実機Z80の`JR e`/`JR cc,e`は8bit符号付き変位
+  だが、`JR.L`はED prefix込みで4byte固定（`ED xx + lo + hi`）、16bit
+  符号付き変位を使う。M2ではPC24全体（`bank_pc`+PC）に対して
+  `Addr24_AddDisp16`（t80_pack.vhd、Phase2から用意されていた関数）で
+  24bit演算し、bank境界を正しく跨ぐ（繰り上がり・繰り下がり両方、
+  8bitのbankバイト自体の折り返しも含めて検証済み）。
+- **M0/M1では従来どおりの16bit wrap**（JP.L同様、bank_pcはM0/M1の
+  フェッチで参照されないため、ここでは一切変更しない）。
+- **2種類のopcode/条件エンコーディングが混在**: `ED 18/20/28/30/38`は
+  実機Z80の`JR e`/`JR NZ,Z,NC,C,e`と全く同じopcodeバイトをそのまま
+  ED prefix付きで再利用（条件は実機JRと同じ2bitエンコーディング）。
+  `ED A7/AF/B7/BF`は実機JRには存在しないPO/PE/P/M条件用で、偶然にも
+  JP.L/CALL.L等と同じ3bit cc（`IR(5:3)`）エンコーディングに一致する
+  オペコードバイトが空いていたため採用した。
+- **条件不成立時**: 実機Z80の`JR cc,e`と同様、2byteの変位は最後まで
+  読み進めるが、ジャンプはしない（タイミングも可変長）。
+- GHDLテストベンチ: [tb_phase11_jrl.vhd](fpga/G80A/test/tb_phase11_jrl.vhd)
+  （M2での無条件/条件成立/条件不成立、前方/後方双方のbank境界またぎ
+  （bankバイト自体の折り返しを含む）、M0での16bit wrap退化を検証済み）。
+
+**Phase11はこれで完了**（JR.L / JP.L / CALL.L / RET.L すべて実装済み）。
 
 ---
 

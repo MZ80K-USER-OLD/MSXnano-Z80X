@@ -121,6 +121,14 @@ entity T80_MCode is
                 -- "16bit immediate=>bank00h" rule does not apply to it.
                 JumpR       : out std_logic;
                 JumpE       : out std_logic;
+                -- Phase11: JR.L e16 / JR.L cc,e16 (ED 18/20/28/30/38/A7/
+                -- AF/B7/BF). Parallel to JumpE (plain JR's 8bit signed
+                -- displacement add), but TmpAddr holds a LATCHED 16bit
+                -- signed displacement (via LDZ/LDW) instead of JumpE's
+                -- direct 1-cycle DI_Reg read, and the add is a true 24bit
+                -- PC24+displacement (with bank carry/borrow) in M2 rather
+                -- than a plain 16bit PC+DI_Reg.
+                JumpEL      : out std_logic;
                 JumpXY      : out std_logic;
                 Call        : out std_logic;
                 -- Phase11: CALL.L addr24 / CALL.L cc,addr24 (ED CD / ED
@@ -215,6 +223,28 @@ architecture rtl of T80_MCode is
                 end if;
         end;
 
+        -- Phase11: JR.L e16 / JR.L cc,e16 condition test. ED 18/20/28/30/
+        -- 38 reuse the EXACT same opcode bytes as plain JR e / JR NZ,Z,
+        -- NC,C,e (real Z80's own 2bit cc encoding at IR(4:3), only 4
+        -- conditions), while ED A7/AF/B7/BF (PO/PE/P/M - conditions that
+        -- plain JR never had) happen to already fit the standard 3bit cc
+        -- field at IR(5:3) used by JP/CALL/RET (is_cc_true above), purely
+        -- by coincidence of which opcode bytes were free. This function
+        -- just dispatches to whichever encoding applies.
+        function is_jrl_cc_true(
+                F : std_logic_vector(7 downto 0);
+                IR : std_logic_vector(7 downto 0)
+                ) return boolean is
+        begin
+                case IR is
+                when "00100000" => return F(6) = '0'; -- NZ
+                when "00101000" => return F(6) = '1'; -- Z
+                when "00110000" => return F(0) = '0'; -- NC
+                when "00111000" => return F(0) = '1'; -- C
+                when others => return is_cc_true(F, to_bitvector(IR(5 downto 3))); -- PO/PE/P/M
+                end case;
+        end;
+
 begin
 
         process (IR, ISet, MCycle, F, NMICycle, IntCycle, XY_State)
@@ -253,6 +283,7 @@ begin
                 JumpL <= '0';
                 JumpR <= '0';
                 JumpE <= '0';
+                JumpEL <= '0';
                 JumpXY <= '0';
                 Call <= '0';
                 CallL <= '0';
@@ -1606,21 +1637,21 @@ begin
                         when "00000000"|"00000001"|"00000010"|"00000011"|"00000100"|"00000101"|"00000110"|"00000111"
                                 |"00001000"|"00001001"|"00001010"|"00001011"|"00001100"|"00001101"|"00001110"|"00001111"
                                 |"00010000"|"00010001"|"00010010"|"00010011"|"00010100"|"00010101"|"00010110"|"00010111"
-                                |"00011000"|"00011001"|"00011010"|"00011011"|"00011100"|"00011101"|"00011110"|"00011111"
-                                |"00100000"|"00100001"|"00100010"|"00100011"|"00100100"|"00100101"|"00100110"|"00100111"
-                                |"00101000"|"00101001"|"00101010"|"00101011"|"00101100"|"00101101"|"00101110"|"00101111"
-                                |"00110000"|"00110001"|"00110010"|"00110011"|"00110100"|"00110101"|"00110110"|"00110111"
-                                |"00111000"|"00111001"|"00111010"|"00111011"|"00111100"|"00111101"|"00111110"|"00111111"
+                                |            "00011001"|"00011010"|"00011011"|"00011100"|"00011101"|"00011110"|"00011111"
+                                |            "00100001"|"00100010"|"00100011"|"00100100"|"00100101"|"00100110"|"00100111"
+                                |            "00101001"|"00101010"|"00101011"|"00101100"|"00101101"|"00101110"|"00101111"
+                                |            "00110001"|"00110010"|"00110011"|"00110100"|"00110101"|"00110110"|"00110111"
+                                |            "00111001"|"00111010"|"00111011"|"00111100"|"00111101"|"00111110"|"00111111"
 
 
                                 |"10000000"|"10000001"|"10000010"|"10000011"|"10000100"|"10000101"|"10000110"|"10000111"
                                 |"10001000"|"10001001"|"10001010"|"10001011"|"10001100"|"10001101"|"10001110"|"10001111"
                                 |"10010000"|"10010001"|"10010010"|"10010011"|"10010100"|"10010101"|"10010110"|"10010111"
                                 |"10011000"|"10011001"|"10011010"|"10011011"|"10011100"|"10011101"|"10011110"|"10011111"
-                                |                                            "10100100"|"10100101"|"10100110"|"10100111"
-                                |                                            "10101100"|"10101101"|"10101110"|"10101111"
-                                |                                            "10110100"|"10110101"|"10110110"|"10110111"
-                                |                                            "10111100"|"10111101"|"10111110"|"10111111"
+                                |                                            "10100100"|"10100101"|"10100110"
+                                |                                            "10101100"|"10101101"|"10101110"
+                                |                                            "10110100"|"10110101"|"10110110"
+                                |                                            "10111100"|"10111101"|"10111110"
                                 |"11000110"|"11000111"
                                 |"11001011"|"11001110"|"11001111"
                                 |"11010011"|"11010110"|"11010111"
@@ -1630,6 +1661,72 @@ begin
                                 |"11110001"|"11110101"|"11110110"|"11110111"
                                 |"11111001"|"11111011"|"11111101"|"11111110"|"11111111" =>
                                 null; -- NOP, undocumented
+                        when "00011000" =>
+                                -- Phase11: JR.L e16 (ED 18). Unconditional
+                                -- PC24-relative jump with a 16bit (not
+                                -- plain JR's 8bit) signed displacement
+                                -- (CPU仕様書V8/roadmap Phase11 "JR.LはM2では
+                                -- PC24全体にsigned 16bit displacementを
+                                -- 加算しbank境界を跨ぐ"). Reuses the exact
+                                -- same opcode byte as plain 'JR e' (0x18),
+                                -- just ED-prefixed. M2=low byte+LDZ,
+                                -- M3=high byte+LDW (both latched into
+                                -- TmpAddr, unlike plain JR which uses
+                                -- DI_Reg directly since it only has 1
+                                -- byte), M4=NoRead+JumpEL (the actual
+                                -- PC24+displacement add, done in t80.vhd's
+                                -- T_Res block - mode-dependent: plain
+                                -- 16bit wrap in M0/M1, true 24bit
+                                -- bank-carrying add in M2).
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                when 4 =>
+                                        NoRead <= '1';
+                                        JumpEL <= '1';
+                                        TStates <= "101";
+                                when others => null;
+                                end case;
+                        when "00100000"|"00101000"|"00110000"|"00111000"
+                                |"10100111"|"10101111"|"10110111"|"10111111" =>
+                                -- Phase11: JR.L cc,e16 (ED 20/28/30/38 =
+                                -- NZ/Z/NC/C, reusing plain JR cc's own
+                                -- opcode bytes; ED A7/AF/B7/BF = PO/PE/P/M,
+                                -- conditions plain JR never had - see
+                                -- is_jrl_cc_true above for why these 2
+                                -- different encodings can share one case
+                                -- arm). Same operand shape as JR.L above;
+                                -- condition test at M3 (the last fetch
+                                -- cycle, mirroring JP.L cc/CALL.L cc's own
+                                -- pattern) either proceeds to M4's add
+                                -- (condition true) or shrinks MCycles to
+                                -- abort right after the fetch (condition
+                                -- false - both displacement bytes are
+                                -- still consumed, matching real Z80 JR
+                                -- cc,e's variable-length timing, just
+                                -- generalized to 2 operand bytes).
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                        if not is_jrl_cc_true(F, IR) then
+                                                MCycles <= "011";
+                                        end if;
+                                when 4 =>
+                                        NoRead <= '1';
+                                        JumpEL <= '1';
+                                        TStates <= "101";
+                                when others => null;
+                                end case;
                         when "11000011" =>
                                 -- Phase11: JP.L addr24 (ED C3). M2-only
                                 -- unconditional 24bit far jump (MSX_T80_
