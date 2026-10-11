@@ -113,12 +113,35 @@ entity T80_MCode is
                 -- fetched 3rd (bank) operand byte instead of resetting it
                 -- to 00h, giving a true 24bit far jump target.
                 JumpL       : out std_logic;
+                -- Phase11: plain RET/RET cc (ED-less C9 / C0/C8/D0/D8/E0/
+                -- E8/F0/F8). Parallel to Jump, but PRESERVES bank_pc_r
+                -- instead of resetting it (CPU仕様書V8/roadmap Phase11
+                -- "通常CALL/RETは同一64KB segment内用...PC_B=不変") - RET's
+                -- target is not an immediate value, so the general
+                -- "16bit immediate=>bank00h" rule does not apply to it.
+                JumpR       : out std_logic;
                 JumpE       : out std_logic;
                 JumpXY      : out std_logic;
                 Call        : out std_logic;
+                -- Phase11: CALL.L addr24 / CALL.L cc,addr24 (ED CD / ED
+                -- C4/CC/D4/DC/E4/EC/F4/FC). M2 24bit far call: pushes a
+                -- 3byte PC24 return frame (bank_pc_r/PC_H/PC_L, same
+                -- write order as Phase9's PUSH24) to MSP24, then jumps to
+                -- the freshly fetched 24bit target (TmpAddr+TmpBank).
+                CallL       : out std_logic;
+                -- Phase11: RET.L (ED C9 / ED C0/C8/D0/D8/E0/E8/F0/F8).
+                -- M2 24bit far return: pops the matching 3byte PC24 frame
+                -- from MSP24 (same read order as Phase9's POP24) and
+                -- jumps to it.
+                RetL        : out std_logic;
                 RstP        : out std_logic;
                 LDZ         : out std_logic;
                 LDW         : out std_logic;
+                -- Phase11: latches the 3rd (bank) byte of a CALL.L addr24
+                -- target into TmpBank (t80.vhd), mirroring LDZ/LDW's
+                -- timing/mechanism but for the bank byte instead of the
+                -- low/high address bytes.
+                LDB         : out std_logic;
                 LDSPHL      : out std_logic;
                 Special_LD  : out std_logic_vector(2 downto 0); -- A,I;A,R;I,A;R,A;None
                 ExchangeDH  : out std_logic;
@@ -228,12 +251,16 @@ begin
                 Set_Addr_To <= aNone;
                 Jump <= '0';
                 JumpL <= '0';
+                JumpR <= '0';
                 JumpE <= '0';
                 JumpXY <= '0';
                 Call <= '0';
+                CallL <= '0';
+                RetL <= '0';
                 RstP <= '0';
                 LDZ <= '0';
                 LDW <= '0';
+                LDB <= '0';
                 LDSPHL <= '0';
                 Special_LD <= "000";
                 ExchangeDH <= '0';
@@ -1178,7 +1205,11 @@ begin
                                 Set_Addr_To <= aSP;
                                 LDZ <= '1';
                         when 3 =>
-                                Jump <= '1';
+                                -- Phase11: JumpR (not Jump) preserves
+                                -- bank_pc_r instead of resetting it to
+                                -- 00h - see the JumpR entity-port comment
+                                -- and t80.vhd's matching T_Res branch.
+                                JumpR <= '1';
                                 IncDec_16 <= "0111";
                         when others => null;
                         end case;
@@ -1266,7 +1297,9 @@ begin
                                         Set_Addr_To <= aSP;
                                         LDZ <= '1';
                                 when 3 =>
-                                        Jump <= '1';
+                                        -- Phase11: see JumpR comment on
+                                        -- plain RET above.
+                                        JumpR <= '1';
                                         IncDec_16 <= "0111";
                                 when others => null;
                                 end case;
@@ -1588,14 +1621,14 @@ begin
                                 |                                            "10101100"|"10101101"|"10101110"|"10101111"
                                 |                                            "10110100"|"10110101"|"10110110"|"10110111"
                                 |                                            "10111100"|"10111101"|"10111110"|"10111111"
-                                |"11000000"|                      "11000100"|           "11000110"|"11000111"
-                                |"11001000"|           "11001011"|"11001100"|"11001101"|"11001110"|"11001111"
-                                |"11010000"|           "11010011"|"11010100"|           "11010110"|"11010111"
-                                |"11011000"|           "11011011"|"11011100"|"11011101"|"11011110"|"11011111"
-                                |"11100000"|           "11100011"|"11100100"|           "11100110"|"11100111"
-                                |"11101000"|"11101001"|           "11101011"|"11101100"|"11101101"|"11101110"|"11101111"
-                                |"11110000"|"11110001"|           "11110100"|"11110101"|"11110110"|"11110111"
-                                |"11111000"|"11111001"|           "11111011"|"11111100"|"11111101"|"11111110"|"11111111" =>
+                                |"11000110"|"11000111"
+                                |"11001011"|"11001110"|"11001111"
+                                |"11010011"|"11010110"|"11010111"
+                                |"11011011"|"11011101"|"11011110"|"11011111"
+                                |"11100011"|"11100110"|"11100111"
+                                |"11101001"|"11101011"|"11101101"|"11101110"|"11101111"
+                                |"11110001"|"11110101"|"11110110"|"11110111"
+                                |"11111001"|"11111011"|"11111101"|"11111110"|"11111111" =>
                                 null; -- NOP, undocumented
                         when "11000011" =>
                                 -- Phase11: JP.L addr24 (ED C3). M2-only
@@ -1655,6 +1688,156 @@ begin
                                         if is_cc_true(F, to_bitvector(IR(5 downto 3))) then
                                                 JumpL <= '1';
                                         end if;
+                                when others => null;
+                                end case;
+                        when "11001101" =>
+                                -- Phase11: CALL.L addr24 (ED CD). M2 24bit
+                                -- far call (CPU仕様書V8/roadmap Phase11
+                                -- "CALL.L/RET.LはM2専用24bit far call").
+                                -- Reads the same 3byte little-endian target
+                                -- as JP.L (M2=low+LDZ, M3=high+LDW, M4=bank
+                                -- +LDB - a NEW latch into TmpBank since,
+                                -- unlike JP.L, the bank byte must survive 3
+                                -- more cycles while the return frame is
+                                -- pushed), then pushes a 3byte PC24 return
+                                -- frame (bank_pc_r/PC_H/PC_L, same write
+                                -- order/MSP24-decrement-before-each-write
+                                -- pattern as Phase9's PUSH24 - see the
+                                -- matching t80.vhd direct IR-match block)
+                                -- to MSP24. M4 kicks off the first
+                                -- decrement one cycle early (TStates<=100,
+                                -- Set_Addr_To<=aMSP) exactly like PUSH24's
+                                -- own extended MCycle=1, since Set_Addr_To
+                                -- set during cycle N determines the
+                                -- address bus for cycle N+1 (see t80.vhd
+                                -- comment on the aMSP case). Set_BusB_To
+                                -- "1101"/"1100" (PC high/low) are the exact
+                                -- same encodings plain 'CALL nn' already
+                                -- uses to push its own return address.
+                                MCycles <= "111";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                when 4 =>
+                                        Inc_PC <= '1';
+                                        LDB <= '1';
+                                        TStates <= "100";
+                                        Set_Addr_To <= aMSP;
+                                when 5 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1101";
+                                        Write <= '1';
+                                when 6 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1100";
+                                        Write <= '1';
+                                when 7 =>
+                                        Write <= '1';
+                                        CallL <= '1';
+                                when others => null;
+                                end case;
+                        when "11000100"|"11001100"|"11010100"|"11011100"|"11100100"|"11101100"|"11110100"|"11111100" =>
+                                -- Phase11: CALL.L cc,addr24 (ED C4/CC/D4/
+                                -- DC/E4/EC/F4/FC). Same operand/push shape
+                                -- as CALL.L above; condition test (at M4,
+                                -- the last fetch cycle, mirroring plain
+                                -- 'CALL cc,nn' testing at its own last
+                                -- fetch cycle) either kicks off the push
+                                -- phase (condition true) or shrinks
+                                -- MCycles to abort right after the fetch
+                                -- (condition false - all 3 operand bytes
+                                -- are still consumed, matching real Z80
+                                -- CALL cc,nn's variable-length timing).
+                                MCycles <= "111";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                when 4 =>
+                                        Inc_PC <= '1';
+                                        LDB <= '1';
+                                        if is_cc_true(F, to_bitvector(IR(5 downto 3))) then
+                                                TStates <= "100";
+                                                Set_Addr_To <= aMSP;
+                                        else
+                                                MCycles <= "100";
+                                        end if;
+                                when 5 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1101";
+                                        Write <= '1';
+                                when 6 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1100";
+                                        Write <= '1';
+                                when 7 =>
+                                        Write <= '1';
+                                        CallL <= '1';
+                                when others => null;
+                                end case;
+                        when "11001001" =>
+                                -- Phase11: RET.L (ED C9). M2 24bit far
+                                -- return; pops the matching 3byte PC24
+                                -- frame pushed by CALL.L (same LOW/HIGH/
+                                -- BANK read order and MSP24-increment-
+                                -- after-each-read pattern as Phase9's
+                                -- POP24 - see the matching t80.vhd direct
+                                -- IR-match block). M1 mirrors plain RET's
+                                -- own (TStates<=101, Set_Addr_To<=aSP)
+                                -- shape exactly, just targeting aMSP. This
+                                -- opcode slot was previously the
+                                -- unreachable "R800 MULUB" placeholder
+                                -- (see ED D9, which keeps that placeholder
+                                -- unchanged).
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        TStates <= "101";
+                                        Set_Addr_To <= aMSP;
+                                when 2 =>
+                                        Set_Addr_To <= aMSP;
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Set_Addr_To <= aMSP;
+                                        LDW <= '1';
+                                when 4 =>
+                                        RetL <= '1';
+                                when others => null;
+                                end case;
+                        when "11000000"|"11001000"|"11010000"|"11011000"|"11100000"|"11101000"|"11110000"|"11111000" =>
+                                -- Phase11: RET.L cc (ED C0/C8/D0/D8/E0/E8/
+                                -- F0/F8). Same pop shape as RET.L above;
+                                -- condition test (at M1, mirroring plain
+                                -- 'RET cc' testing immediately) either
+                                -- continues to the pop phase (condition
+                                -- true) or shrinks MCycles to abort right
+                                -- after the opcode fetch (condition false,
+                                -- matching real Z80 RET cc's variable-
+                                -- length timing).
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        if is_cc_true(F, to_bitvector(IR(5 downto 3))) then
+                                                Set_Addr_To <= aMSP;
+                                        else
+                                                MCycles <= "001";
+                                        end if;
+                                        TStates <= "101";
+                                when 2 =>
+                                        Set_Addr_To <= aMSP;
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Set_Addr_To <= aMSP;
+                                        LDW <= '1';
+                                when 4 =>
+                                        RetL <= '1';
                                 when others => null;
                                 end case;
                         when "11000101"|"11010101"|"11100101" =>
@@ -2092,8 +2275,12 @@ begin
                                         TStates <= "101";
                                 when others => null;
                                 end case;
-                        when "11001001"|"11011001" =>
-                                --R800 MULUB
+                        when "11011001" =>
+                                -- R800 MULUB. ED C9 (previously grouped
+                                -- here alongside D9) is now Phase11's
+                                -- RET.L below; this opcode (D9) remains the
+                                -- unreachable R800 placeholder since Mode
+                                -- is always 0=Z80 in this project.
                                 null;
                         when "11110011" =>
                                 -- R800 MULUW. ED C3 (previously grouped here)
@@ -2123,7 +2310,20 @@ begin
                 end if;
 
                 if Mode < 2 then
-                        if MCycle = "110" then
+                        -- Phase11: this block was originally unconditional
+                        -- for ANY instruction reaching MCycle=110/111,
+                        -- intended ONLY for the DD/FD+CB double-prefix
+                        -- continuation (NextIs_XY_Fetch in t80.vhd, itself
+                        -- gated on XY_State/="00"). New instructions with
+                        -- their own MCycles reaching 6/7 for unrelated
+                        -- reasons (e.g. CALL.L's 7-cycle fetch+push
+                        -- sequence) must NOT be affected by this -
+                        -- guarding on XY_State/="00" restores that
+                        -- intent without touching the DD/FD+CB behaviour
+                        -- itself (XY_State is always /="00" whenever this
+                        -- block's MCycle=110/111 is legitimately reached
+                        -- via the DD/FD+CB path).
+                        if MCycle = "110" and XY_State /= "00" then
                                 Inc_PC <= '1';
                                 if Mode = 1 then
                                         Set_Addr_To <= aXY;
@@ -2135,7 +2335,7 @@ begin
                                         Set_Addr_To <= aNone;
                                 end if;
                         end if;
-                        if MCycle = "111" then
+                        if MCycle = "111" and XY_State /= "00" then
                                 if Mode = 0 then
                                         TStates <= "101";
                                 end if;

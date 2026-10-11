@@ -205,12 +205,12 @@ CPU仕様書V8セクション2「MODE」が定義するM2モード（`PC: 24bit`
 | `ED 30` / `38` | `JR.L NC/C, e16` | 条件付き | 未実装 |
 | `ED A7` / `AF` | `JR.L PO/PE, e16` | 条件付き | 未実装 |
 | `ED B7` / `BF` | `JR.L P/M, e16` | 条件付き | 未実装 |
-| `ED C3` | `JP.L addr24` | 24bit無条件ジャンプ | 実装済み（GHDL検証済み。M2ではbank_pcへ即値のbankバイトを反映、M0/M1では3byte目は読み捨てbank00h扱い。詳細は下記「8.1 JP.L」参照） |
+| `ED C3` | `JP.L addr24` | 24bit無条件ジャンプ | 実装済み（GHDL検証済み。M2ではbank_pcへ即値のbankバイトを反映、M0/M1では3byte目は読み捨てbank00h扱い。詳細は下記「9.1 JP.L」参照） |
 | `ED C2/CA/D2/DA/E2/EA/F2/FA` | `JP.L cc, addr24` | 条件付き24bitジャンプ | 実装済み（GHDL検証済み。条件不成立時も3byteのアドレスは読み飛ばし、bank_pcは変化しない） |
-| `ED CD` | `CALL.L addr24` | MSPへPC24を3byte保存（M2専用） | 未実装 |
-| `ED C4/CC/D4/DC/E4/EC/F4/FC` | `CALL.L cc, addr24` | 条件付きfar call（M2専用） | 未実装 |
-| `ED C9` | `RET.L` | MSPからPC24復元（M2専用） | 未実装 |
-| `ED C0/C8/D0/D8/E0/E8/F0/F8` | `RET.L cc` | 条件付きfar return（M2専用） | 未実装 |
+| `ED CD` | `CALL.L addr24` | MSPへPC24を3byte保存（M2専用） | 実装済み（GHDL検証済み。詳細は下記「9.2 CALL.L/RET.L」参照） |
+| `ED C4/CC/D4/DC/E4/EC/F4/FC` | `CALL.L cc, addr24` | 条件付きfar call（M2専用） | 実装済み（GHDL検証済み） |
+| `ED C9` | `RET.L` | MSPからPC24復元（M2専用） | 実装済み（GHDL検証済み） |
+| `ED C0/C8/D0/D8/E0/E8/F0/F8` | `RET.L cc` | 条件付きfar return（M2専用） | 実装済み（GHDL検証済み） |
 
 ### 9.1 JP.L / JP.L cc 実装メモ（Phase11着手）
 
@@ -236,9 +236,68 @@ CPU仕様書V8セクション2「MODE」が定義するM2モード（`PC: 24bit`
 - GHDLテストベンチ: [tb_phase11_jpl.vhd](fpga/G80A/test/tb_phase11_jpl.vhd)
   （M2での無条件/条件付き（成立・不成立）ジャンプ、M0でのbankバイト
   読み捨てを検証済み）。
-- 未実装: `JR.L`（相対ジャンプ、PC24全体にsigned変位を加算）、
-  `CALL.L`/`RET.L`（MSPへの3byte frame保存/復元）は、本セクション表の
-  とおり引き続きPhase11のTODOとして残っている。
+- 未実装: `JR.L`（相対ジャンプ、PC24全体にsigned変位を加算）は、本
+  セクション表のとおり引き続きPhase11のTODOとして残っている。
+
+### 9.2 CALL.L / RET.L 実装メモ（Phase11）
+
+`CALL.L addr24`/`CALL.L cc,addr24`/`RET.L`/`RET.L cc`は、Phase9の
+PUSH24/POP24と同じ「MSP24へ3byte転送」の仕組みを流用し、PC24の
+far call/returnとして実装した。
+
+- **フレーム構成**: `CALL.L`はMSP24へ`bank_pc_r`(戻り先bank)→`PC_H`→
+  `PC_L`の順に3byte push（decrementしながら書き込み、最終的にMSP24は
+  LOWバイトを指す）。`RET.L`はLOW→HIGH→BANKの順に3byte pop（incrementし
+  ながら読み込み）し、`PC24={BANK,HIGH,LOW}`へジャンプする。書き込み/
+  読み込み順序・MSP24の増減タイミングはPhase9のPUSH24/POP24と完全に
+  同じパターン（decrement-before-write / increment-after-read）。
+- **条件付き版の中断動作**: `CALL.L cc`は条件不成立時、実機Z80の
+  `CALL cc,nn`と同様に3byteのアドレスは最後まで読み進めるが、MSP24へは
+  一切触れない（push phaseへ進まない）。`RET.L cc`は条件不成立時、
+  即座に中断し（opcodeフェッチのみ）、MSP24は一切変化しない。
+- **既存のED CD/C9 opcodeスロットについて**: `ED CD`は元々未使用
+  （NOP扱い）だったスロットを使用。`ED C9`は、JP.Lと同様にこのプロジェ
+  クトでは到達しないR800 MULUBのopcodeスロット（`ED D9`とペア）を
+  転用し、`ED D9`はMULUBプレースホルダのまま変更していない。
+- **通常CALL/RETのbank_pc挙動もPhase11で修正**: ロードマップPhase11の
+  「通常CALL/RETは同一64KB segment内用、PC_B=不変」との規定に合わせ、
+  既存の（ED prefixを使わない）プレーンな`CALL`/`CALL cc`/`RET`/
+  `RET cc`命令についても、M2実行時に`bank_pc`をbank00hへリセットして
+  いた旧Phase10の挙動を「`bank_pc`を変更せず保持する」よう修正した
+  （RET側は新設の`JumpR`信号で`Jump`と区別し、CALL側は既存の`Call`
+  信号のbank_pc_rリセットを単純に削除）。JP/JR/RST等、16bit即値ターゲ
+  ットを生成する他の命令は引き続きbank00hへリセットする（CPU仕様書V8
+  section 5のルールのまま）。
+
+#### T80コア側で発見・修正した前提条件（既存バグ、Phase11で表面化）
+
+CALL.L/RET.Lの実装過程で、T80コア本体（`fpga/G80A/t80.vhd`・
+`fpga/G80A/t80_mcode.vhd`）に存在していた、**DD/FD+CBの二重prefix
+継続処理専用のはずのロジックが、`MCycle`の値（110/111=6/7）だけで無条件
+に発火してしまう**という前提条件がいくつか見つかった。これらは今まで
+「どの命令のMCyclesも6/7に到達しない」という暗黙の前提の上でのみ安全
+だった潜在バグで、CALL.L（7 MCycles必要）の追加で初めて表面化した。
+すべて`XY_State /= "00"`（DD/FD prefix実行中かどうか）によるガード条件
+追加で最小限に修正した（DD/FD+CB自体の動作は変更なし、GHDL回帰
+Phase2〜11で確認済み）。
+
+- `t80.vhd`のメイン状態機械: `MCycle="111"`に達すると常に
+  `Pre_XY_F_M`から復元する処理が無条件発火 → 新規1bitフラグ
+  `XYF_Pending`を追加し、`NextIs_XY_Fetch`経由で来た場合のみ有効化。
+- `t80_mcode.vhd`末尾の共通ブロック: `MCycle="110"/"111"`で
+  `Inc_PC`/`Set_Addr_To`/`TStates`等を無条件に上書き。
+- `t80.vhd`の(IX/IY+d)実効アドレス計算: `TState=3 and MCycle="110"`で
+  `TmpAddr`/`TmpBank`を無条件に上書き。
+- `t80.vhd`の`XY_Ind`セット、`RegAddrC`選択: いずれも`MCycle="110"`の
+  単独条件で無条件発火。
+- さらに、CALL.L cc自身の実装バグとして、条件不成立時にも「push phase
+  手前の最初のMSP24デクリメント」だけは発火してしまう問題を発見・
+  修正（`Set_Addr_To=aMSP`であることを追加の条件としてガード）。
+
+GHDLテストベンチ:
+[tb_phase11_call_ret_l.vhd](fpga/G80A/test/tb_phase11_call_ret_l.vhd)
+（無条件/条件成立/条件不成立のCALL.L・RET.L双方、複数回の呼び出し
+ネストを経てもMSP24が正しく復元されることを検証済み）。
 
 ---
 

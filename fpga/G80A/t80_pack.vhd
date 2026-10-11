@@ -217,12 +217,16 @@ package T80_Pack is
         IORQ        : out std_logic;
         Jump        : out std_logic;
         JumpL       : out std_logic;
+        JumpR       : out std_logic;
         JumpE       : out std_logic;
         JumpXY      : out std_logic;
         Call        : out std_logic;
+        CallL       : out std_logic;
+        RetL        : out std_logic;
         RstP        : out std_logic;
         LDZ         : out std_logic;
         LDW         : out std_logic;
+        LDB         : out std_logic;
         LDSPHL      : out std_logic;
         Special_LD  : out std_logic_vector(2 downto 0); -- A,I;A,R;I,A;R,A;None
         ExchangeDH  : out std_logic;

@@ -217,6 +217,15 @@ architecture rtl of T80 is
     signal XY_State         : std_logic_vector(1 downto 0);
     signal Pre_XY_F_M       : std_logic_vector(2 downto 0);
     signal NextIs_XY_Fetch  : std_logic;
+    -- Phase11: distinguishes "MCycle reached 111 because
+    -- NextIs_XY_Fetch legitimately jumped here via the DD/FD+CB
+    -- continuation" from "MCycle reached 111 because a NEW instruction
+    -- (e.g. CALL.L) simply has 7 MCycles of its own". Only the former
+    -- should trigger the Pre_XY_F_M restore below; this flag is the
+    -- minimal-footprint way to keep both meanings of "MCycle=111"
+    -- correctly separated without widening MCycle/MCycles (which would
+    -- touch every existing instruction's cycle-matching logic).
+    signal XYF_Pending      : std_logic;
     signal XY_Ind           : std_logic;
     signal No_BTR           : std_logic;
     signal BTR_r            : std_logic;
@@ -263,12 +272,19 @@ architecture rtl of T80 is
     signal Jump             : std_logic;
     -- Phase11: see matching JumpL comment in t80_mcode.vhd's entity port.
     signal JumpL            : std_logic;
+    -- Phase11: see matching JumpR comment in t80_mcode.vhd's entity port.
+    signal JumpR            : std_logic;
     signal JumpE            : std_logic;
     signal JumpXY           : std_logic;
     signal Call             : std_logic;
+    -- Phase11: see matching CallL/RetL comments in t80_mcode.vhd's entity port.
+    signal CallL            : std_logic;
+    signal RetL             : std_logic;
     signal RstP             : std_logic;
     signal LDZ              : std_logic;
     signal LDW              : std_logic;
+    -- Phase11: see matching LDB comment in t80_mcode.vhd's entity port.
+    signal LDB              : std_logic;
     signal LDSPHL           : std_logic;
     signal IORQ_i           : std_logic;
     signal Special_LD       : std_logic_vector(2 downto 0);
@@ -333,12 +349,16 @@ begin
             IORQ => IORQ_i,
             Jump => Jump,
             JumpL => JumpL,
+            JumpR => JumpR,
             JumpE => JumpE,
             JumpXY => JumpXY,
             Call => Call,
+            CallL => CallL,
+            RetL => RetL,
             RstP => RstP,
             LDZ => LDZ,
             LDW => LDW,
+            LDB => LDB,
             LDSPHL => LDSPHL,
             Special_LD => Special_LD,
             ExchangeDH => ExchangeDH,
@@ -546,7 +566,7 @@ begin
             else
             -- either (MCycle > 1) OR (MCycle = 1 AND TState > 3)
 
-                if MCycle = "110" then
+                if MCycle = "110" and XY_State /= "00" then
                     XY_Ind <= '1';
                     if Prefix = "01" then
                         ISet <= "01";
@@ -614,14 +634,82 @@ begin
                             -- would silently fall back to bank00h anyway.
                             bank_pc_r <= (others => '0');
                         end if;
+                    elsif JumpR = '1' then
+                        -- Phase11: plain RET / RET cc (CPU仕様書V8/roadmap
+                        -- Phase11 "通常CALL/RETは同一64KB segment内用...
+                        -- PC_B=不変"). Address restore is otherwise
+                        -- identical to 'Jump' (TmpAddr low + DI_Reg high),
+                        -- but bank_pc_r/A_Bank_r are explicitly PRESERVED
+                        -- (not reset to 00h) - unlike JP nn/JP cc,nn,
+                        -- which DO reset to bank00h because their target
+                        -- is a genuine 16bit immediate address (CPU仕様書
+                        -- V8 section 5's bank00h rule). RET's target is
+                        -- not an immediate value; it is whatever bank the
+                        -- matching CALL was originally executing in, so
+                        -- it must stay in that bank. A_Bank_r needs an
+                        -- explicit override here since the top-of-block
+                        -- default resets it to 00h.
+                        A(15 downto 8) <= DI_Reg;
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        A_Bank_r <= bank_pc_r;
+                        PC(15 downto 8) <= unsigned(DI_Reg);
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        -- bank_pc_r itself is left untouched (preserved).
                     elsif JumpXY = '1' then
                         A <= RegBusC;
                         PC <= unsigned(RegBusC);
                         bank_pc_r <= (others => '0');
-                    elsif Call = '1' or RstP = '1' then
+                    elsif Call = '1' then
+                        A <= TmpAddr;
+                        PC <= unsigned(TmpAddr);
+                        -- Phase11: plain CALL/CALL cc target is "same
+                        -- 64KB segment" per CPU仕様書V8/roadmap Phase11
+                        -- ("通常CALL/RETは同一64KB segment内用...PC_B=
+                        -- 不変") - bank_pc_r is intentionally left
+                        -- UNTOUCHED here (preserved), unlike JP/JR/RST's
+                        -- "16bit immediate=>bank00h" rule. A_Bank_r needs
+                        -- an explicit override since the top-of-block
+                        -- default resets it to 00h; RET's matching JumpR
+                        -- branch above does the same.
+                        A_Bank_r <= bank_pc_r;
+                    elsif RstP = '1' then
                         A <= TmpAddr;
                         PC <= unsigned(TmpAddr);
                         bank_pc_r <= (others => '0');
+                    elsif CallL = '1' then
+                        -- Phase11: CALL.L addr24 / CALL.L cc,addr24 (ED
+                        -- CD / ED C4/CC/D4/DC/E4/EC/F4/FC). True 24bit far
+                        -- call: TmpAddr/TmpBank hold the latched 3byte
+                        -- target (via LDZ/LDW/LDB during M2/M3/M4); the
+                        -- 3byte PC24 return frame was already pushed to
+                        -- MSP24 by the preceding write cycles (see the
+                        -- direct IR-match MSP24-decrement/BANK-byte-DO
+                        -- block below, mirroring Phase9's PUSH24). This is
+                        -- simply JumpL's logic, reusing TmpBank (latched)
+                        -- instead of DI_Reg (freshly read) for the bank
+                        -- byte, since CALL.L's bank byte must survive the
+                        -- 3 push cycles rather than being consumed
+                        -- immediately.
+                        A(15 downto 8) <= TmpAddr(15 downto 8);
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        A_Bank_r <= TmpBank;
+                        PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        bank_pc_r <= TmpBank;
+                    elsif RetL = '1' then
+                        -- Phase11: RET.L (ED C9 / ED C0/C8/D0/D8/E0/E8/F0/
+                        -- F8). True 24bit far return: TmpAddr holds the
+                        -- latched low+high bytes (via LDZ/LDW at MCycle
+                        -- 2/3), and DI_Reg holds the freshly-read bank
+                        -- byte at this MCycle=4 T_Res (mirrors JumpL's
+                        -- structure, and POP24's own BANK-byte-via-DI_Reg
+                        -- capture pattern).
+                        A(15 downto 8) <= TmpAddr(15 downto 8);
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        A_Bank_r <= DI_Reg;
+                        PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        bank_pc_r <= DI_Reg;
                     elsif MCycle = MCycles and NMICycle = '1' then
                         A <= "0000000001100110";
                         PC <= "0000000001100110";
@@ -807,7 +895,17 @@ begin
                         TmpAddr(5 downto 3) <= IR(5 downto 3);
                     end if;
                 end if;
-                if TState = 3 and MCycle = "110" then
+                -- Phase11: this block was originally unconditional for
+                -- ANY instruction reaching MCycle=110 at TState=3 - safe
+                -- before Phase11 because MCycle only ever reached 110 via
+                -- the DD/FD+CB continuation (NextIs_XY_Fetch, itself
+                -- gated on XY_State/="00"). CALL.L's own 7-cycle fetch+
+                -- push sequence legitimately reaches MCycle=110 too
+                -- (M6), so this (IX/IY+d) effective-address computation
+                -- must be guarded to not corrupt TmpAddr/TmpBank for
+                -- unrelated instructions - see the matching t80_mcode.vhd
+                -- guard on the same MCycle=110/111 special-casing.
+                if TState = 3 and MCycle = "110" and XY_State /= "00" then
                     TmpAddr <= std_logic_vector(signed(RegBusC) + signed(DI_Reg));
                     -- Phase2: 24bit address generator for (IX/IY+d).
                     -- M0 keeps plain 16bit wrap (bank unchanged); M1/M2 add
@@ -899,6 +997,45 @@ begin
                             bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
                             MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
                         end if;
+                    -- Phase11: CALL.L addr24 / CALL.L cc,addr24 MSP24
+                    -- pointer adjustment, same pattern as PUSH24 above
+                    -- but shifted 3 mcycles later (CALL.L has 3 operand-
+                    -- fetch cycles - M2/M3/M4 - before its 3 write cycles
+                    -- - M5/M6/M7 - whereas PUSH24 starts writing
+                    -- immediately at M2). The first decrement fires at
+                    -- TState=3 of M4 (which mcode extends to TStates=4
+                    -- via "100", mirroring PUSH24's own extended-M1
+                    -- pattern one T-state earlier since M4 is a normal
+                    -- 3T-default cycle rather than M1's 4T default) so it
+                    -- settles in time for M5's first write; the other two
+                    -- decrements mirror PUSH24's own TState=2,Wait_n=1
+                    -- pattern exactly, just on M5/M6 instead of M2/M3.
+                    when x"CD" | x"C4" | x"CC" | x"D4" | x"DC" | x"E4" | x"EC" | x"F4" | x"FC" =>
+                        -- Phase11: the first decrement (TState=3,
+                        -- MCycle=100) must additionally check
+                        -- Set_Addr_To=aMSP - M4 runs for BOTH taken and
+                        -- aborted CALL.L cc (the condition test/divergence
+                        -- happens INSIDE M4's own mcode body), so without
+                        -- this guard an aborted (not-taken) CALL.L cc
+                        -- would still silently decrement MSP24 once with
+                        -- no matching write, corrupting it for every
+                        -- subsequent PUSH/CALL.L/RET.L.
+                        if ((TState = 3 and MCycle = "100") or
+                           (TState = 2 and Wait_n = '1' and (MCycle = "101" or MCycle = "110"))) and
+                           Set_Addr_To = aMSP then
+                            bank_msp_r <= Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                            MSP <= unsigned(Addr24_Dec(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                        end if;
+                    -- Phase11: RET.L / RET.L cc MSP24 pointer adjustment,
+                    -- identical pattern to POP24 above (RET.L's pop phase
+                    -- starts immediately at M1, same as POP24, so no
+                    -- mcycle shift is needed).
+                    when x"C9" | x"C0" | x"C8" | x"D0" | x"D8" | x"E0" | x"E8" | x"F0" | x"F8" =>
+                        if TState = 2 and Wait_n = '1' and
+                           (MCycle = "010" or MCycle = "011" or MCycle = "100") then
+                            bank_msp_r <= Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(23 downto 16);
+                            MSP <= unsigned(Addr24_Inc(bank_msp_r, std_logic_vector(MSP))(15 downto 0));
+                        end if;
                     when others => null;
                     end case;
                 end if;
@@ -923,6 +1060,16 @@ begin
                 end if;
                 if LDW = '1' then
                     TmpAddr(15 downto 8) <= DI_Reg;
+                end if;
+                if LDB = '1' then
+                    -- Phase11: latches CALL.L addr24's 3rd (bank) operand
+                    -- byte, mirroring LDZ/LDW's timing. Reuses the
+                    -- existing Phase2/3 TmpBank register (IX/IY+d
+                    -- effective-address bank byte); safe since TmpBank is
+                    -- only otherwise written by the DD/FD+XY_State-gated
+                    -- (IX+d)/(IY+d) paths, which never overlap with
+                    -- CALL.L's IR match.
+                    TmpBank <= DI_Reg;
                 end if;
 
                 if Special_LD(2) = '1' then
@@ -995,6 +1142,22 @@ begin
                     when x"C5" => DO <= bank_bc_r;
                     when x"D5" => DO <= bank_de_r;
                     when x"E5" => DO <= bank_hl_r;
+                    when others => null;
+                    end case;
+                end if;
+                -- Phase11: CALL.L addr24 / CALL.L cc,addr24 (ED CD / ED
+                -- C4/CC/D4/DC/E4/EC/F4/FC) BANK-byte write override. This
+                -- is the FIRST of the 3 return-frame bytes written
+                -- (MCycle=5, at the MSP24 address already decremented
+                -- once - see the MSP24 adjustment block above), bypassing
+                -- the normal Set_BusB_To/BusB staging path exactly like
+                -- Phase9's PUSH24 override above, since bank_pc_r is a
+                -- plain signal outside the register file. Same-cycle,
+                -- mcode's own Set_BusB_To<="1101" (PC-HIGH) staged THIS
+                -- cycle becomes DO at MCycle=6 via the normal pipeline.
+                if ISet = "10" and MCycle = "101" then
+                    case IR is
+                    when x"CD" | x"C4" | x"CC" | x"D4" | x"DC" | x"E4" | x"EC" | x"F4" | x"FC" => DO <= bank_pc_r;
                     when others => null;
                     end case;
                 end if;
@@ -1326,7 +1489,7 @@ begin
                 if (JumpXY = '1' or LDSPHL = '1') then
                     RegAddrC <= Alternate & "10";
                 end if;
-                if ((JumpXY = '1' or LDSPHL = '1') and XY_State /= "00") or (MCycle = "110") then
+                if ((JumpXY = '1' or LDSPHL = '1') and XY_State /= "00") or (MCycle = "110" and XY_State /= "00") then
                     RegAddrC <= XY_State(1) & "11";
                 end if;
 
@@ -1663,6 +1826,7 @@ begin
             MCycle <= "001";
             TState <= "000";
             Pre_XY_F_M <= "000";
+            XYF_Pending <= '0';
             Halt_FF <= '0';
             BusAck <= '0';
             NMICycle <= '0';
@@ -1720,12 +1884,20 @@ begin
                         if NextIs_XY_Fetch = '1' then
                             MCycle <= "110";
                             Pre_XY_F_M <= MCycle;
+                            -- Phase11: mark that MCycle is about to reach
+                            -- "110"/"111" via this legitimate DD/FD+CB
+                            -- continuation jump, not because some OTHER
+                            -- instruction (e.g. CALL.L) simply has that
+                            -- many MCycles of its own. Cleared once
+                            -- consumed below.
+                            XYF_Pending <= '1';
                             if IR = "00110110" and Mode = 0 then
                                 Pre_XY_F_M <= "010";
                             end if;
-                        elsif (MCycle = "111") or
+                        elsif (MCycle = "111" and XYF_Pending = '1') or
                             (MCycle = "110" and Mode = 1 and ISet /= "01") then
                             MCycle <= std_logic_vector(unsigned(Pre_XY_F_M) + 1);
+                            XYF_Pending <= '0';
                         elsif (MCycle = MCycles) or
                             No_BTR = '1' or
                             (MCycle = "010" and I_DJNZ = '1' and IncDecZ = '1') then
