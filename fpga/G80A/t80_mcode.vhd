@@ -107,6 +107,12 @@ entity T80_MCode is
                 Set_Addr_To : out std_logic_vector(2 downto 0); -- aNone,aXY,aIOA,aSP,aBC,aDE,aZI
                 IORQ        : out std_logic;
                 Jump        : out std_logic;
+                -- Phase11: JP.L addr24 / JP.L cc,addr24 (ED C3 / ED C2/CA/
+                -- D2/DA/E2/EA/F2/FA). Parallel to Jump, but the matching
+                -- t80.vhd T_Res branch loads bank_pc_r from the freshly
+                -- fetched 3rd (bank) operand byte instead of resetting it
+                -- to 00h, giving a true 24bit far jump target.
+                JumpL       : out std_logic;
                 JumpE       : out std_logic;
                 JumpXY      : out std_logic;
                 Call        : out std_logic;
@@ -221,6 +227,7 @@ begin
                 IORQ <= '0';
                 Set_Addr_To <= aNone;
                 Jump <= '0';
+                JumpL <= '0';
                 JumpE <= '0';
                 JumpXY <= '0';
                 Call <= '0';
@@ -1581,15 +1588,75 @@ begin
                                 |                                            "10101100"|"10101101"|"10101110"|"10101111"
                                 |                                            "10110100"|"10110101"|"10110110"|"10110111"
                                 |                                            "10111100"|"10111101"|"10111110"|"10111111"
-                                |"11000000"|           "11000010"|           "11000100"|           "11000110"|"11000111"
-                                |"11001000"|           "11001010"|"11001011"|"11001100"|"11001101"|"11001110"|"11001111"
-                                |"11010000"|           "11010010"|"11010011"|"11010100"|           "11010110"|"11010111"
-                                |"11011000"|           "11011010"|"11011011"|"11011100"|"11011101"|"11011110"|"11011111"
-                                |"11100000"|           "11100010"|"11100011"|"11100100"|           "11100110"|"11100111"
-                                |"11101000"|"11101001"|"11101010"|"11101011"|"11101100"|"11101101"|"11101110"|"11101111"
-                                |"11110000"|"11110001"|"11110010"|           "11110100"|"11110101"|"11110110"|"11110111"
-                                |"11111000"|"11111001"|"11111010"|"11111011"|"11111100"|"11111101"|"11111110"|"11111111" =>
+                                |"11000000"|                      "11000100"|           "11000110"|"11000111"
+                                |"11001000"|           "11001011"|"11001100"|"11001101"|"11001110"|"11001111"
+                                |"11010000"|           "11010011"|"11010100"|           "11010110"|"11010111"
+                                |"11011000"|           "11011011"|"11011100"|"11011101"|"11011110"|"11011111"
+                                |"11100000"|           "11100011"|"11100100"|           "11100110"|"11100111"
+                                |"11101000"|"11101001"|           "11101011"|"11101100"|"11101101"|"11101110"|"11101111"
+                                |"11110000"|"11110001"|           "11110100"|"11110101"|"11110110"|"11110111"
+                                |"11111000"|"11111001"|           "11111011"|"11111100"|"11111101"|"11111110"|"11111111" =>
                                 null; -- NOP, undocumented
+                        when "11000011" =>
+                                -- Phase11: JP.L addr24 (ED C3). M2-only
+                                -- unconditional 24bit far jump (MSX_T80_
+                                -- 24bit化_実装手順_V2_2026-10-05.md section
+                                -- 14 "Phase 12"寄りの命令だが、スタックを
+                                -- 使わない単純なジャンプなのでAVAILABLE_
+                                -- INSTRUCTIONS.md 9章の並びに合わせてPhase11
+                                -- の一部として先行実装。CPU仕様書V8 section
+                                -- 5). Reads a 3byte little-endian 24bit
+                                -- address (low/high/bank); same MCycle
+                                -- shape as plain 'JP nn' (M2=low byte+LDZ,
+                                -- M3=high byte - LDW is used here (unlike
+                                -- plain JP nn) because one more byte
+                                -- follows and TmpAddr must hold it past
+                                -- M3 - M4=bank byte+JumpL). This opcode
+                                -- slot was previously the unreachable
+                                -- "R800 MULUW" placeholder (Mode is always
+                                -- 0=Z80 in this project, so R800 opcodes
+                                -- were dead code); ED F3 keeps the MULUW
+                                -- placeholder. The actual PC/A/bank_pc_r
+                                -- assignment for JumpL is in t80.vhd's
+                                -- T_Res block, mirroring 'Jump' but loading
+                                -- the bank byte from DI_Reg instead of
+                                -- resetting to 00h.
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                when 4 =>
+                                        Inc_PC <= '1';
+                                        JumpL <= '1';
+                                when others => null;
+                                end case;
+                        when "11000010"|"11001010"|"11010010"|"11011010"|"11100010"|"11101010"|"11110010"|"11111010" =>
+                                -- Phase11: JP.L cc,addr24 (ED C2/CA/D2/DA/
+                                -- E2/EA/F2/FA). Same 3byte operand shape as
+                                -- JP.L above; condition test mirrors plain
+                                -- 'JP cc,nn' (IR(5:3) selects cc via
+                                -- is_cc_true). Operand bytes are always
+                                -- consumed regardless of the condition
+                                -- result, matching real Z80 JP cc,nn timing.
+                                MCycles <= "100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 2 =>
+                                        Inc_PC <= '1';
+                                        LDZ <= '1';
+                                when 3 =>
+                                        Inc_PC <= '1';
+                                        LDW <= '1';
+                                when 4 =>
+                                        Inc_PC <= '1';
+                                        if is_cc_true(F, to_bitvector(IR(5 downto 3))) then
+                                                JumpL <= '1';
+                                        end if;
+                                when others => null;
+                                end case;
                         when "11000101"|"11010101"|"11100101" =>
                                 -- Phase9: PUSH24 BC/DE/HL (ED C5/D5/E5)
                                 -- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 11
@@ -2028,8 +2095,12 @@ begin
                         when "11001001"|"11011001" =>
                                 --R800 MULUB
                                 null;
-                        when "11000011"|"11110011" =>
-                                --R800 MULUW
+                        when "11110011" =>
+                                -- R800 MULUW. ED C3 (previously grouped here)
+                                -- is now Phase11's JP.L addr24 above; this
+                                -- opcode (F3) remains the unreachable R800
+                                -- placeholder since Mode is always 0=Z80 in
+                                -- this project.
                                 null;
                         end case;
 

@@ -205,12 +205,40 @@ CPU仕様書V8セクション2「MODE」が定義するM2モード（`PC: 24bit`
 | `ED 30` / `38` | `JR.L NC/C, e16` | 条件付き | 未実装 |
 | `ED A7` / `AF` | `JR.L PO/PE, e16` | 条件付き | 未実装 |
 | `ED B7` / `BF` | `JR.L P/M, e16` | 条件付き | 未実装 |
-| `ED C3` | `JP.L addr24` | 24bit無条件ジャンプ | 未実装 |
-| `ED C2/CA/D2/DA/E2/EA/F2/FA` | `JP.L cc, addr24` | 条件付き24bitジャンプ | 未実装 |
+| `ED C3` | `JP.L addr24` | 24bit無条件ジャンプ | 実装済み（GHDL検証済み。M2ではbank_pcへ即値のbankバイトを反映、M0/M1では3byte目は読み捨てbank00h扱い。詳細は下記「8.1 JP.L」参照） |
+| `ED C2/CA/D2/DA/E2/EA/F2/FA` | `JP.L cc, addr24` | 条件付き24bitジャンプ | 実装済み（GHDL検証済み。条件不成立時も3byteのアドレスは読み飛ばし、bank_pcは変化しない） |
 | `ED CD` | `CALL.L addr24` | MSPへPC24を3byte保存（M2専用） | 未実装 |
 | `ED C4/CC/D4/DC/E4/EC/F4/FC` | `CALL.L cc, addr24` | 条件付きfar call（M2専用） | 未実装 |
 | `ED C9` | `RET.L` | MSPからPC24復元（M2専用） | 未実装 |
 | `ED C0/C8/D0/D8/E0/E8/F0/F8` | `RET.L cc` | 条件付きfar return（M2専用） | 未実装 |
+
+### 9.1 JP.L / JP.L cc 実装メモ（Phase11着手）
+
+`JP.L`/`JP.L cc`は、Phase11「M2制御フロー」のうちスタック(MSP)を使わない
+最もシンプルな部分として先行実装した。
+
+- 命令長はED prefix込みで5byte固定（`ED xx + lo + hi + bank`）。条件が
+  不成立の場合も、実機Z80の`JP cc,nn`と同様に3byteのアドレスは最後まで
+  読み進める（ジャンプしないだけで命令長は変わらない）。
+- `ED C3`は、このプロジェクトでは常にMode=0（Z80相当）固定でビルドして
+  おりR800拡張（MULUW/MULUB）には到達しないため、元々未使用だった
+  R800 MULUWのopcodeスロットを転用した（`ED F3`はMULUWプレースホルダの
+  ままで変更していない）。
+- **M2でのみ本来の24bitジャンプとして機能する**: `mode24=M2`のとき、
+  読み込んだ3byte目（bankバイト）がそのまま`bank_pc`（PC24の物理バンク
+  レジスタ）に反映され、真の24bit far jumpとして動作する。
+- **M0/M1では3byte目は読み捨てられ、常にbank00h扱いになる**（CALL.L/
+  RET.LのM2専用制限と同じ考え方）。これは意図的な設計判断であり、
+  Phase10で`bank_pc`はM2のときしか命令フェッチに参照されないため、
+  M0/M1でbank_pcへ非ゼロ値を書き込んでも「ジャンプ直後の1回だけ正しい
+  バンクが見えて、以降のフェッチでは静かにbank00hへ戻ってしまう」
+  という不整合（"zombie bank_pc"）を避けるため。
+- GHDLテストベンチ: [tb_phase11_jpl.vhd](fpga/G80A/test/tb_phase11_jpl.vhd)
+  （M2での無条件/条件付き（成立・不成立）ジャンプ、M0でのbankバイト
+  読み捨てを検証済み）。
+- 未実装: `JR.L`（相対ジャンプ、PC24全体にsigned変位を加算）、
+  `CALL.L`/`RET.L`（MSPへの3byte frame保存/復元）は、本セクション表の
+  とおり引き続きPhase11のTODOとして残っている。
 
 ---
 

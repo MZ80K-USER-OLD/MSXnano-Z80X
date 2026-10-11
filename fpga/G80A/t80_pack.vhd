@@ -216,6 +216,7 @@ package T80_Pack is
         Set_Addr_To : out std_logic_vector(2 downto 0); -- aNone,aXY,aIOA,aSP,aBC,aDE,aZI
         IORQ        : out std_logic;
         Jump        : out std_logic;
+        JumpL       : out std_logic;
         JumpE       : out std_logic;
         JumpXY      : out std_logic;
         Call        : out std_logic;

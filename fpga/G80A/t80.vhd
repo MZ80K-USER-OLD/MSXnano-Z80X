@@ -261,6 +261,8 @@ architecture rtl of T80 is
     signal Arith16          : std_logic;
     signal Set_Addr_To      : std_logic_vector(2 downto 0);
     signal Jump             : std_logic;
+    -- Phase11: see matching JumpL comment in t80_mcode.vhd's entity port.
+    signal JumpL            : std_logic;
     signal JumpE            : std_logic;
     signal JumpXY           : std_logic;
     signal Call             : std_logic;
@@ -330,6 +332,7 @@ begin
             Set_Addr_To => Set_Addr_To,
             IORQ => IORQ_i,
             Jump => Jump,
+            JumpL => JumpL,
             JumpE => JumpE,
             JumpXY => JumpXY,
             Call => Call,
@@ -574,10 +577,43 @@ begin
                         -- stale here would corrupt every subsequent fetch
                         -- after a jump executed in M2. JP (HL)/(IX)/(IY)
                         -- (JumpXY) and CALL/RST targets (Call/RstP) below
-                        -- get the same treatment for the same reason. Far
-                        -- jump/call variants (JP.L/CALL.L, Phase11) are not
-                        -- implemented yet and are unaffected by this.
+                        -- get the same treatment for the same reason.
+                        -- JP.L (Phase11, see JumpL branch below) is a true
+                        -- 24bit target and is NOT affected by this rule.
                         bank_pc_r <= (others => '0');
+                    elsif JumpL = '1' then
+                        -- Phase11: JP.L addr24 (ED C3) / JP.L cc,addr24
+                        -- (ED C2/CA/D2/DA/E2/EA/F2/FA). True 24bit far
+                        -- jump: TmpAddr holds the latched low+high bytes
+                        -- (via LDZ/LDW during M2/M3), and DI_Reg holds the
+                        -- freshly-fetched 3rd (bank) byte at this M4
+                        -- T_Res. Unlike the plain 'Jump' branch above,
+                        -- bank_pc_r/A_Bank_r take this bank byte directly
+                        -- instead of resetting to 00h - this is the only
+                        -- difference from 'Jump', since JP.L's target is a
+                        -- true 24bit address rather than CPU仕様書V8's
+                        -- "16bit immediate => bank00h" rule.
+                        A(15 downto 8) <= TmpAddr(15 downto 8);
+                        A(7 downto 0) <= TmpAddr(7 downto 0);
+                        PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
+                        PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
+                        if mode24_r = "10" then
+                            A_Bank_r <= DI_Reg;
+                            bank_pc_r <= DI_Reg;
+                        else
+                            -- Phase11: outside M2, JP.L still reads all 3
+                            -- operand bytes (for a mode-independent
+                            -- instruction encoding/length) but the bank
+                            -- byte has no effect - same bank00h rule as
+                            -- plain JP nn ('Jump' above), since M0/M1
+                            -- fetch never consults bank_pc_r regardless
+                            -- (Phase10's PC24 fetch gating). This avoids a
+                            -- "zombie bank_pc_r" where the jump's OWN
+                            -- fetch would briefly use the new bank (A_Bank_r
+                            -- set here) but every subsequent M0/M1 fetch
+                            -- would silently fall back to bank00h anyway.
+                            bank_pc_r <= (others => '0');
+                        end if;
                     elsif JumpXY = '1' then
                         A <= RegBusC;
                         PC <= unsigned(RegBusC);
