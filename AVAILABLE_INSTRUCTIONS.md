@@ -490,11 +490,72 @@ GHDL回帰テストは全てこの拡張後も変更なくパスしており、G
 
 ## 12. 割り込み（M2拡張）
 
+Phase13「M2割り込み拡張」（[MSX_T80_24bit化_CPU仕様書_V10](doc/jpn/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md)
+section13 "Interrupt"）。M2では、マスク可能割込み（IRQ）・NMIともに
+**IStatus（IM0/1/2の設定）に一切関係なく**、それぞれ専用の24bitベクタ
+レジスタ（IVR24/NVR24、Phase7で既存）へ直接分岐する。M0/M1は既存の
+Z80標準割込み処理（IM0/1/2・固定アドレス0066h）のまま変更なし。
+
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
-| `ED 4E` | `RETI.L` | M2用4byte frame復元 | 未実装 |
-| `ED 8C` | `RETN.L` | M2用4byte frame復元、IFF1<-IFF2 | 未実装 |
+| (opcode無し) | M2 IRQ受付 | IStatusに関係なくIVR24へ直接分岐 | 実装済み（GHDL検証済み） |
+| (opcode無し) | M2 NMI受付 | NVR24へ直接分岐 | 実装済み（GHDL検証済み） |
+| `ED 4E` | `RETI.L` | M2用4byte frame復元（IFF1/IFF2は変更しない） | 実装済み（GHDL検証済み） |
+| `ED 8C` | `RETN.L` | M2用4byte frame復元、復元後IFF1←IFF2 | 実装済み（GHDL検証済み） |
 | `ED 8D`〜`8F` | RESERVED | 未実装中はNOP | 未実装（現状は未定義opcodeとしてNOP動作） |
+
+### 12.1 実装メモ
+
+- **割込みframe構成**: M2での割込み受付時、MSP24を4回decrementしながら
+  `MSP+3=MODE, MSP+2=PC_B, MSP+1=PC_H, MSP+0=PC_L`の順（Phase12の
+  `CALL.M0/M1/M2`と全く同じ構成・書き込み順序）で4byteを保存する。IRQ
+  とNMIで差分はなく、唯一の違いは分岐先（IRQ→IVR24、NMI→NVR24）と、
+  受付時のIFF操作（IRQはIFF1=0,IFF2=0。NMIはIFF2のみ維持されIFF1=0に
+  なる、既存のZ80標準割込み受付ロジックをそのまま流用）。
+- **IStatus非依存の実現方法**: 割込み受付シーケンスの最初（IRを
+  強制的に`00000000`へ固定する箇所）で、`mode24_r="10"`（M2）のときは
+  IStatus（IM0/1/2）の値を一切参照せず常に同じ分岐へ進むよう、既存の
+  `IStatus="01"`（IM1→RST38h相当）判定より手前に新しいガードを追加した。
+  これにより、M2中にIM2を設定していても（M0/M1用のベクタテーブル読み
+  出し手順を経由せず）IVR24へ直接分岐することを保証している。
+- **RETI.L/RETN.L**: いずれもPhase12の`RET.M`（ED 99）と全く同じ
+  4byte pop + PC24/モード復元の仕組みをそのまま共用する（ハードウェア
+  的には同一のメカニズム、唯一の違いはRETN.Lだけが最終サイクルで
+  `IFF1←IFF2`を行う点、既存の標準RETN/RETIミラー群が使う`I_RETN`機構を
+  そのまま流用）。
+- **opcodeスロットの割当**: `ED 8C`は元々未使用（Indexed転送の予約
+  範囲内のNOPスロット）だったため衝突なく割り当てた。`ED 4E`は、実機
+  Z80にも存在する**非公開（undocumented）のIM0重複エンコーディング**
+  （`ED 46`と同じ効果、`ED 66`/`ED 6E`と並ぶミラー）と衝突していたため、
+  この重複動作を削除してRETI.Lへ割り当てた（MSXソフトウェアがこの
+  非公開ミラーを意図的に発行することは実質的に無く、実害はほぼ無いと
+  判断。詳細は[T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)参照）。
+- GHDLテストベンチ:
+  [tb_phase13_m2_interrupt.vhd](fpga/G80A/test/tb_phase13_m2_interrupt.vhd)
+  （IM2を明示的に設定した状態でのM2 IRQ→IVR24バイパス確認、4byte frame
+  の内容・MSP24の正しい復元、RETI.LがIFFを変更しないこと（直後の割込み
+  がマスクされたままであること）、RETN.Lが`IFF1←IFF2`を正しく復元する
+  こと（直後の割込みが再度受理されること）をEnd-to-endで検証済み）。
+  実機未検証。
+
+### 12.2 T80コア側で発見・修正した前提条件（既存バグ、Phase13で表面化）
+
+**詳細な技術レポート**:
+[T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](/d:/Users/HeroineFactory/Documents/GIT/MSXNano-Z80X/msxnano-24bit/doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)
+（Phase13分の追記を参照）。
+
+Phase13の実装過程で、T80コア本体（`fpga/G80A/t80.vhd`）の**既存の**
+M0/M1向け割込み処理ロジック（IM2のベクタテーブル読み出し、NMIの固定
+アドレス0066hジャンプ）が、いずれも`mode24_r`（現在のモード）を一切
+確認せず`MCycle`の値だけで無条件に発火する実装になっていたことが
+判明した。これはPhase11で発見した「DD/FD+CB専用のはずのMCycle=110/111
+無条件発火バグ」と全く同じ種類の前提条件違反で、「M0/M1の割込み処理は
+最大5 MCycleしか使わない」という暗黙の前提の上に成り立っていたが、
+Phase13の新しいM2割込みエントリ処理（同じく5 MCycle、ただし全く別の
+意味）がこれと衝突し、GHDLテストベンチ（あえてIM2を設定してM2の
+バイパスを確認する設計にしていた）がこれを検出した。`mode24_r /= "10"`
+ガードを2箇所に追加して修正済み（M0/M1自体の動作には影響なし、GHDL
+回帰で確認済み）。
 
 ---
 

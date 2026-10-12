@@ -97,6 +97,14 @@ entity T80_MCode is
                 -- Consulted only by the ED 68/69 (LEA.L) dispatch below;
                 -- every other ED-prefixed opcode is unaffected.
                 LeaXY       : in std_logic_vector(1 downto 0);
+                -- New (Phase13, V10仕様書): current mode24_r value from
+                -- t80.vhd, consulted ONLY by the "00000000" (interrupt
+                -- acknowledge) dispatch below to choose between the new
+                -- M2 4byte-interrupt-frame path and the pre-existing M0/
+                -- M1 NMI/IM2 paths (CPU仕様書V10 section13: "M2のIRQは
+                -- IM0/1/2の設定に関係なくIVR24へ直接分岐する"). No other
+                -- opcode consults this signal.
+                Mode24      : in std_logic_vector(1 downto 0);
                 MCycles     : out std_logic_vector(3 downto 0);
                 TStates     : out std_logic_vector(2 downto 0);
                 Prefix      : out std_logic_vector(1 downto 0); -- None,CB,ED,DD/FD
@@ -193,6 +201,14 @@ entity T80_MCode is
                 -- restores a previously-saved mode rather than hardcoding
                 -- M0/M1/M2).
                 RetM        : out std_logic;
+                -- New (Phase13, V10仕様書 section13): M2 interrupt entry
+                -- commit (maskable IRQ -> IVR24, NMI -> NVR24). Fires at
+                -- the final MCycle of the new M2-specific 4byte-frame
+                -- interrupt-acknowledge sequence (see the "00000000"
+                -- dispatch below); t80.vhd's T_Res branch selects IVR24
+                -- vs NVR24 directly from NMICycle/IntCycle, bypassing
+                -- IStatus/IM entirely.
+                IntM2       : out std_logic;
                 RstP        : out std_logic;
                 LDZ         : out std_logic;
                 LDW         : out std_logic;
@@ -298,7 +314,7 @@ architecture rtl of T80_MCode is
 
 begin
 
-        process (IR, ISet, MCycle, F, NMICycle, IntCycle, XY_State, LeaXY)
+        process (IR, ISet, MCycle, F, NMICycle, IntCycle, XY_State, LeaXY, Mode24)
                 variable DDD : std_logic_vector(2 downto 0);
                 variable SSS : std_logic_vector(2 downto 0);
                 variable DPair : std_logic_vector(1 downto 0);
@@ -344,6 +360,7 @@ begin
                 CallM01 <= '0';
                 CallM2 <= '0';
                 RetM <= '0';
+                IntM2 <= '0';
                 RstP <= '0';
                 LDZ <= '0';
                 LDW <= '0';
@@ -911,7 +928,57 @@ begin
                         -- SCF
                         I_SCF <= '1';
                 when "00000000" =>
-                        if NMICycle = '1' then
+                        if Mode24 = "10" and (NMICycle = '1' or IntCycle = '1') then
+                                -- Phase13 (V10仕様書 section13): M2
+                                -- interrupt entry (maskable IRQ -> IVR24,
+                                -- NMI -> NVR24, both via this SAME 4byte-
+                                -- frame + ack-cycle shape - differs from
+                                -- the M0/M1 NMI/IM2 paths below only in
+                                -- which target register is jumped to; the
+                                -- actual IVR24/NVR24 selection and jump
+                                -- commit happens in t80.vhd's T_Res chain
+                                -- via the IntM2 signal, keyed off
+                                -- NMICycle/IntCycle exactly like the M0/
+                                -- M1 paths below already are). Pushes the
+                                -- SAME 4byte frame shape as CALL.Mx/RET.M
+                                -- (MODE/PC_B/PC_H/PC_L, decrement-before-
+                                -- write) to MSP24, but since there is no
+                                -- preceding operand-fetch phase (the
+                                -- target is a forced jump, not an
+                                -- operand-encoded address), M1 itself -
+                                -- extended to TStates=101(5), mirroring
+                                -- the EXISTING M0/M1 NMI/IM2 ack cycle's
+                                -- own INTACK bus timing just below -
+                                -- serves as the "last fetch-equivalent"
+                                -- cycle that preps the first decrement
+                                -- (see the matching MSP24-decrement/MODE-
+                                -- PC_B-byte-DO override blocks in
+                                -- t80.vhd). Does NOT set IncDec_16 (so
+                                -- the generic 16bit SP/MSP adjustment
+                                -- mechanism used by the M0/M1 paths below
+                                -- does not also fire).
+                                MCycles <= "0101";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        TStates <= "101";
+                                        Set_Addr_To <= aMSP;
+                                when 2 =>
+                                        Set_Addr_To <= aMSP;
+                                        Write <= '1';
+                                when 3 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1101";
+                                        Write <= '1';
+                                when 4 =>
+                                        Set_Addr_To <= aMSP;
+                                        Set_BusB_To <= "1100";
+                                        Write <= '1';
+                                when 5 =>
+                                        Write <= '1';
+                                        IntM2 <= '1';
+                                when others => null;
+                                end case;
+                        elsif NMICycle = '1' then
                                 -- NMI
                                 MCycles <= "0011";
                                 case to_integer(unsigned(MCycle)) is
@@ -1701,7 +1768,7 @@ begin
 
 
                                 |"10000000"|"10000001"|"10000010"|"10000011"|"10000100"|"10000101"|"10000110"|"10000111"
-                                |"10001000"|"10001001"|"10001010"|"10001011"|"10001100"|"10001101"|"10001110"|"10001111"
+                                |"10001000"|"10001001"|"10001010"|"10001011"|            "10001101"|"10001110"|"10001111"
                                 |"10010000"|"10010001"|"10010010"
                                 |"10011010"|"10011011"|"10011100"|"10011101"|"10011110"|"10011111"
                                 |                                            "10100100"|"10100101"|"10100110"
@@ -1717,6 +1784,12 @@ begin
                                 |"11110001"|"11110101"|"11110110"|"11110111"
                                 |"11111001"|"11111011"|"11111101"|"11111110"|"11111111" =>
                                 null; -- NOP, undocumented
+                        -- Phase13 (V10仕様書 section13): "10001100" (ED
+                        -- 8C, formerly part of the Indexed-pair-transfer
+                        -- reserved/NOP range above) was carved out of
+                        -- this catch-all and reassigned to RETN.L (see
+                        -- the "10011001" RET.M/RETI.L/RETN.L shared case
+                        -- below).
                         when "10010011" =>
                                 -- Phase12: JP.M0 addr16 (ED 93). Mode-
                                 -- switching jump: identical 3cycle fetch/
@@ -1891,7 +1964,7 @@ begin
                                         CallM2 <= '1';
                                 when others => null;
                                 end case;
-                        when "10011001" =>
+                        when "10011001" | "01001110" | "10001100" =>
                                 -- Phase12: RET.M (ED 99). Pops the
                                 -- matching 4byte frame (LOW/HIGH/BANK/
                                 -- MODE, same increment-after-read pattern
@@ -1903,6 +1976,25 @@ begin
                                 -- these Phase12 opcodes that restores a
                                 -- previously-saved mode rather than
                                 -- hardcoding M0/M1/M2.
+                                --
+                                -- Phase13 (V10仕様書 section13): RETI.L
+                                -- (ED 4E) and RETN.L (ED 8C) share this
+                                -- IDENTICAL 4byte pop/restore mechanism
+                                -- unchanged - the only behavioural
+                                -- difference between the three is that
+                                -- RETN.L additionally restores IFF1<-IFF2
+                                -- (I_RETN, same mechanism already used by
+                                -- the existing plain RETN/RETI mirrors at
+                                -- ED45/4D/55/5D/65/6D/75/7D) at its final
+                                -- cycle, mirroring the real Z80
+                                -- distinction between RET/RETI (no IFF
+                                -- restore) and RETN (IFF restore). ED4E
+                                -- repurposes a previously-unused
+                                -- undocumented IM0 mirror slot (see the
+                                -- IM0 case above); ED8C repurposes an
+                                -- unused/NOP slot from the Indexed-pair-
+                                -- transfer reserved range (see the NOP
+                                -- catch-all comment above).
                                 MCycles <= "0101";
                                 case to_integer(unsigned(MCycle)) is
                                 when 1 =>
@@ -1919,6 +2011,9 @@ begin
                                         LDB <= '1';
                                 when 5 =>
                                         RetM <= '1';
+                                        if IR = x"8C" then
+                                                I_RETN <= '1';
+                                        end if;
                                 when others => null;
                                 end case;
                         when "00011000" =>
@@ -2413,8 +2508,18 @@ begin
                                 Set_BusA_To <= "1010";
                                 Read_To_Acc <= '1';
                                 Save_ALU <= '1';
-                        when "01000110"|"01001110"|"01100110"|"01101110" =>
+                        when "01000110"|"01100110"|"01101110" =>
                                 -- IM 0
+                                -- Phase13 (V10仕様書 section13): "01001110"
+                                -- (ED 4E, formerly an undocumented IM0
+                                -- mirror alongside 46/66/6E) was removed
+                                -- from this list and reassigned to
+                                -- RETI.L (see the "10011001" RET.M/RETI.L
+                                -- /RETN.L shared case below) - this
+                                -- undocumented mirror encoding is not
+                                -- known to be used by any real MSX
+                                -- software (which sets IM via the
+                                -- documented ED 46/56/66 encodings).
                                 IMode <= "00";
                         when "01010110"|"01110110" =>
                                 -- IM 1

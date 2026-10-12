@@ -304,6 +304,8 @@ architecture rtl of T80 is
     signal CallM01          : std_logic;
     signal CallM2           : std_logic;
     signal RetM             : std_logic;
+    -- Phase13: see matching IntM2 comment in t80_mcode.vhd's entity port.
+    signal IntM2            : std_logic;
     signal RstP             : std_logic;
     signal LDZ              : std_logic;
     signal LDW              : std_logic;
@@ -355,6 +357,7 @@ begin
             IntCycle => IntCycle,
             XY_State => XY_State,
             LeaXY => LeaXY,
+            Mode24 => mode24_r,
             MCycles => MCycles_d,
             TStates => TStates,
             Prefix => Prefix,
@@ -386,6 +389,7 @@ begin
             CallM01 => CallM01,
             CallM2 => CallM2,
             RetM => RetM,
+            IntM2 => IntM2,
             RstP => RstP,
             LDZ => LDZ,
             LDW => LDW,
@@ -580,7 +584,20 @@ begin
                         end if;
                     end if;
 
-                    if IntCycle = '1' and IStatus = "01" then
+                    if mode24_r = "10" and (IntCycle = '1' or NMICycle = '1') then
+                        -- Phase13 (V10仕様書 section13): "M2のIRQは
+                        -- IM0/1/2の設定に関係なくIVR24へ直接分岐する".
+                        -- M2 interrupts always dispatch through the
+                        -- "00000000" NOP-opcode path (handled specially
+                        -- via NMICycle/IntCycle/Mode24 in t80_mcode.vhd),
+                        -- regardless of IStatus - this check must come
+                        -- BEFORE the IStatus="01" (IM1) case below, which
+                        -- would otherwise force IR<="11111111" (RST 38h)
+                        -- for a maskable M2 IRQ. M0/M1 interrupts
+                        -- (mode24_r/="10") are completely unaffected,
+                        -- falling through to the unchanged cases below.
+                        IR <= "00000000";
+                    elsif IntCycle = '1' and IStatus = "01" then
                         IR <= "11111111";
                     elsif Halt_FF = '1' or (IntCycle = '1' and IStatus = "10") or NMICycle = '1' then
                         IR <= "00000000";
@@ -882,11 +899,70 @@ begin
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
                         bank_pc_r <= TmpBank;
                         mode24_r <= DI_Reg(1 downto 0);
-                    elsif MCycle = MCycles and NMICycle = '1' then
+                    elsif IntM2 = '1' then
+                        -- Phase13 (V10仕様書 section13): M2 interrupt
+                        -- entry commit. The 4byte frame (MODE/PC_B/PC_H/
+                        -- PC_L) was already pushed to MSP24 by the
+                        -- preceding write cycles (see the MSP24-decrement
+                        -- / MODE-PC_B-byte-DO override blocks below,
+                        -- mirroring CALL.Mx). Target is chosen directly
+                        -- from NMICycle vs IntCycle, WITHOUT consulting
+                        -- IStatus/IM ("M2のIRQはIM0/1/2の設定に関係なく
+                        -- IVR24へ直接分岐する"). mode24_r is explicitly
+                        -- re-asserted to M2 (redundant since this path
+                        -- only ever fires when already in M2, but kept
+                        -- explicit/safe to mirror JumpM2/CallM2's own
+                        -- pattern).
+                        if NMICycle = '1' then
+                            A(15 downto 8) <= std_logic_vector(NVR(15 downto 8));
+                            A(7 downto 0) <= std_logic_vector(NVR(7 downto 0));
+                            A_Bank_r <= bank_nvr_r;
+                            PC <= NVR;
+                            bank_pc_r <= bank_nvr_r;
+                        else
+                            A(15 downto 8) <= std_logic_vector(IVR(15 downto 8));
+                            A(7 downto 0) <= std_logic_vector(IVR(7 downto 0));
+                            A_Bank_r <= bank_int_r;
+                            PC <= IVR;
+                            bank_pc_r <= bank_int_r;
+                        end if;
+                        mode24_r <= "10";
+                    elsif MCycle = MCycles and NMICycle = '1' and mode24_r /= "10" then
+                        -- Phase13: guarded with mode24_r/="10" - this is
+                        -- the OLD M0/M1-only "NMI jumps to fixed 0066h"
+                        -- mechanism. Without this guard, it would ALSO
+                        -- spuriously fire for the NEW M2 NMI path at its
+                        -- own final mcycle (MCycle=MCycles=5 there too),
+                        -- racing against (and, due to elsif ordering,
+                        -- actually losing to) the IntM2 branch above -
+                        -- but see the MATCHING "MCycle=0011" IM2 guard
+                        -- just below, which fires 2 mcycles EARLIER
+                        -- (before IntM2 ever gets a chance) and corrupts
+                        -- the M2 sequence if left unguarded.
                         A <= "0000000001100110";
                         PC <= "0000000001100110";
                         bank_pc_r <= (others => '0');
-                    elsif MCycle = "0011" and IntCycle = '1' and IStatus = "10" then
+                    elsif MCycle = "0011" and IntCycle = '1' and IStatus = "10" and mode24_r /= "10" then
+                        -- Phase13: guarded with mode24_r/="10" - this is
+                        -- the OLD M0/M1-only IM2 vector-table-read
+                        -- mechanism (reads the jump target from {I,Z}).
+                        -- CRITICAL: M2's own new interrupt-entry sequence
+                        -- (see IntM2 above) also passes through
+                        -- MCycle="0011" as part of its OWN 5-mcycle push
+                        -- sequence (unrelated to IM2's vector read), and
+                        -- IntCycle stays '1' throughout that ENTIRE
+                        -- sequence - without this guard, a maskable M2
+                        -- IRQ serviced while IStatus happens to be "10"
+                        -- (IM2 - exactly what CPU仕様書V8 section13 says
+                        -- M2 must IGNORE) would have this unrelated
+                        -- M0/M1-only branch spuriously fire mid-push,
+                        -- overwriting A/PC with I&TmpAddr(7:0) (garbage,
+                        -- since TmpAddr is never set up for M2's forced-
+                        -- jump path) and corrupting the whole sequence.
+                        -- This was caught by tb_phase13_m2_interrupt.vhd
+                        -- Test1 (which deliberately sets IM2 to prove
+                        -- M2 ignores it, per the same CPU仕様書V8
+                        -- section13 rule).
                         A(15 downto 8) <= I;
                         A(7 downto 0) <= TmpAddr(7 downto 0);
                         PC(15 downto 8) <= unsigned(I);
@@ -1299,7 +1375,10 @@ begin
                     -- increments (one more than RET.L's 3, for the extra
                     -- MODE byte), identical TState=2,Wait_n=1 pattern to
                     -- RET.L above just extended to MCycle=101(5) too.
-                    when x"99" =>
+                    -- Phase13: RETI.L (ED 4E) / RETN.L (ED 8C) share this
+                    -- identical pop mechanism (see the matching mcode
+                    -- "10011001"|"01001110"|"10001100" shared case).
+                    when x"99" | x"4E" | x"8C" =>
                         if TState = 2 and Wait_n = '1' and
                            (MCycle = "0010" or MCycle = "0011" or MCycle = "0100" or MCycle = "0101") then
                             addr24_tmp := Addr24_Inc(bank_msp_r, std_logic_vector(MSP));
@@ -1308,6 +1387,33 @@ begin
                         end if;
                     when others => null;
                     end case;
+                end if;
+
+                -- Phase13 (V10仕様書 section13): M2 interrupt entry
+                -- (NMI->NVR24, IRQ->IVR24) MSP24 pointer adjustment. 4
+                -- decrements, mirroring CALL.M0/M1's own 4-decrement
+                -- shape above (see the IR=x"96"|x"97" case) but shifted 2
+                -- mcycles earlier throughout (M1/M2/M3/M4 instead of
+                -- M3/M4/M5/M6) since there is no operand-fetch phase here
+                -- - M1's own extended-ack-cycle TStates=101(5) serves as
+                -- the "last fetch-equivalent" cycle that preps the first
+                -- decrement, reusing the SAME extended-INTACK-bus timing
+                -- the pre-existing M0/M1 NMI/IM2 ack cycle already uses
+                -- (see the "00000000" IR-dispatch case in t80_mcode.vhd).
+                -- Gated on NMICycle/IntCycle (IR is forced to a fixed
+                -- "00000000" marker value during interrupt acknowledge,
+                -- so cannot be matched directly like CALL.Mx's IR=x"96"/
+                -- x"97" above) and mode24_r="10" (M0/M1 interrupts keep
+                -- the existing 2byte-frame NMI/IM2 paths, driven instead
+                -- by the generic IncDec_16="111" mechanism further above
+                -- - completely unchanged).
+                if (NMICycle = '1' or IntCycle = '1') and mode24_r = "10" then
+                    if (TState = 4 and MCycle = "0001") or
+                       (TState = 2 and Wait_n = '1' and (MCycle = "0010" or MCycle = "0011" or MCycle = "0100")) then
+                        addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
+                        bank_msp_r <= addr24_tmp(23 downto 16);
+                        MSP <= unsigned(addr24_tmp(15 downto 0));
+                    end if;
                 end if;
 
                 if LDSPHL = '1' then
@@ -1480,6 +1586,26 @@ begin
                     when x"98" => DO <= bank_pc_r;
                     when others => null;
                     end case;
+                end if;
+                -- Phase13 (V10仕様書 section13): M2 interrupt entry
+                -- MODE-byte write override. First of the 4 frame bytes
+                -- written (MCycle=2, at the MSP24 address already
+                -- decremented once by M1's own ack-cycle extension - see
+                -- the matching MSP24-decrement block above). Gated on
+                -- NMICycle/IntCycle (IR is forced to "00000000" during
+                -- interrupt acknowledge, so cannot be matched by opcode
+                -- like CALL.Mx's own MODE-byte override above) and
+                -- mode24_r="10".
+                if (NMICycle = '1' or IntCycle = '1') and mode24_r = "10" and MCycle = "0010" then
+                    DO <= "000000" & mode24_r;
+                end if;
+                -- Phase13: M2 interrupt entry PC_B-byte (bank_pc_r, the
+                -- bank the interrupted code was executing in) write
+                -- override. Second frame byte (MCycle=3). mcode's own
+                -- Set_BusB_To<="1101" (PC-HIGH) staged THIS cycle becomes
+                -- DO at MCycle=4 via the normal pipeline.
+                if (NMICycle = '1' or IntCycle = '1') and mode24_r = "10" and MCycle = "0011" then
+                    DO <= bank_pc_r;
                 end if;
             end if;
 
