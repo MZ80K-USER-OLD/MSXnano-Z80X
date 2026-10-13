@@ -1,0 +1,14 @@
+Z80X24 Phase13/14 (M2 interrupt / RST.L) test
+MSXnano-Z80X / msxnano-24bit
+
+Test1  RST.L 00H bank05 marker (11h): PASS
+Test2  RST.L 20H bank05 marker (22h): PASS
+Test3  RST.L 38H bank05 marker (33h): PASS
+Test4  RETN.L manual-frame restore (44h): PASS
+DIAG1  M2 sustained execution (no IRQ) survived
+T5: IVR/R1 setup done (direct OUT, no BIOS CALL), arming M2+EI now
+Test5  VDP IRQ -> IVR24 -> RETI.L (count=01): PASS
+Test6  RETI.L must NOT unmask IFF (count=01): FAIL (got=02, want=01)
+Test7  EI re-arms, IRQ serviced again (count=02): PASS
+
+PASS=06 FAIL=01
