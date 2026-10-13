@@ -307,6 +307,8 @@ architecture rtl of T80 is
     -- Phase13: see matching IntM2 comment in t80_mcode.vhd's entity port.
     signal IntM2            : std_logic;
     signal RstP             : std_logic;
+    -- Phase14(next): see matching RstL comment in t80_mcode.vhd's entity port.
+    signal RstL             : std_logic;
     signal LDZ              : std_logic;
     signal LDW              : std_logic;
     -- Phase11: see matching LDB comment in t80_mcode.vhd's entity port.
@@ -391,6 +393,7 @@ begin
             RetM => RetM,
             IntM2 => IntM2,
             RstP => RstP,
+            RstL => RstL,
             LDZ => LDZ,
             LDW => LDW,
             LDB => LDB,
@@ -748,6 +751,27 @@ begin
                         A <= TmpAddr;
                         PC <= unsigned(TmpAddr);
                         bank_pc_r <= (others => '0');
+                    elsif RstL = '1' then
+                        -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/
+                        -- FF), M2 commit. TmpAddr already holds the same
+                        -- "00"&IR(5:3)&"000" vector as plain RST (shared
+                        -- compute block above), but unlike RstP's own
+                        -- commit (which always zeroes bank_pc_r for plain
+                        -- RST/other 16bit-immediate-target instructions
+                        -- per CPU仕様書V8 section5), RST.L's M2 path
+                        -- jumps to PC24={RST_B,00h,vector}: the 3byte
+                        -- PC24 return frame (bank_pc_r/PC_H/PC_L) was
+                        -- already pushed to MSP24 by the preceding write
+                        -- cycles (see the matching MSP24-decrement/BANK-
+                        -- byte-DO blocks below, mirroring Phase9's
+                        -- PUSH24). M0/M1 execution of this same opcode
+                        -- never sets RstL (mcode selects RstP/aSP/16bit
+                        -- push instead - see t80_mcode.vhd), so this
+                        -- branch is M2-only by construction.
+                        A <= TmpAddr;
+                        PC <= unsigned(TmpAddr);
+                        A_Bank_r <= bank_rst_r;
+                        bank_pc_r <= bank_rst_r;
                     elsif CallL = '1' then
                         -- Phase11: CALL.L addr24 / CALL.L cc,addr24 (ED
                         -- CD / ED C4/CC/D4/DC/E4/EC/F4/FC). True 24bit far
@@ -1159,7 +1183,12 @@ begin
                     if BTR_r = '1' then
                         PC <= PC - 2;
                     end if;
-                    if RstP = '1' then
+                    if RstP = '1' or RstL = '1' then
+                        -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/
+                        -- FF) shares this IDENTICAL vector compute with
+                        -- plain RST p (same IR(5:3) bit position, same
+                        -- byte value regardless of ED prefix) - only the
+                        -- T_Res commit (below) differs in BANK handling.
                         TmpAddr <= (others =>'0');
                         TmpAddr(5 downto 3) <= IR(5 downto 3);
                     end if;
@@ -1294,6 +1323,26 @@ begin
                         if TState = 2 and Wait_n = '1' and
                            (MCycle = "0010" or MCycle = "0011" or MCycle = "0100") then
                             addr24_tmp := Addr24_Inc(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
+                        end if;
+                    -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/FF)
+                    -- MSP24 pointer adjustment, M2-only, same decrement-
+                    -- before-write schedule as PUSH24 above (no preceding
+                    -- operand-fetch phase, so the push starts right at
+                    -- M1, identically to PUSH24). M0/M1 execution of this
+                    -- SAME opcode instead uses the regular SP via
+                    -- IncDec_16 (see t80_mcode.vhd's Mode24 branch) and
+                    -- never reaches this code with matching MCycle/
+                    -- TState values in a way that should touch MSP - the
+                    -- explicit mode24_r guard here prevents a spurious
+                    -- MSP decrement if it ever did (same lesson as the
+                    -- Phase13 mode24_r-guard bug fix).
+                    when x"C7" | x"CF" | x"D7" | x"DF" | x"E7" | x"EF" | x"F7" | x"FF" =>
+                        if mode24_r = "10" and
+                           ((TState = 4 and MCycle = "0001") or
+                            (TState = 2 and Wait_n = '1' and (MCycle = "0010" or MCycle = "0011"))) then
+                            addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
                             bank_msp_r <= addr24_tmp(23 downto 16);
                             MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
@@ -1518,6 +1567,21 @@ begin
                     when x"C5" => DO <= bank_bc_r;
                     when x"D5" => DO <= bank_de_r;
                     when x"E5" => DO <= bank_hl_r;
+                    when others => null;
+                    end case;
+                end if;
+                -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/FF) BANK-
+                -- byte write override, M2-only (same MCycle=2 slot as
+                -- PUSH24's own override above, since RST.L's push also
+                -- starts right at M1 with no preceding operand-fetch
+                -- phase). Guarded by mode24_r: M0/M1 execution of this
+                -- SAME opcode writes PC_H (not bank_pc_r) at this same
+                -- MCycle via the normal Set_BusB_To path instead (see
+                -- t80_mcode.vhd's Mode24 branch) - without this guard,
+                -- M0/M1's PC_H write would be silently corrupted.
+                if ISet = "10" and MCycle = "0010" and mode24_r = "10" then
+                    case IR is
+                    when x"C7" | x"CF" | x"D7" | x"DF" | x"E7" | x"EF" | x"F7" | x"FF" => DO <= bank_pc_r;
                     when others => null;
                     end case;
                 end if;

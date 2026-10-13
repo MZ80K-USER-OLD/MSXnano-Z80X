@@ -210,6 +210,16 @@ entity T80_MCode is
                 -- IStatus/IM entirely.
                 IntM2       : out std_logic;
                 RstP        : out std_logic;
+                -- New (next phase, V10仕様書 section12): RST.L (ED C7/
+                -- CF/D7/DF/E7/EF/F7/FF) M2-only commit. Fires at the
+                -- final MCycle of RST.L's M2 3byte-push sequence (bank_
+                -- pc_r/PC_H/PC_L to MSP24, mirroring Phase9's PUSH24);
+                -- t80.vhd's T_Res branch jumps to PC24={RST_B,00h,
+                -- vector} using the SAME TmpAddr vector compute as RstP
+                -- but preserving/applying RST_B instead of zeroing
+                -- bank_pc_r. M0/M1 execution of the same opcode instead
+                -- uses RstP (see the Mode24 branch below).
+                RstL        : out std_logic;
                 LDZ         : out std_logic;
                 LDW         : out std_logic;
                 -- Phase11: latches the 3rd (bank) byte of a CALL.L addr24
@@ -362,6 +372,7 @@ begin
                 RetM <= '0';
                 IntM2 <= '0';
                 RstP <= '0';
+                RstL <= '0';
                 LDZ <= '0';
                 LDW <= '0';
                 LDB <= '0';
@@ -1775,21 +1786,102 @@ begin
                                 |                                            "10101100"|"10101101"|"10101110"
                                 |                                            "10110100"|"10110101"|"10110110"
                                 |                                            "10111100"|"10111101"|"10111110"
-                                |"11000110"|"11000111"
-                                |"11001011"|"11001110"|"11001111"
-                                |"11010011"|"11010110"|"11010111"
-                                |"11011011"|"11011101"|"11011110"|"11011111"
-                                |"11100011"|"11100110"|"11100111"
-                                |"11101001"|"11101011"|"11101101"|"11101110"|"11101111"
-                                |"11110001"|"11110101"|"11110110"|"11110111"
-                                |"11111001"|"11111011"|"11111101"|"11111110"|"11111111" =>
+                                |"11000110"
+                                |"11001011"|"11001110"
+                                |"11010011"|"11010110"
+                                |"11011011"|"11011101"|"11011110"
+                                |"11100011"|"11100110"
+                                |"11101001"|"11101011"|"11101101"|"11101110"
+                                |"11110001"|"11110101"|"11110110"
+                                |"11111001"|"11111011"|"11111101"|"11111110" =>
                                 null; -- NOP, undocumented
+                        -- New (next phase, V10仕様書 section12): RST.L
+                        -- opcodes (ED C7/CF/D7/DF/E7/EF/F7/FF, i.e.
+                        -- "11xxx111") were carved out of this catch-all
+                        -- (see the dedicated case below, mirroring the
+                        -- Phase13 ED4E/ED8C carve-out pattern for RETI.L/
+                        -- RETN.L).
                         -- Phase13 (V10仕様書 section13): "10001100" (ED
                         -- 8C, formerly part of the Indexed-pair-transfer
                         -- reserved/NOP range above) was carved out of
                         -- this catch-all and reassigned to RETN.L (see
                         -- the "10011001" RET.M/RETI.L/RETN.L shared case
                         -- below).
+                        when "11000111"|"11001111"|"11010111"|"11011111"
+                                |"11100111"|"11101111"|"11110111"|"11111111" =>
+                                -- New (next phase, V10仕様書 section12):
+                                -- RST.L 00H/08H/10H/18H/20H/28H/30H/38H
+                                -- (ED C7/CF/D7/DF/E7/EF/F7/FF). Unlike
+                                -- CALL.L/RET.L (which always use MSP24
+                                -- regardless of mode, only the BANK
+                                -- byte's EFFECT differs by mode), RST.L
+                                -- fully degrades to a plain Z80 RST in
+                                -- M0/M1 per CPU仕様書V10 section12 ("M0/
+                                -- M1では対応する通常Z80 RSTとしてSP16へ
+                                -- 16bit return PCをpush...RST_Bは参照し
+                                -- ない"): different register (SP vs MSP)
+                                -- and different byte count (2 vs 3), so
+                                -- the mode selection must happen here in
+                                -- mcode (Mode24 input, added Phase13),
+                                -- not just in t80.vhd's commit logic.
+                                if Mode24 = "10" then
+                                        -- M2: 3byte PC24 return-frame
+                                        -- push (bank_pc_r/PC_H/PC_L) to
+                                        -- MSP24, identical decrement-
+                                        -- before-write shape/schedule to
+                                        -- Phase9's PUSH24 (no preceding
+                                        -- operand-fetch phase, so M1
+                                        -- itself - extended to TStates=5 -
+                                        -- serves as PUSH24's own "last
+                                        -- fetch-equivalent" prep cycle).
+                                        -- Set_BusB_To "1101"/"1100" (PC
+                                        -- high/low) are the same encodings
+                                        -- plain RST/CALL.L already use.
+                                        MCycles <= "0100";
+                                        case to_integer(unsigned(MCycle)) is
+                                        when 1 =>
+                                                TStates <= "101";
+                                                Set_Addr_To <= aMSP;
+                                        when 2 =>
+                                                Set_Addr_To <= aMSP;
+                                                Set_BusB_To <= "1101";
+                                                Write <= '1';
+                                        when 3 =>
+                                                Set_Addr_To <= aMSP;
+                                                Set_BusB_To <= "1100";
+                                                Write <= '1';
+                                        when 4 =>
+                                                Write <= '1';
+                                                RstL <= '1';
+                                        when others => null;
+                                        end case;
+                                else
+                                        -- M0/M1: identical shape to plain
+                                        -- (non-ED) "RST p" above - SP16,
+                                        -- 2byte push (PC_H/PC_L), commits
+                                        -- via the SAME RstP signal (whose
+                                        -- t80.vhd handler zeroes bank_pc_r,
+                                        -- matching plain RST/JP/JR's "16bit
+                                        -- immediate target" convention -
+                                        -- RST_B is never referenced).
+                                        MCycles <= "0011";
+                                        case to_integer(unsigned(MCycle)) is
+                                        when 1 =>
+                                                TStates <= "101";
+                                                IncDec_16 <= "1111";
+                                                Set_Addr_To <= aSP;
+                                                Set_BusB_To <= "1101";
+                                        when 2 =>
+                                                Write <= '1';
+                                                IncDec_16 <= "1111";
+                                                Set_Addr_To <= aSP;
+                                                Set_BusB_To <= "1100";
+                                        when 3 =>
+                                                Write <= '1';
+                                                RstP <= '1';
+                                        when others => null;
+                                        end case;
+                                end if;
                         when "10010011" =>
                                 -- Phase12: JP.M0 addr16 (ED 93). Mode-
                                 -- switching jump: identical 3cycle fetch/

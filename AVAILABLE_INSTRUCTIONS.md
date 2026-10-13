@@ -195,7 +195,7 @@ DD/FD ED80〜8B。80〜82=LD16 load、83〜85=LD16 store、86〜88=LD24 load、8
 1回のPUSH24/POP24呼出しの中で物理bankが変化するシナリオ（例:
 MSP24=02:0001hからPUSH24を実行し、3回のデクリメントで
 02:0001→02:0000→01:FFFF（bank繰り下がり）→01:FFFEとbankをまたぐ）を
-[Project/Push24Test](../Project/Push24Test)で実機検証したところ、
+[hardware_test/Push24Test](hardware_test/Push24Test)で実機検証したところ、
 **先行するTest5完了直後にシステムがフリーズする現象を確認しました**
 （画面にプログラム起動時のバナーが再表示された後、応答不能に。PCが暴走し
 プログラム先頭付近へ飛んだ可能性が高い）。GHDLシミュレーション
@@ -213,7 +213,7 @@ sdram.v）にはCPU側へのWAIT状態生成機構が存在しない（[top.v](f
 プログラム自身の空間や、BIOS/割込みベクタ等）を破壊した可能性が疑われます。
 
 根本原因の特定には[memory.v](fpga/src/memory.v)・sdram.vのSD-RAMタイミング
-のより詳細な調査が必要で、**現時点では未解決**です。[Project/Push24Test](../Project/Push24Test)
+のより詳細な調査が必要で、**現時点では未解決**です。[hardware_test/Push24Test](hardware_test/Push24Test)
 の実機テストプログラムは、この問題が判明した時点でbank境界をまたぐ
 シナリオを削除し、常に単一物理bank内で完結するテストのみに修正済みです。
 PUSH24/POP24を単一物理bank内で使う限りは実機で正常動作を確認済みですが、
@@ -435,7 +435,7 @@ Phase12「モード間制御」。`JP.Mx`/`CALL.Mx`は、通常のJP/CALLとは�
   [tb_phase12_mode_control.vhd](fpga/G80A/test/tb_phase12_mode_control.vhd)
   （JP.M0/M1/M2、CALL.M0/M1/M2→RET.Mの往復3回を検証済み。4byte frame
   の内容・MSP24の正しい復元も確認済み）。
-- **実機検証済み**: [Project/P12Test](../Project/P12Test)のMSX-DOS(2)用
+- **実機検証済み**: [hardware_test/P12Test](hardware_test/P12Test)のMSX-DOS(2)用
   テストプログラム`P12TEST.COM`で、JP.M0/M1/M2（bank02hへの実行マーカー
   方式を含む）・CALL.M0/M1/M2（RET.Mとの往復、bank02hへの往復を含む）の
   全8チェックが実機（Tang Nano）で2026年10月にPASSしました
@@ -479,12 +479,57 @@ GHDL回帰テストは全てこの拡張後も変更なくパスしており、G
 
 | オペコード | 命令 | 状態 |
 |---|---|---|
-| `ED C7` / `CF` | `RST.L 00H` / `08H` | 未実装 |
-| `ED D7` / `DF` | `RST.L 10H` / `18H` | 未実装 |
-| `ED E7` / `EF` | `RST.L 20H` / `28H` | 未実装 |
-| `ED F7` / `FF` | `RST.L 30H` / `38H` | 未実装 |
+| `ED C7` / `CF` | `RST.L 00H` / `08H` | 実装済み（GHDL検証済み。`00H`は実機検証済み、`08H`はM0/M1 degrade対象のため実機未検証—下記11.1参照） |
+| `ED D7` / `DF` | `RST.L 10H` / `18H` | 実装済み（GHDL検証済み、実機未検証） |
+| `ED E7` / `EF` | `RST.L 20H` / `28H` | 実装済み（GHDL検証済み。`20H`は実機検証済み） |
+| `ED F7` / `FF` | `RST.L 30H` / `38H` | 実装済み（GHDL検証済み。`38H`は実機検証済み） |
 
 > 通常（ED非前置）の `RST 00H〜38H` は既存Z80標準命令として実装済みです。
+
+### 11.1 実装メモ
+
+- **M0/M1はCALL.L/RET.Lと違う「完全degrade」**: CALL.L/RET.L（上記9.2参照）
+  はモードに関わらず常にMSP24へ3byte push/popするのに対し、RST.Lは
+  M0/M1では**SP16・2byte push**の正真正銘の通常Z80 RSTへ完全degrade
+  する（RST_Bを一切参照しない）。これはCPU仕様書V10 section12の明文
+  規定どおりで、mcode側（`t80_mcode.vhd`）に新設した`Mode24`参照の
+  分岐で、M2時はPUSH24と同型の4 MCycle（M1で aMSP 準備、M2/M3/M4で
+  bank_pc_r/PC_H/PC_Lを書込み）、M0/M1時は既存の（非ED）`RST p`と全く
+  同じ3 MCycle（SP decrement+aSP書込み×2）を選択する。同一opcodeの
+  mcode内でMCycle数そのものを`Mode24`で切り替えるのは本プロジェクトで
+  初めてのパターン（JP.Mx/CALL.Mxはターゲットmodeをopcode自体で静的に
+  指定するため、実行時modeによるMCycle数分岐は不要だった）。
+- **bank_pc挙動はJP.L/JR.L/通常RSTと同じ「resetファミリー」**: CALL.L/
+  RET.Lは「同一64KBセグメント内、PC_B不変」のpreserveルール（CALL/RET
+  ファミリー）に従うが、RST.Lは「16bit即値ターゲットを生成する命令は
+  bank00hへリセットする」というJP/JR/RSTファミリーのルール（CPU仕様書
+  V8 section5）に従う。M0/M1でのRST.Lは、既存の（非ED）`RST p`が使う
+  `RstP`コミット信号をそのまま再利用しており、`bank_pc_r`を無条件に
+  00hへリセットする（意図的な設計、CALL.L/RET.Lとは異なるので注意）。
+- **新設`RstL`信号**: M2側の専用コミット信号。`RstP`と同じ
+  `TmpAddr<="00"&IR(5:3)&"000"`計算を共用しつつ、コミット時のBANK
+  バイト処理だけが異なる（`RstP`は`bank_pc_r`を00hへリセット、`RstL`は
+  `bank_rst_r`（RST_B）を適用）。MSP24の3byte push（decrement-before-
+  write、PUSH24と全く同じスケジュール: M1@TState4、M2/M3@TState2）と
+  BANKバイトDO書込みオーバーライドはいずれも`mode24_r = "10"`で明示的に
+  ガードしている（M0/M1での同一opcode実行時に誤発火してPC_H書込みを
+  破壊する／MSP24を誤って増減させることを防ぐため、Phase13で学んだ
+  「MCycle値の偶然の一致」バグ類型への対策）。
+- **opcodeスロットの割当**: `ED C7/CF/D7/DF/E7/EF/F7/FF`（`11xxx111`）
+  は、ED prefix後の未使用/undocumented NOP範囲に含まれていたスロット
+  で、他の命令と衝突しない（`t80_mcode.vhd`の既存catch-allから
+  切り出した）。
+- GHDLテストベンチ: [tb_rst_l.vhd](fpga/G80A/test/tb_rst_l.vhd)（M2での
+  `RST.L 20H`実行→MSP24への3byte push frame検証→`RET.L`での復帰→MSP24
+  復元確認、M0への切替後の`RST.L 08H`実行→SP16への2byte push＋固定
+  0008hジャンプ＋`bank_pc`が0Ch(precondition)でもAAh(毒入りRST_B)でも
+  なく00hへリセットされること→`RET`での復帰、を一連のシーケンスで
+  End-to-endに検証済み）。
+- **実機検証済み**: [hardware_test/P1314Test](hardware_test/P1314Test)のMSX-DOS(2)用
+  テストプログラム`P1314T.COM`で、`RST.L`の3vector（00H/20H/38H、物理
+  bank05hへの実行マーカー方式）が実機（Tang Nano）で2026年10月に
+  PASSしました（詳細は次節12のPhase13分と合わせた総合結果`PASS=07
+  FAIL=00`を参照）。
 
 ---
 
@@ -498,10 +543,10 @@ Z80標準割込み処理（IM0/1/2・固定アドレス0066h）のまま変更�
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
-| (opcode無し) | M2 IRQ受付 | IStatusに関係なくIVR24へ直接分岐 | 実装済み（GHDL検証済み） |
-| (opcode無し) | M2 NMI受付 | NVR24へ直接分岐 | 実装済み（GHDL検証済み） |
-| `ED 4E` | `RETI.L` | M2用4byte frame復元（IFF1/IFF2は変更しない） | 実装済み（GHDL検証済み） |
-| `ED 8C` | `RETN.L` | M2用4byte frame復元、復元後IFF1←IFF2 | 実装済み（GHDL検証済み） |
+| (opcode無し) | M2 IRQ受付 | IStatusに関係なくIVR24へ直接分岐 | 実装済み（GHDL検証済み、実機検証済み） |
+| (opcode無し) | M2 NMI受付 | NVR24へ直接分岐 | 実装済み（GHDL検証済み、実機未検証—実機にはソフトウェアから起動可能なNMIトリガが無いため） |
+| `ED 4E` | `RETI.L` | M2用4byte frame復元（IFF1/IFF2は変更しない） | 実装済み（GHDL検証済み、実機検証済み） |
+| `ED 8C` | `RETN.L` | M2用4byte frame復元、復元後IFF1←IFF2 | 実装済み（GHDL検証済み。実機では手動構築フレームによる復元スモークテストのみ実施—IFF1←IFF2復元自体はNMI同様の理由で実機未検証） |
 | `ED 8D`〜`8F` | RESERVED | 未実装中はNOP | 未実装（現状は未定義opcodeとしてNOP動作） |
 
 ### 12.1 実装メモ
@@ -536,7 +581,22 @@ Z80標準割込み処理（IM0/1/2・固定アドレス0066h）のまま変更�
   の内容・MSP24の正しい復元、RETI.LがIFFを変更しないこと（直後の割込み
   がマスクされたままであること）、RETN.Lが`IFF1←IFF2`を正しく復元する
   こと（直後の割込みが再度受理されること）をEnd-to-endで検証済み）。
-  実機未検証。
+- **実機検証済み**: [hardware_test/P1314Test](hardware_test/P1314Test)のMSX-DOS(2)用
+  テストプログラム`P1314T.COM`で、実機のVDPフレーム割込み（垂直帰線
+  割込み）という本物の非同期ハードウェア割込みを使い、M2のIRQが
+  `IVR24`へ直接分岐すること・`RETI.L`がIFF1を復元しないこと（直後の
+  割込みがマスクされたままであること）・明示的な`EI`で割込みが再び
+  受理されることを含む7チェックが、実機（Tang Nano）で2026年10月に
+  PASSしました（`PASS=07 FAIL=00`）。RST.L・M2割込みともに、本物の
+  非同期割込みタイミングで実機検証された初めてのケースです。この
+  実機検証の過程で、Z80X24拡張とは独立したMSX-DOSプログラミング一般の
+  既知の注意点（BIOS ROM内ルーチンはCALSLT経由でなければ直接CALL
+  できない、BDOSは副作用として内部でEIを実行し呼出し前の割込み禁止
+  状態を保存・復元しない）も発見しており、詳細は
+  [hardware_test/P1314Test/README.md](hardware_test/P1314Test/README.md)の
+  「開発経緯2/3」を参照のこと。NMI受付とRETN.LのIFF1←IFF2復元自体は、
+  実機にソフトウェアから起動可能なNMIトリガが存在しないため、実機
+  検証の対象外（GHDL側で厳密に検証済み）。
 
 ### 12.2 T80コア側で発見・修正した前提条件（既存バグ、Phase13で表面化）
 
@@ -591,7 +651,61 @@ Phase13の新しいM2割込みエントリ処理（同じく5 MCycle、ただし
 - `MMU_ATTR`のW=0は、対応する論理bankへの実際の書込み（Write Enable）のみを抑止します。CPU命令自体は正常完了し、例外/trapは発生しません（有効化した場合、`top.v`で`Write_Allow`が`cpu_sdram_write`をゲートします）。
 - 論理bank00h（Z80/MSX互換64KB空間）は`MMU_DATA`と同様に`MMU_ATTR`でも例外扱いです。`MMU_ATTR[00h]`への書込みは無視され、bank00hの`Write_Allow`は常に`1`（書込み許可）として扱われます。bank00hは拡張SD-RAM経路自体を使わず既存のMSX互換スロット/マッパー経由でアクセスされるため、常に読み書き可能という不変条件が保たれます。
 - 変換結果（物理bank）は有効化した場合、[top.v](fpga/top.v)で実SD-RAM経路（`memory_ctrl`の`cpu_sdram_req`/`cpu_sdram_addr`）に配線されます。ただし物理bank **01h〜1Bh（27バンク、約1.6875MB）のみ**対応しており、これを超える物理bankは未接続（読出しは0xFF、書込みは無視）です。詳細な物理アドレス割り当ては[SDRAMメモリマップ.md](doc/jpn/SDRAMメモリマップ.md)の2.2章を参照してください。
-- **Phase5「MMU実機検証」は、MMUが有効だった時点で実機（Tang Nano）で確認済みです**（[Project/MMUTest](../Project/MMUTest)のMSX-DOS(2)用テストプログラム`MMUTEST.COM`で、物理bank間の独立性・エイリアス・MMU_DATA[n]=00hの64KB互換aliasを含む全8テストがPASS）。Phase6（`MMU_ATTR.W`）はGHDLシミュレーションで確認済みですが、実機検証は未実施です。MMUTestはMMU_DATA[n]=n（straight-through）設定で動かせば、現在のデフォルト仕様の動作確認にもそのまま使えます。
+- **Phase5「MMU実機検証」は、MMUが有効だった時点で実機（Tang Nano）で確認済みです**（[hardware_test/MMUTest](hardware_test/MMUTest)のMSX-DOS(2)用テストプログラム`MMUTEST.COM`で、物理bank間の独立性・エイリアス・MMU_DATA[n]=00hの64KB互換aliasを含む全8テストがPASS）。Phase6（`MMU_ATTR.W`）はGHDLシミュレーションで確認済みですが、実機検証は未実施です。MMUTestはMMU_DATA[n]=n（straight-through）設定で動かせば、現在のデフォルト仕様の動作確認にもそのまま使えます。
+
+---
+
+## 15. 回路規模調査：24bitアダー類のGowin合成時共用状況
+
+Phase13完了後、回路規模（LUT/ALU）削減の余地を探るため、[t80.vhd](fpga/G80A/t80.vhd)内に複数箇所存在する24bitアドレス加算（`Addr24_Inc`/`Addr24_Dec`/`Addr24_AddDisp8`/`Addr24_AddDisp16`/`Alu24_AddSub`、[t80_pack.vhd](fpga/G80A/t80_pack.vhd)定義）が、Gowin合成時に自動的に共用化（重複排除）されているかを調査しました。
+
+### 調査手法
+
+合成後のnetlist（`.vg`）は暗号化されており直接解析できず、リソースレポート（`_syn_resource.html`）もサブモジュール単位の粗い集計のみで式単位の内訳が得られないため、**差分実験**で間接的に検証しました。特定の加算呼び出し箇所を一時的に「素通し代入（`bank_x_r & std_logic_vector(X)`、加算なし）」に置き換え、Gowin合成後のLUT/ALU使用量の増減を測定する方法です（実験後は都度元のコードへ復元）。
+
+| 実験 | 対象 | 置換前ベースライン | 置換後 | 差分 | 解釈 |
+|---|---|---|---|---|---|
+| ① | PC逐次加算（`Addr24_Inc(bank_pc_r, PC)`、命令フェッチ用とオペランドフェッチ用の同一式が2箇所） | 15022 LUT / 1630 ALU | 15073 LUT / 1631 ALU | LUT +51 / ALU +1（≒誤差範囲） | 片方を無効化しても回路規模が減らない → **既に1つの加算器に統合済み**と推定 |
+| ② | JR.L相対分岐加算（`Addr24_AddDisp16`、PCの逐次加算とは異なる式） | 同上 | 15157 LUT / 1607 ALU | LUT +135 / ALU **-23** | ALUが明確に減少 → **PC逐次加算とは別の専用回路**であり、共用されていない |
+| ③ | MSP24増減算（`Addr24_Dec`×6箇所＋`Addr24_Inc`×4箇所、CALL.Mx/RET.M/割込み等に分散、計10箇所） | 同上 | 14744 LUT / 1631 ALU | LUT **-278** / ALU ±0 | 10箇所の呼び出しを全廃止してもLUT減少はわずかでALUは不変 → 全箇所が既に**Dec用1回路・Inc用1回路（計2回路程度）へ統合済み**と推定（Dec/Inc間の統合はされていない） |
+
+### 結論（ユーザー提起の5項目への回答）
+
+1. **PC24更新**（`Addr24_Inc` vs `Addr24_AddDisp16`）: 同一関数・同一引数の複数呼び出し（フェッチ用逐次加算）はGowinの共通部分式除去（CSE）により**既に自動統合済み**。ただしJR.L用の`Addr24_AddDisp16`は構造が異なる別関数のため**共用されていない**。
+2. **MSP24更新**: 通常/拡張スタックの各分岐に散らばる`Addr24_Dec`/`Addr24_Inc`呼び出しは、引数が同一式である限りGowinが自動的に統合済み（実質Dec用・Inc用の2回路）。ただしDecとIncを1つの±1加算器へ統合する、という一段深い手動最適化は行われていない。
+3. **24bit ALU**（`Alu24_AddSub`）: 呼び出し箇所は既存セッションで1箇所に手動集約済みのため対象外。
+4. **24bitアドレス生成**（IX/IY+d・JR.L・PC・MSP）: これらは関数自体が異なるため、実行タイミングが重ならなくてもGowinは自動共用しない（実験②で確認）。**唯一、手動RTL書き換え（排他的制御による汎用加算器＋オペランド選択セレクタ化）で回路を共用化できる余地がある領域**。なお`Addr24_AddDisp8`（IX/IY+d）は`LEA.L`実装とまったく同一の呼び出し式が2箇所あるため、これも既に自動統合されている可能性が高い。
+5. **レジスタ書込み経路**: `RegDIH`/`RegDIL`へのHL24/DE24/LEA.L/ALU24書込みは、単一プロセス内のif/elsif分岐として最初から1系統のみ実装されており、そもそも重複回路が存在しない（整理の余地なし）。
+
+### 今後の方針
+
+上記4.のみ手動統合の余地が残っているが、タイミング・パス再検証（セレクタのmux段が加算のクリティカルパスに乗る可能性）を伴う相応の実装コストがあるため、**本調査では実装は見送り、知見の記録のみとする**（2026年時点の判断）。
+
+---
+
+## 16. 周辺CPU動作（Phase15）監査メモ
+
+[実装手順V4](doc/jpn/MSX_T80_24bit化_実装手順_V4_2026-10-11.md)section17「Phase 15 — 周辺CPU動作」、および[CPU仕様書V10](doc/jpn/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md)section13の「HALT/WAIT/BUSREQ/BUSACK、DI/EI、interrupt timingはZ80/T80を敷衍する」に基づく監査。**新規opcodeの追加はありません。** 既存（T80コアから継承・未改変）の周辺機構が、`mode24_r`/`bank_pc_r`/`MSP24`が絡んでも壊れていないかを、Phase11（DD/FD+CB専用のはずのMCycle=110/111が無条件発火）・Phase13（M0/M1専用割込み処理がmode24_rを見ずに発火）で見つけたのと同じ観点で監査しました。
+
+| 項目 | 監査結果 | 根拠 |
+|---|---|---|
+| HALT | 既に正しくガード済み。PC+1抑制（`Halt_FF`/`Halt`チェック）はM0/M1・M2のAddr24_Inc分岐を両方とも包含しており、M2割込みのIR強制分岐は`Halt_FF`判定より手前にあるため、HALT中でも非HALT時と全く同じ経路でM2割込みが発火する。ただし「HALT中にM2割込みを受ける」組合せはどのテストベンチも検証していなかったため、新規テストで実証（下記参照） | [t80.vhd](fpga/G80A/t80.vhd)のPC自動インクリメントガード、IR強制分岐の判定順序 |
+| WAIT | 全ての24bit MSP24/PC24増減算は、既存（未改変）T80ステートマシン自身がTState進行をゲートするのと**全く同じ**`TState=2 and Wait_n='1'`条件を再利用している。WAIT挿入は常にTState=2での保持という単一の仕組みで実現されるため、M2の複数byte push/popシーケンス中にWAITが入っても、増減算が二重発火・早期発火することは構造的にあり得ない。ただし実際にWAIT_nをトグルするテストベンチはこれまで1つも無かったため、新規テストで実証（下記参照） | [t80.vhd](fpga/G80A/t80.vhd)メインステートマシンの`if TState=2 and Wait_n='0' then`（TState凍結）と、各MSP24増減算ブロックの`TState=2 and Wait_n='1'`条件 |
+| BUSREQ/BUSACK | 本プロジェクトの実機ビルドでは不使用（[top.v](fpga/top.v)で`BUSRQ_n`を定数1に固定配線、`BUSAK_n`は未接続）。T80コア内のBUSREQ/BUSACK自体のロジックも無改変で、`mode24_r`やbankレジスタを一切参照しない。24bit固有の懸念なし | [top.v](fpga/top.v)の`BUSRQ_n(1)`/`BUSAK_n( )`配線 |
+| R register | リフレッシュカウンタのインクリメントは、本プロジェクトの新機能とは無関係な（既存の）T80 `Mode`ジェネリック（`Mode<2`）でのみゲートされており、`mode24_r`は一切関与しない。影響なし | [t80.vhd](fpga/G80A/t80.vhd)のリフレッシュ処理ブロック（`if Mode < 2 then ... R(6 downto 0) <= R(6 downto 0) + 1;`） |
+| IRQ/NMI受付タイミング | `NMICycle`/`IntCycle`の確定はNMI_s/INT_s/IntE_FF1/Prefixのみで決まり`mode24_r`やHalt_FFには依存しないため、HALT中・非HALT中を問わず同一の受付タイミングでPhase13のM2割込み機構へ正しく到達する | [t80.vhd](fpga/G80A/t80.vhd)メインステートマシンのNMICycle/IntCycle確定ロジック |
+| prefix fetch | DD/FD+CB継続のMCycle=110/111バグは既にPhase11で発見・修正済み（[T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)参照）。LEA.L以外のDD/FD+ED二重プレフィクス命令は意図的に未実装（NOP扱い、ロードマップ原則7「未定義/未実装opcodeはNOPとして処理する」どおり）であり、これはPhase15の監査対象となる不具合ではなくスコープ外の機能拡張課題 | 上記T80バグレポート、本一覧3章/6章の二重プレフィクス制限の注記 |
+| refresh動作 | リフレッシュサイクル中の`A_Bank_r`強制00hリセット（既存・無改変コード）は、[top.v](fpga/top.v)側で旧来のMSXバス調停（`mapper_req`/`megarom_req`、`bus_rfsh_n`でゲート）・新設の拡張メモリSD-RAM要求（`cpu_sdram_req`、同じく`bus_rfsh_n`でゲート）の両方が、リフレッシュサイクル中のアドレスには一切反応しないことを確認したため無害 | [top.v](fpga/top.v)の`cpu_sdram_req_r <= (... && bus_rfsh_n == 1) ...`、既存`mapper_req3`等の同様のゲート |
+
+### 新規検証
+
+コードレビューで「これまで未検証」と判明した2つの組合せ（HALT中のM2割込み、M2 push系列中へのWAIT挿入）を、新規GHDLテストベンチ [tb_phase15_peripheral.vhd](fpga/G80A/test/tb_phase15_peripheral.vhd) でEnd-to-endに実証しました。
+
+- **Test1/1b**: HALT実行後（`HALT_n='0'`を確認してから）IRQを発生させ、非HALT時と全く同じIVR24分岐（4byte frame）・RETI.Lでの復帰を検証。push frameのPC_Lが「HALT命令直後のアドレス」（HALTの1byte分だけ進んだ値）になっていること、すなわちHALT自身のフェッチは通常通りPCを進めており、HALT中の内部NOP再フェッチだけがPCを止めていることも確認。
+- **Test2/2b**: `RST.L 38H`のM1の最初のwaitサンプリングポイント（TState=2）で2クロック分`WAIT_n='0'`を注入し、MSP24への3byte push frameが非WAIT時と完全に同一の内容で（ただし時間的に遅延して）書き込まれることを検証。
+- **Test3**: Test2のWAIT付きRST.L/RET.L往復後も、Test1のIRQカウンタが変化していない（意図しない再トリガや破壊が起きていない）ことを確認。
+
+全17本（既存16本＋本テスト）のGHDL回帰は全てPASSしています。本Phaseはコードレビューと新規テストの両方で既存機構の正当性を確認する監査であり、t80.vhd/t80_mcode.vhdへの変更は一切ありません（Gowin合成リソースへの影響なし）。
 
 ---
 

@@ -233,6 +233,7 @@ package T80_Pack is
         RetM        : out std_logic;
         IntM2       : out std_logic;
         RstP        : out std_logic;
+        RstL        : out std_logic;
         LDZ         : out std_logic;
         LDW         : out std_logic;
         LDB         : out std_logic;
