@@ -709,6 +709,51 @@ Phase13完了後、回路規模（LUT/ALU）削減の余地を探るため、[t8
 
 ---
 
+## 17. Phase16「総合検証」
+
+[実装手順V4](doc/jpn/MSX_T80_24bit化_実装手順_V4_2026-10-11.md)section18「Phase 16 — 総合検証」（M0: MSX互換性・MMU bypass・Z80命令回帰、M1: 16bit code+24bit data・MMU mapping・bank境界アクセス、M2: PC24・MSP24・near/far call・24bit ALU・PUSH24/POP24・interrupt、MMU: alias・mapping変更・W protect・bank boundary・M0 bypass）に基づく、ロードマップ最終Phaseの統合検証。**新規opcodeの追加はありません。** Phase0〜15で実装したM0/M1/M2全体を対象に、GHDL統合回帰・Gowin合成リソース・Place&Routeタイミング（Fmax）の3点を確認しました。
+
+### 17.1 GHDL統合回帰
+
+Phase2〜15で作成した全18本のGHDLテストベンチ（`tb_phase2_addr24`〜`tb_phase9_push24_pop24`、`tb_lea_l`、`tb_phase10_m2_basic`〜`tb_phase13_m2_interrupt`、`tb_rst_l`、`tb_phase15_peripheral`、`tb_m2_nested_stack`）を、コンパイル順序（`t80_pack.vhd t80_alu.vhd t80_mcode.vhd t80_reg.vhd t80.vhd mmu24.vhd`）を揃えた単一のビルドから続けて実行し、**全18本PASS**を確認しました。個々のテスト内容・対象PhaseはAVAILABLE_INSTRUCTIONS.mdの各セクション（3〜12、15〜16）を参照してください。
+
+### 17.2 Gowin合成 + Place&Route（P&R）リソース使用率
+
+デフォルトビルド（MMU無効、`MSXNanoTang20K_Z80X24.gprj`、Tang Nano 20K / GW2AR-18C）で、論理合成に加えて配置配線（Place&Route）まで実行し、ビットストリーム生成までエラーなく完走することを確認しました。
+
+| リソース | 使用量 | 使用率 |
+|---|---|---|
+| Logic（LUT, ALU, ROM16） | 16987（15117 LUT, 1870 ALU, 0 ROM16） | 84% |
+| Register | 7171 / 15915 | 46% |
+| CLS | 9587 / 10368 | 93% |
+| BSRAM | 45 / 46 | 98% |
+| DSP | 1.5 / 24 | 7% |
+
+P&R後のリソース数値は、論理合成段階（synthesis-only）の報告値（例: Phase15完了時点でLogic 83%・BSRAM 45/46=98%）と近い傾向にありますが、ALU使用数（1870、synthesis段階の1630台より増加）はP&R時の追加的な論理パッキング最適化による差分で、機能面への影響はありません。BSRAM使用率98%（45/46）は既存の制約（MMU無効化の理由、セクション14.1参照）のまま変化なしです。
+
+### 17.3 タイミング解析（Fmax）
+
+Place&Route後のSTA（Static Timing Analysis）レポートで、CPU本体が使うメインクロック`clock_54m`（54MHz）のタイミングクロージャを確認しました。
+
+- **Max Frequency Summaryの表記上の注意**: Gowinのサマリーレポートは`clock_54m`のActual Fmaxを48.581MHz（制約54MHzに対し赤字で未達表示）と報告しますが、これは[tang20k.sdc](fpga/tang20k.sdc)で明示的に設定済みのmulticycle path例外（`set_multicycle_path -from [get_clocks {clock_54m}] -to [get_pins {cpu1/cpu1_0/...}] -setup -end 2`等、T80コアの一部内部パスに2サイクル分の猶予を与える既存の制約）を考慮しない単純な reciprocal 換算値であり、実際のタイミング合否を正しく反映していません。
+- **実際の合否（Setup/Hold Paths Table、例外適用済み）**: `report_timing`による実際のパス解析（SDCのmulticycle例外を正しく適用）では、`clock_54m`→`clock_54m`（CPU内部、同一クロックドメイン）のsetupパスは全17件が正のスラックで収まっており（最小でも+0.116ns、`cpu1/cpu1_0/u0/IStatus_0_s15`からレジスタ書込み系統へのパスが最も厳しい）、holdパスもワースト25件（グローバル）の中に`cpu1`関連のパスは一切含まれません。**すなわちCPU本体は54MHzのタイミング制約を、既存のmulticycle設計を前提として満たしています。**
+- **CPUと無関係な負スラックパス**: Setup Paths Tableの上位（最も厳しい）約200件は、いずれも`ex_bus_reset_n`（リセット信号が疑似クロックとして誤認識されたことによるPnRの警告、`WARN (TA1132)`参照）・SDカードコントローラ・VDPオーディオクロック・既存のFPGAコンパニオンMCUなど、**Z80X24 CPU拡張（t80.vhd等）とは無関係な、本プロジェクトのベース部分に既存のクロックドメインクロッシング**に起因するものです。本増分でのCPU拡張作業によって新たに生じたものではありません。
+
+### 17.4 実機（Tang Nano）統合確認
+
+M0/M1/M2それぞれの実機動作は、[hardware_test/](hardware_test)配下の各テストプログラムで個別に実機検証済みです（詳細は[hardware_test/README.md](hardware_test/README.md)の一覧参照）。
+
+- M0互換性: [hardware_test/P12Test](hardware_test/P12Test)・[hardware_test/P1314Test](hardware_test/P1314Test)の各安全策（M0へ戻してからBDOS呼出し）が実機で問題なく機能し、既存MSX-DOS環境との共存を確認。
+- MMU: [hardware_test/MMUTest](hardware_test/MMUTest)で全8テストPASS（MMU有効時点）。
+- M2（PC24/MSP24/near・far call/interrupt）: [hardware_test/P12Test](hardware_test/P12Test)（モード間制御、全8チェックPASS）・[hardware_test/P1314Test](hardware_test/P1314Test)（RST.L・M2割込み、全7チェックPASS、実機の本物の非同期VDPフレーム割込みを使用）で確認。
+- PUSH24/POP24: [hardware_test/Push24Test](hardware_test/Push24Test)で確認（bank境界をまたぐケースを除く、既知の制限はセクション7参照）。
+
+### 17.5 まとめ
+
+GHDL統合回帰（全18本PASS）・Gowin合成+P&R（エラーなし、ビットストリーム生成成功）・タイミングクロージャ（CPU本体のclock_54mは既存のmulticycle設計で54MHz達成）・実機統合確認（M0/M1/M2の主要機構をhardware_test/配下の各プログラムで実地検証済み）の4点から、ロードマップのMilestone G「M0/M1/M2総合統合」相当の内容を満たしていることを確認しました。これによりPhase0〜16、ロードマップに記載された全Phaseの実装・検証作業が完了しました。
+
+---
+
 ## 補足
 
 - 24bit 拡張命令には、Z80 既存命令に `ED` を前置する「mirror 方式」を採用しています。
