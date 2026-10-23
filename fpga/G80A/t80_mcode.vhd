@@ -121,7 +121,7 @@ entity T80_MCode is
                 Save_ALU    : out std_logic;
                 PreserveC   : out std_logic;
                 Arith16     : out std_logic;
-                Set_Addr_To : out std_logic_vector(2 downto 0); -- aNone,aXY,aIOA,aSP,aBC,aDE,aZI
+                Set_Addr_To : out std_logic_vector(3 downto 0); -- aNone,aXY,aIOA,aSP,aBC,aDE,aZI,aMSP,aXfer
                 IORQ        : out std_logic;
                 Jump        : out std_logic;
                 -- Phase11: JP.L addr24 / JP.L cc,addr24 (ED C3 / ED C2/CA/
@@ -256,19 +256,36 @@ end T80_MCode;
 
 architecture rtl of T80_MCode is
 
-        constant aNone  : std_logic_vector(2 downto 0) := "111";
-        constant aBC    : std_logic_vector(2 downto 0) := "000";
-        constant aDE    : std_logic_vector(2 downto 0) := "001";
-        constant aXY    : std_logic_vector(2 downto 0) := "010";
-        constant aIOA   : std_logic_vector(2 downto 0) := "100";
-        constant aSP    : std_logic_vector(2 downto 0) := "101";
-        constant aZI    : std_logic_vector(2 downto 0) := "110";
+        constant aNone  : std_logic_vector(3 downto 0) := "0111";
+        constant aBC    : std_logic_vector(3 downto 0) := "0000";
+        constant aDE    : std_logic_vector(3 downto 0) := "0001";
+        constant aXY    : std_logic_vector(3 downto 0) := "0010";
+        constant aIOA   : std_logic_vector(3 downto 0) := "0100";
+        constant aSP    : std_logic_vector(3 downto 0) := "0101";
+        constant aZI    : std_logic_vector(3 downto 0) := "0110";
         -- Phase9: MSP24 (PUSH24/POP24) address source. "011" was the only
-        -- unused value among the 8 possible Set_Addr_To encodings, so it is
-        -- reused here with no risk of colliding with aNone/aBC/aDE/aXY/
-        -- aIOA/aSP/aZI above. See t80.vhd's matching aMSP case (in the
-        -- Set_Addr_To interpretation block) for how this drives A/A_Bank.
-        constant aMSP   : std_logic_vector(2 downto 0) := "011";
+        -- unused value among the original 8 possible 3bit Set_Addr_To
+        -- encodings, so it was reused here with no risk of colliding with
+        -- aNone/aBC/aDE/aXY/aIOA/aSP/aZI above. See t80.vhd's matching
+        -- aMSP case (in the Set_Addr_To interpretation block) for how this
+        -- drives A/A_Bank. The bus was widened to 4 bits below (2026-10-19)
+        -- to make room for aXfer; all 8 original codes are simply
+        -- zero-extended on their new MSB so every existing comparison
+        -- still matches unchanged.
+        constant aMSP   : std_logic_vector(3 downto 0) := "0011";
+        -- 2026-10-19 (不足転送命令追加案): dedicated address source for the
+        -- new ED00/01/03/08 (LD24 BC/DE,(HL) / LD24 (HL),BC/DE) sequential
+        -- 3byte HL-indirect transfer instructions. Unlike aXY (which reads
+        -- bank_hl_r directly, and is still used for THESE opcodes' own
+        -- first byte), aXfer reads TmpAddr/TmpBank unconditionally
+        -- (regardless of XY_State) - see t80.vhd's matching aXfer case and
+        -- its dedicated TmpAddr/TmpBank auto-increment logic (reusing the
+        -- same temp registers (IX/IY+d) EA computation already uses, since
+        -- none of these opcodes can ever be active at the same time as a
+        -- DD/FD-prefixed instruction). All 8 original 3bit codes used
+        -- "0xxx"; aXfer uses the newly available "1000" to guarantee no
+        -- collision with any of them.
+        constant aXfer  : std_logic_vector(3 downto 0) := "1000";
 
         function is_cc_true(
                 F : std_logic_vector(7 downto 0);
@@ -1768,8 +1785,8 @@ begin
 ------------------------------------------------------------------------------
 
                         case IRB is
-                        when "00000000"|"00000001"|"00000010"|"00000011"|"00000100"|"00000101"|"00000110"|"00000111"
-                                |"00001000"|"00001001"|"00001010"|"00001011"|"00001100"|"00001101"|"00001110"|"00001111"
+                        when                "00000010"|            "00000100"|"00000101"|"00000110"|"00000111"
+                                |            "00001001"|"00001010"|"00001011"|"00001100"|"00001101"|"00001110"|"00001111"
                                 |"00010000"|"00010001"|"00010010"|"00010011"|"00010100"|"00010101"|"00010110"|"00010111"
                                 |            "00011001"|"00011010"|"00011011"|"00011100"|"00011101"|"00011110"|"00011111"
                                 |            "00100001"|"00100010"|"00100011"|"00100100"|"00100101"|"00100110"|"00100111"
@@ -1795,6 +1812,131 @@ begin
                                 |"11110001"|"11110101"|"11110110"
                                 |"11111001"|"11111011"|"11111101"|"11111110" =>
                                 null; -- NOP, undocumented
+                        -- 2026-10-19 (不足転送命令追加案): ED00/01 (LD24
+                        -- BC/DE,(HL)) were carved out of the NOP catch-all
+                        -- above, mirroring Phase9's POP24 case shape
+                        -- exactly (3 sequential reads via a NEW aXfer
+                        -- address source instead of aMSP - see
+                        -- doc/jpn/24bitメモリロード追加命令案.md and
+                        -- doc/jpn/MSX_T80_24bit化_実装手順_V4_不足転送
+                        -- 命令追加案_2026-10-19.md). HL24 itself is
+                        -- NEVER written (only the temporary TmpAddr/
+                        -- TmpBank "xfer pointer" advances - see t80.vhd's
+                        -- matching case in the "Phase9: PUSH24/POP24
+                        -- MSP24 pointer adjustment" block), so the
+                        -- source HL24 register stays unchanged as
+                        -- required by the spec addendum. BANK-byte
+                        -- capture (3rd read, MCycle=4) is handled
+                        -- directly in t80.vhd (same technique as POP24's
+                        -- own BANK-byte capture).
+                        --
+                        -- NOTE: unlike PUSH24/POP24's official opcodes
+                        -- (C5/D5/E5, C1/D1/E1), whose dd-pair is Z80's
+                        -- standard IR(5:4) encoding (DPair), this
+                        -- proposal's ED00/01/03/08 values do NOT follow
+                        -- that convention (00h/03h both decode as
+                        -- IR(5:4)="00"=BC, but 01h/08h would ALSO
+                        -- (incorrectly) decode as IR(5:4)="00"=BC rather
+                        -- than the intended DE) - so the destination/
+                        -- source pair select bits are hardcoded per
+                        -- opcode below instead of reusing the DPair
+                        -- variable.
+                        when "00000000" =>
+                                MCycles <= "0100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        Set_Addr_To <= aXY;
+                                when 2 =>
+                                        Set_Addr_To <= aXfer;
+                                        Read_To_Reg <= '1';
+                                        Set_BusA_To(2 downto 1) <= "00";  -- BC
+                                        Set_BusA_To(0) <= '1';  -- LOW byte dest
+                                when 3 =>
+                                        Set_Addr_To <= aXfer;
+                                        Read_To_Reg <= '1';
+                                        Set_BusA_To(2 downto 1) <= "00";  -- BC
+                                        Set_BusA_To(0) <= '0';  -- HIGH byte dest
+                                when 4 =>
+                                        null; -- BANK byte capture: see t80.vhd
+                                when others => null;
+                                end case;
+                        when "00000001" =>
+                                MCycles <= "0100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        Set_Addr_To <= aXY;
+                                when 2 =>
+                                        Set_Addr_To <= aXfer;
+                                        Read_To_Reg <= '1';
+                                        Set_BusA_To(2 downto 1) <= "01";  -- DE
+                                        Set_BusA_To(0) <= '1';  -- LOW byte dest
+                                when 3 =>
+                                        Set_Addr_To <= aXfer;
+                                        Read_To_Reg <= '1';
+                                        Set_BusA_To(2 downto 1) <= "01";  -- DE
+                                        Set_BusA_To(0) <= '0';  -- HIGH byte dest
+                                when 4 =>
+                                        null; -- BANK byte capture: see t80.vhd
+                                when others => null;
+                                end case;
+                        -- 2026-10-19 (不足転送命令追加案): ED03 (LD24
+                        -- (HL),BC) / ED08 (LD24 (HL),DE), the store
+                        -- counterpart of ED00/01 above. 3 sequential
+                        -- writes (LOW at HL24, HIGH at HL24+1, BANK at
+                        -- HL24+2 - forward order, unlike PUSH24's stack-
+                        -- style BANK-first order), via the same aXfer
+                        -- address source. LOW/HIGH bytes are staged one
+                        -- mcycle ahead via the normal Set_BusB_To path
+                        -- (identical mechanism to PUSH24's own HIGH/LOW
+                        -- byte staging); the BANK byte write (last,
+                        -- MCycle=4) bypasses Set_BusB_To entirely and is
+                        -- handled directly in t80.vhd (same technique as
+                        -- PUSH24's own BANK-byte override, just at a
+                        -- different mcycle - see that comment). HL24/
+                        -- BC24/DE24 source registers are never written.
+                        -- Same DPair caveat as ED00/01 above applies here.
+                        when "00000011" =>
+                                MCycles <= "0100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        Set_Addr_To <= aXY;
+                                        Set_BusB_To(2 downto 1) <= "00";  -- BC
+                                        Set_BusB_To(0) <= '1';  -- stage LOW byte for MCycle2's write
+                                        Set_BusB_To(3) <= '0';
+                                when 2 =>
+                                        Set_Addr_To <= aXfer;
+                                        Set_BusB_To(2 downto 1) <= "00";  -- BC
+                                        Set_BusB_To(0) <= '0';  -- stage HIGH byte for MCycle3's write
+                                        Set_BusB_To(3) <= '0';
+                                        Write <= '1';
+                                when 3 =>
+                                        Set_Addr_To <= aXfer;
+                                        Write <= '1';
+                                when 4 =>
+                                        Write <= '1'; -- BANK byte write: see t80.vhd
+                                when others => null;
+                                end case;
+                        when "00001000" =>
+                                MCycles <= "0100";
+                                case to_integer(unsigned(MCycle)) is
+                                when 1 =>
+                                        Set_Addr_To <= aXY;
+                                        Set_BusB_To(2 downto 1) <= "01";  -- DE
+                                        Set_BusB_To(0) <= '1';  -- stage LOW byte for MCycle2's write
+                                        Set_BusB_To(3) <= '0';
+                                when 2 =>
+                                        Set_Addr_To <= aXfer;
+                                        Set_BusB_To(2 downto 1) <= "01";  -- DE
+                                        Set_BusB_To(0) <= '0';  -- stage HIGH byte for MCycle3's write
+                                        Set_BusB_To(3) <= '0';
+                                        Write <= '1';
+                                when 3 =>
+                                        Set_Addr_To <= aXfer;
+                                        Write <= '1';
+                                when 4 =>
+                                        Write <= '1'; -- BANK byte write: see t80.vhd
+                                when others => null;
+                                end case;
                         -- New (next phase, V10仕様書 section12): RST.L
                         -- opcodes (ED C7/CF/D7/DF/E7/EF/F7/FF, i.e.
                         -- "11xxx111") were carved out of this catch-all

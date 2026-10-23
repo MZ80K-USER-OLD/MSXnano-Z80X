@@ -98,7 +98,50 @@ BIOSを差し替えたい場合は、合成前に該当 `.hex` ファイルを�
 1. **VDP予約領域(0x600000〜0x63FFFFまでの256KB)、およびZ80X24 CPU拡張メモリ領域(0x650000〜0x7FFFFF)とは重複させないこと。**
 2. この64KBを使う新規デバイスを実装する場合、`memory_ctrl` に新しいクライアントポート一式（`req`/`addr`/`write`/`dout`）を追加し、`sdram_seq`の調停ロジックへ組み込む必要があります（現状の `cpu_sdram_req`系ポートはZ80X24 CPU拡張メモリとして使用済みです、2.2章参照）。
 3. SD-RAM自体は23bit＝8MBの物理アドレス空間の上限を持つため、これを超えるアドレス指定はラップアラウンドしてメモリ内容を破壊します。
-4. Z80X24 CPU拡張メモリの物理bank 1Ch以上は現状どこにも接続されておらず、より広い領域が必要になった場合は`memory_ctrl`側のSD-RAM割り当て再設計（`CPU_SDRAM_BANK_MAX`の拡大、または専用クライアントポートの追加）が必要です。
+4. Z80X24 CPU拡張メモリの物理bank 1Ch以上はSD-RAMへ接続されていません。読出しはFFh、書込みは無効で、通常MSX空間へはフォールバックしません。より広い領域が必要になった場合は`memory_ctrl`側のSD-RAM割り当て再設計（`CPU_SDRAM_BANK_MAX`の拡大、または専用クライアントポートの追加）が必要です。
+
+### 4.1 通常MSX空間と拡張メモリのバス分離 (2026-10-22)
+
+[memory_bus_router24.v](../../fpga/src/memory_bus_router24.v)を、
+[top.v](../../fpga/top.v)のCPUラッパ出力直後に接続しています。
+CPUコアとG80aのインターフェース・命令動作は変更していません。
+
+| CPUメモリアクセス | 通常MSX側 `bus_mreq_n` | 拡張側 `extended_mreq_n` |
+|---|---|---|
+| bank00 | CPUのMREQを通す | 無効 |
+| bank01〜FF | 無効 | CPUのMREQを通す |
+
+アドレスは通常側16bit・拡張側24bitとして配線し、アドレス値をゼロに
+置換するのではなく要求信号を遮断します。拡張側のうちbank01〜1Bだけが
+SDRAM要求を発生させます。I/OのIORQ/RD/WRは従来の配線のままで、
+VDP・PSG・PPI・Mapperポートなどはメモリバンクの影響を受けません。
+既存のSDRAM WAIT状態機械は拡張側要求を監視し、通常側の外部メモリ待ちと
+Flash待ちは、非ゼロバンクから新しい要求が入らない構成になります。
+
+この分離により、非ゼロバンクではFFFFの拡張スロットレジスタ、
+Mapper/MegaRAM/SCC、ROMバンク切替、SDカードのメモリマップ領域、
+外部スロットのメモリ要求を遮断します。SD有効化レジスタにも、
+従来欠けていた通常側MREQ条件を追加しています。
+拡張読出しは通常側データより優先し、未実装バンクではFFhを返します。
+
+[tb_memory_bus_router24.sv](../../fpga/G80A/test/tb_memory_bus_router24.sv)は、
+全256バンク×8アドレス×32制御パターンの65,536通り、
+境界準備書込み `01:FFFE→01:FFFF→02:0000`、
+通常bank00のスロット/SD書込み維持、全256バンクでのVDP I/O維持を検証します。
+これはバス分離回路と代表的な機器デコードの検証です。実機では2026-10-22に
+LD24MI(境界をまたぐ拡張メモリ読書きを含む)が`PASS=0D FAIL=00`で完了しました。
+
+Icarus Verilogによる実行例（リポジトリルート、実行ファイルはPATH上に配置）:
+
+```powershell
+$out = Join-Path $env:TEMP "tb_memory_bus_router24.vvp"
+iverilog -g2012 -s tb_memory_bus_router24 -o $out fpga\src\memory_bus_router24.v fpga\G80A\test\tb_memory_bus_router24.sv
+vvp $out
+```
+
+共有のtopを使うZ80X24/Std両プロジェクトへ追加しています。
+Std構成は常にbank00のため、通常メモリ要求がそのまま通過します。
+実機へ反映するにはFPGAの再合成・配置配線・ビットストリーム生成・書込みが必要です。
 
 ------------------------------
 ## 5. 参照した実装ファイル一覧

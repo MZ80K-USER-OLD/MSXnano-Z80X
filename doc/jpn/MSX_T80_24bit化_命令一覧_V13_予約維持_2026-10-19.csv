@@ -1,0 +1,136 @@
+﻿カテゴリ,オプコード(HEX),命令表記,拡張バイト,使用モード,挙動概要,状態
+モード制御,ED 90,SET_M0,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 91,SET_M1,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 92,SET_M2,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 93,JP.M0 addr16,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 94,JP.M1 addr16,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 95,JP.M2 addr24,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 96,CALL.M0 addr16,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 97,CALL.M1 addr16,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 98,CALL.M2 addr24,なし,M0/M1/M2,確定MODE制御,確定
+モード制御,ED 99,RET.M,なし,M0/M1/M2,確定MODE制御,確定
+バンクレジスタ,ED 04,"LD BC_B,A",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 0C,"LD A,BC_B",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 14,"LD DE_B,A",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 1C,"LD A,DE_B",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 24,"LD HL_B,A",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 2C,"LD A,HL_B",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 05,"LD IX_B,A",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 0D,"LD A,IX_B",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 15,"LD IY_B,A",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 1D,"LD A,IY_B",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 3A,"LD RST_B,A",なし,M0/M1/M2,F不変,確定
+バンクレジスタ,ED 3E,"LD A,RST_B",なし,M0/M1/M2,F不変,確定
+24bit転送,ED 06,"LD24 HL,BC",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,ED 0E,"LD24 BC,HL",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,ED 16,"LD24 HL,DE",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,ED 1E,"LD24 DE,HL",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,DD ED 26,"LD24 HL,IX",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,DD ED 2E,"LD24 IX,HL",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,FD ED 26,"LD24 HL,IY",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,FD ED 2E,"LD24 IY,HL",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,ED 35,"LD24 MSP,HL",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,ED 36,"LD24 HL,MSP",なし,M0/M1/M2,full 24bit、F不変,確定
+24bit転送,ED 34,"LD24 MSP,imm24","bl,bh,bn",M0/M1/M2,F不変,確定
+割込ベクタ,ED 9A,"LD24 IVR,imm24","bl,bh,bn",M0/M1/M2,F不変,確定
+割込ベクタ,ED 9B,"LD24 IVR,HL",なし,M0/M1/M2,F不変,確定
+割込ベクタ,ED 9C,"LD24 HL,IVR",なし,M0/M1/M2,F不変,確定
+割込ベクタ,ED 9D,"LD24 NVR,imm24","bl,bh,bn",M0/M1/M2,F不変,確定
+割込ベクタ,ED 9E,"LD24 NVR,HL",なし,M0/M1/M2,F不変,確定
+割込ベクタ,ED 9F,"LD24 HL,NVR",なし,M0/M1/M2,F不変,確定
+24bit ALU,ED 09,"ADD24 HL,BC",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 19,"ADD24 HL,DE",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 29,"ADD24 HL,HL",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 39,"ADD24 HL,SP",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 07,"ADC24 HL,BC",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 17,"ADC24 HL,DE",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 27,"ADC24 HL,HL",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 37,"ADC24 HL,SP",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 0F,"SBC24 HL,BC",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 1F,"SBC24 HL,DE",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 2F,"SBC24 HL,HL",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 3F,"SBC24 HL,SP",なし,M0/M1/M2,DD/FDでIX/IY target,確定
+24bit ALU,ED 23,INC24 HL,なし,M0/M1/M2,DD/FDでIX/IY,確定
+24bit ALU,ED 2B,DEC24 HL,なし,M0/M1/M2,DD/FDでIX/IY,確定
+24bit ALU,ED 3D,"CP24 HL,DE",なし,M0/M1/M2,DD/FDでIX/IY、writebackなし,確定
+Indexed転送,DD/FD ED 80,"LD16 BC,(IX/IY+d)",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 81,"LD16 DE,(IX/IY+d)",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 82,"LD16 HL,(IX/IY+d)",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 83,"LD16 (IX/IY+d),BC",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 84,"LD16 (IX/IY+d),DE",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 85,"LD16 (IX/IY+d),HL",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 86,"LD24 BC,(IX/IY+d)",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 87,"LD24 DE,(IX/IY+d)",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 88,"LD24 HL,(IX/IY+d)",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 89,"LD24 (IX/IY+d),BC",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 8A,"LD24 (IX/IY+d),DE",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+Indexed転送,DD/FD ED 8B,"LD24 (IX/IY+d),HL",d,M0/M1/M2,M0=16bit EA、M1/M2=24bit EA,確定
+24bit Stack,ED C1,POP24 BC,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,ED C5,PUSH24 BC,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,ED D1,POP24 DE,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,ED D5,PUSH24 DE,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,ED E1,POP24 HL,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,ED E5,PUSH24 HL,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,DD ED E1,POP24 IX,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,DD ED E5,PUSH24 IX,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,FD ED E1,POP24 IY,なし,M0/M1/M2,MSP、3byte,確定
+24bit Stack,FD ED E5,PUSH24 IY,なし,M0/M1/M2,MSP、3byte,確定
+24bit制御,ED 18,JR.L e16,e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED 20,"JR.L NZ,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED 28,"JR.L Z,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED 30,"JR.L NC,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED 38,"JR.L C,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED A7,"JR.L PO,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED AF,"JR.L PE,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED B7,"JR.L P,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED BF,"JR.L M,e16",e16,M0/M1/M2,M2=PC24相対、M0/M1=PC16相対,確定
+24bit制御,ED C3,JP.L addr24,addr24,M0/M1/M2,24bit jump,確定
+24bit制御,ED C2/CA/D2/DA/E2/EA/F2/FA,"JP.L cc,addr24",addr24,M0/M1/M2,条件付き24bit jump,確定
+24bit制御,ED CD,CALL.L addr24,addr24,M2,MSPへPC24を3byte保存,確定
+24bit制御,ED C4/CC/D4/DC/E4/EC/F4/FC,"CALL.L cc,addr24",addr24,M2,条件付きfar call,確定
+24bit制御,ED C9,RET.L,なし,M2,MSPからPC24復元,確定
+24bit制御,ED C0/C8/D0/D8/E0/E8/F0/F8,RET.L cc,なし,M2,条件付きfar return,確定
+RST拡張,ED C7,RST.L 00H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+RST拡張,ED CF,RST.L 08H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+RST拡張,ED D7,RST.L 10H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+RST拡張,ED DF,RST.L 18H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+RST拡張,ED E7,RST.L 20H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+RST拡張,ED EF,RST.L 28H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+RST拡張,ED F7,RST.L 30H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+RST拡張,ED FF,RST.L 38H,なし,M0/M1/M2,M0/M1=通常RST、M2=RST_B bank、3byte return,確定
+割り込み,ED 4E,RETI.L,なし,M2,4byte frame復元,確定
+割り込み,ED 8C,RETN.L,なし,M2,4byte frame復元、IFF1<-IFF2,確定
+予約,ED 8D-8F,RESERVED,なし,M0/M1/M2,未実装中はNOP,予約
+実効アドレス,DD ED 68 d,"LEA.L HL,(IX+d)",d: signed 8bit,M0/M1/M2,M0: HL24←00:( IX16+d )16; M1/M2: HL24←(IX24+signed d)24。F/IX/IY/SP/MSP不変、メモリアクセスなし,確定
+実効アドレス,FD ED 68 d,"LEA.L HL,(IY+d)",d: signed 8bit,M0/M1/M2,M0: HL24←00:( IY16+d )16; M1/M2: HL24←(IY24+signed d)24。F/IX/IY/SP/MSP不変、メモリアクセスなし,確定
+実効アドレス,DD ED 69 d,"LEA.L DE,(IX+d)",d: signed 8bit,M0/M1/M2,M0: DE24←00:( IX16+d )16; M1/M2: DE24←(IX24+signed d)24。F/IX/IY/SP/MSP不変、メモリアクセスなし,確定
+実効アドレス,FD ED 69 d,"LEA.L DE,(IY+d)",d: signed 8bit,M0/M1/M2,M0: DE24←00:( IY16+d )16; M1/M2: DE24←(IY24+signed d)24。F/IX/IY/SP/MSP不変、メモリアクセスなし,確定
+廃止/未割当,DD/FD ED 6A d,PEA.L (IX/IY+d)［不採用］,d: signed 8bit,全モード,PEA採用撤回。未割当・未定義NOP扱い（prefix/変位消費詳細はRTL検証）,不採用
+仕様補足,MMU INDEX (I/O F0/F1/F2),MMUオプション時のINDEX更新,なし,MMU有効構成,F0への書込みのみでINDEX変更。F1/F2アクセスによる自動インクリメントなし（添付V8準拠）,確定（添付更新仕様）
+24bitメモリロード（追加案）,ED 00,"LD24 BC,(HL)",addr24 (ED 02のみ),M1/M2,HL24の指すアドレスからLOW/HIGH/BANKの3バイトをBC24へロード。24bit境界繰上げ、F不変,追加案・RTL未実装確認
+24bitメモリロード（追加案）,ED 01,"LD24 DE,(HL)",addr24 (ED 02のみ),M1/M2,HL24の指すアドレスからLOW/HIGH/BANKの3バイトをDE24へロード。24bit境界繰上げ、F不変,追加案・RTL未実装確認
+24bitメモリロード（追加案）,ED 02,"LD24 HL,(addr24)",addr24 (ED 02のみ),M1/M2,命令内24bit絶対アドレスからLOW/HIGH/BANKの3バイトをHL24へロード。24bit境界繰上げ、F不変,追加案・RTL未実装確認
+24bit転送追加案,ED 03,"LD24 (HL),BC",なし,M1/M2,3バイト書込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 08,"LD24 (HL),DE",なし,M1/M2,3バイト書込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 0A,"LD16 BC,(HL)",なし,M1/M2,2バイト読込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 0B,"LD16 DE,(HL)",なし,M1/M2,2バイト読込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 10,"LD16 (HL),BC",なし,M1/M2,2バイト書込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 11,"LD16 (HL),DE",なし,M1/M2,2バイト書込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 12,"LD24 BC,(addr24)","imm24=LOW,HIGH,BANK",M1/M2,絶対アドレス3バイト読込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 13,"LD24 DE,(addr24)","imm24=LOW,HIGH,BANK",M1/M2,絶対アドレス3バイト読込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 1A,"LD24 (addr24),BC","imm24=LOW,HIGH,BANK",M1/M2,絶対アドレス3バイト書込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 1B,"LD24 (addr24),DE","imm24=LOW,HIGH,BANK",M1/M2,絶対アドレス3バイト書込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 21,"LD24 (addr24),HL","imm24=LOW,HIGH,BANK",M1/M2,絶対アドレス3バイト書込、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 22,"LD24 BC,imm24","imm24=LOW,HIGH,BANK",M1/M2,即値3バイト、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 25,"LD24 DE,imm24","imm24=LOW,HIGH,BANK",M1/M2,即値3バイト、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 26,"LD24 HL,imm24","imm24=LOW,HIGH,BANK",M1/M2,即値3バイト、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 2D,"LD24 IX,imm24","imm24=LOW,HIGH,BANK",M1/M2,即値3バイト、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 2E,"LD24 IY,imm24","imm24=LOW,HIGH,BANK",M1/M2,即値3バイト、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 32,"LD24 BC,DE",なし,M1/M2,レジスタ間転送、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+24bit転送追加案,ED 33,"LD24 DE,BC",なし,M1/M2,レジスタ間転送、F不変、24bitアドレスで連続アクセス,追加提案・RTL未実装
+16bit絶対アドレス転送（V12追加案）,ED 2A,"LD16 BC,(addr24)","addr24=LOW,HIGH,BANK",M1/M2,2byte read; BC_B不変。メモリアドレスは24bit moduloで+1、F不変,追加提案・RTL未実装／ED 2A は標準Z80未定義領域
+16bit絶対アドレス転送（V12追加案）,ED 31,"LD16 DE,(addr24)","addr24=LOW,HIGH,BANK",M1/M2,2byte read; DE_B不変。メモリアドレスは24bit moduloで+1、F不変,追加提案・RTL未実装／ED 31 は標準Z80未定義領域
+16bit絶対アドレス転送（V12追加案）,ED 3B,"LD16 HL,(addr24)","addr24=LOW,HIGH,BANK",M1/M2,2byte read; HL_B不変。メモリアドレスは24bit moduloで+1、F不変,追加提案・RTL未実装／ED 3B は標準Z80未定義領域
+16bit絶対アドレス転送（V12追加案）,ED 3C,"LD16 (addr24),BC","addr24=LOW,HIGH,BANK",M1/M2,2byte write; BC_B不変。メモリアドレスは24bit moduloで+1、F不変,追加提案・RTL未実装／ED 3C は標準Z80未定義領域
+16bit絶対アドレス転送（V12追加案）,ED 82,"LD16 (addr24),DE","addr24=LOW,HIGH,BANK",M1/M2,2byte write; DE_B不変。メモリアドレスは24bit moduloで+1、F不変,追加提案・RTL未実装／V10予約領域を使用しない
+16bit絶対アドレス転送（V12追加案）,ED 83,"LD16 (addr24),HL","addr24=LOW,HIGH,BANK",M1/M2,2byte write; HL_B不変。メモリアドレスは24bit moduloで+1、F不変,追加提案・RTL未実装／V10予約領域を使用しない

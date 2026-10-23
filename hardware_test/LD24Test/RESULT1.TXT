@@ -1,0 +1,17 @@
+Z80X24 Phase7 LD24 register-transfer test
+MSXnano-Z80X / msxnano-24bit
+
+Test1a ED06 LD24 HL,BC dest HL24: PASS
+Test1b ED06 LD24 HL,BC src BC24 unchanged: PASS
+Test2a ED0E LD24 BC,HL dest BC24: PASS
+Test2b ED0E LD24 BC,HL src HL24 unchanged: PASS
+Test3a ED16 LD24 HL,DE dest HL24: PASS
+Test3b ED16 LD24 HL,DE src DE24 unchanged: PASS
+Test4a ED1E LD24 DE,HL dest DE24: PASS
+Test4b ED1E LD24 DE,HL src HL24 unchanged: PASS
+Test5 ED35/36 MSP24 round trip: PASS
+Test6 ED9B/9C IVR24 round trip: PASS
+Test7 ED9E/9F NVR24 round trip: PASS
+Test8 F register unchanged by LD24: PASS
+
+PASS=0C FAIL=00

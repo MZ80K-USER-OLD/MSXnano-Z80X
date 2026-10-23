@@ -23,8 +23,14 @@
 ;          PUSHしたBCの値がHLへ、という「逆順」で復元されることを確認する。
 ;   Test6: いずれか1つのPUSH24/POP24命令の前後でF(フラグ)レジスタが変化
 ;          しないことを確認する(仕様上「F不変」、Z80標準のPUSH/POPと同様)。
+;   Test7: bank境界をまたぎPUSH24/POP24往復試験(旧Test6相当、下記
+;          「bank境界またぎPUSH24/POP24の再検証について」参照)。
+;   Test8: POP24単体でのbank境界またぎ試験(PUSH24を経由せず、(BC)書込み
+;          でメモリを直接用意してからPOP24のみ実行する。Test7がPUSH24
+;          直後のPOP24という特殊な連続実行パターンに起因する問題なのか、
+;          POP24単体のbank境界またぎ自体が問題なのかを切り分ける)。
 ;
-; 【既知の問題・本プログラムの対象外】bank境界またぎPUSH24/POP24は未検証:
+; 【bank境界またぎPUSH24/POP24の再検証について】
 ;   当初はMSP24=02:0001hからPUSH24 HLを実行し、3回のデクリメントで
 ;   02:0001->02:0000->01:FFFF(bank borrow)->01:FFFEとbankをまたぐ試験
 ;   (旧Test6)を含めていたが、実機検証でTest5c完了直後にシステムが
@@ -34,16 +40,24 @@
 ;   連続して書き込む(=SD-RAMコントローラが応答する前に物理bankが
 ;   切り替わる)経路は、Phase3/5の既存拡張メモリアクセス(1命令につき
 ;   拡張アクセス1回のみ)では一度も検証されておらず、本プロジェクトの
-;   SD-RAMコントローラ(fpga/src/memory.v・sdram.v)にはCPU側へのWAIT
-;   状態生成機構が存在しない(fpga/top.vのex_bus_wait_nは常時'1'固定)
-;   ため、bankをまたぐ書込みがコントローラの内部処理時間を超過し、
-;   誤ったアドレス(bank00h=実行中プログラム自身の空間や、BIOS/割込み
-;   ベクタ領域等)を破壊した可能性が疑われる。この問題は未解決であり、
-;   根本原因の特定にはfpga/src/memory.v・sdram.vのSD-RAMタイミングの
-;   詳細な調査が必要。したがって本プログラムはbank境界をまたぐPUSH24/
-;   POP24を一切使用しない(全テストで単一物理bank内に留める)よう修正
-;   済みである。詳細はAVAILABLE_INSTRUCTIONS.mdセクション7、および
-;   README.mdの「既知の問題」を参照。
+;   SD-RAMコントローラ(fpga/src/memory.v)にはCPU側へのWAIT状態生成
+;   機構が存在しなかった(fpga/top.vのex_bus_wait_nは常時'1'固定)ため、
+;   bankをまたぐ書込みがコントローラの内部処理時間を超過し、誤った
+;   アドレスを破壊した可能性が疑われていた。
+;
+;   この根本原因調査の結果、fpga/src/memory.v(memory_ctrl)の
+;   SDRAM調停ステートマシンに、CPU側へのWAIT状態生成に使える
+;   cpu_sdram_busy出力を新設し、fpga/top.vでこれを基にした
+;   cpu_sdram_wait_nをCPUのWAIT_n入力へAND結合する修正を実施した
+;   (詳細はfpga/src/memory.v・fpga/top.vの該当コメント、および
+;   AVAILABLE_INSTRUCTIONS.mdセクション7参照)。この修正により、
+;   bank境界をまたぐ連続アクセス中はSDRAMコントローラがアドレス/
+;   書込みフラグを安全にラッチし終えるまでCPUが待機するようになり、
+;   本問題が解消される見込みである。Test7は、この修正を実機で検証
+;   するために復元した、まさにこの境界またぎシナリオ(MSP24=02:0001h
+;   からのPUSH24/POP24往復、PUSH24はbank境界を下向きに、POP24は
+;   同じ境界を上向きにまたぐ)である。Test7がPASSすれば、この修正が
+;   実機で機能していることが確認できる。
 ;
 ; 安全設計上の注意:
 ;   - PUSH24/POP24はMSP24(ED35/ED36で読み書きするPhase7由来の専用24bitポ
@@ -55,16 +69,14 @@
 ;     動作する)。
 ;   - PUSH24/POP24が実際にメモリへ書き込む先は、MSP24のbankバイトが
 ;     指す物理バンクで決まる。本プログラムが使用する物理bankは
-;     01h/02h/03h/04hのみで、これはfpga/top.vのCPU_SDRAM_BASE(0x640000)
-;     経由で、既存のMemory Mapper(0x000000-)やMegaRAM(0x400000-)とは
-;     重ならない安全な領域(0x650000以降)に収まる(詳細はdoc/jpn/
-;     SDRAMメモリマップ.md 2.2章)。上記「既知の問題」のとおり、本
-;     プログラムは1つのPUSH24/POP24呼出しの中で物理bankが変化する
-;     ケースを一切作らない(常に単一のbank内で完結させる)よう設計して
-;     いる。bank00hはこの経路を通らず常時安全だが、実行中のプログラム
-;     自身の64KB空間そのものを指すため、誤って書き込むと致命的な
-;     クラッシュを招く(本プログラムは意図的にbank00hへの書込みを
-;     一切発生させない)。
+;     01h/02h/03h/04h/05hのみで、これはfpga/top.vのCPU_SDRAM_BASE
+;     (0x640000)経由で、既存のMemory Mapper(0x000000-)やMegaRAM
+;     (0x400000-)とは重ならない安全な領域(0x650000以降)に収まる
+;     (詳細はdoc/jpn/SDRAMメモリマップ.md 2.2章)。Test7(bank境界
+;     またぎ往復試験)は意図的にbank01h/02hの境界(02:0000h⇔01:FFFFh)
+;     をまたぐが、この境界も含め本プログラムが使用する全bankは
+;     01h〜05hの範囲に収まっており、bank00h(実行中のプログラム自身の
+;     64KB空間)には一切到達しない。
 ;   - プログラム終了前に、使用したBC/DE/HLバンクレジスタを0クリアしてから
 ;     MSX-DOSへ復帰する(SAFE_RESET参照。MSP24自体はPhase7のLD24Testと
 ;     同様、他のMSX-DOS/BIOSコードが参照することのない専用レジスタなので
@@ -83,6 +95,12 @@
 ;------------------------------------------------------------------------------
 BDOS		EQU	0005H		; DOS function entry
 BDOS_TERM0	EQU	0		; BDOS function 0: プログラム終了、MSX-DOSへ復帰
+VDP_PORT	EQU	099H		; VDPコントロールポート(直接OUT用。診断
+					; マーカーの書込みはBIOS WRTVDPを経由せず
+					; ここへ直接OUTする。P1314Testと同じ方式)
+RG7SAV		EQU	0F3E6H		; VDP R#7 現在値のBIOSシャドウ変数(背景色。
+					; 診断マーカーで変更する前に退避し、Test7
+					; 終了後に元へ復元するために使用)
 
 ;------------------------------------------------------------------------------
 ; Z80X24 独自オペコード (標準Z80アセンブラには無いため DEFB で直接発行する)
@@ -290,6 +308,287 @@ T6_DONE:
 	LD	DE,MSG_CRLF
 	CALL	PRINT_STR
 
+	; ---- 【一時切り分け】Test7本体を無効化し、Test8のみを単独実行する。----
+	; Test7(PUSH24直後にPOP24を実行する構成)とTest8(PUSH24を経由せず
+	; (BC)書込みで直接メモリを用意してからPOP24単体を実行する構成)の
+	; どちらが実機フリーズの原因かを切り分けるため、一時的にTest7の
+	; 命令列(PUSH24 HL/POP24 HLの連続実行、診断マーカー1〜5)を丸ごと
+	; スキップし、Test8の開始地点(診断マーカー6の手前)へ直接ジャンプ
+	; する。Test7をもう一度有効化する際は、この"JP TEST8_ONLY"の1行を
+	; 削除するだけでよい(Test7の命令列自体はそのまま残してある)。
+	; なお、Test7冒頭で行っていたT7_ORIG_R7(診断マーカー色の復元用
+	; 退避値)の設定だけはスキップすると未初期化値が残ってしまうため、
+	; ここで代わりに行っておく。
+	LD	A,(RG7SAV)
+	LD	(T7_ORIG_R7),A
+
+	; 2026-10-22: Test8単独版が実機でPASS=0A FAIL=00となったため、
+	; バス分離RTL上でTest7を再有効化した(JP TEST8_ONLYを削除)。
+
+	; ==== Test7: bank境界をまたぐPUSH24/POP24往復試験 ====
+	; MSP24=02:0001hからPUSH24 HLを実行すると、3回のデクリメントで
+	; 02:0001h->02:0000h(BANK byte、境界またぎ無し)->01:FFFFh(bank
+	; borrow、HIGH byte)->01:FFFEh(LOW byte)とbank境界を下向きに
+	; またぐ。続くPOP24 HLは逆方向(01:FFFEh->01:FFFFh->02:0000h->
+	; 02:0001h、同じ境界を上向きにまたぐ)で元のMSP24へ復帰するはず。
+	; HL24の値だけでなく、MSP24自体がbank境界またぎを経て正しく
+	; 02:0001hへ戻ることも、LD24 HL,MSP(ED 36)で直接読み出して確認
+	; する(詳細な背景は本ファイル冒頭「bank境界またぎPUSH24/POP24の
+	; 再検証について」参照)。
+	LD	HL,0001H
+	LD	A,02H
+	DEFB	0EDH,024H		; LD HL_B,A (=02h)
+	DEFB	0EDH,035H		; LD24 MSP,HL  (MSP24 = 02:0001h)
+
+	; ---- 診断マーカー用に、現在のVDP R#7(背景色)をBIOSシャドウ変数
+	; から退避しておく(Test7終了後に元の色へ復元するため)。----
+	LD	A,(RG7SAV)
+	LD	(T7_ORIG_R7),A
+
+	; ---- 診断マーカー1: MSP24=02:0001hの設定完了直後(PUSH24実行前)。
+	; ここまでは従来のTest1-6と同じ命令しか使っていないため、もし
+	; このマーカーすら表示されない場合はTest7固有の問題ではない。----
+	LD	A,01H
+	CALL	MARK
+
+	LD	HL,99AAH
+	LD	A,05H
+	DEFB	0EDH,024H		; LD HL_B,A (=05h、PUSH24対象の値)
+	DEFB	0EDH,0E5H		; PUSH24 HL  ** テスト対象(bank境界またぎ、下向き) **
+
+	; ---- 診断マーカー2: PUSH24 HL(bank境界またぎ、下向き)の直後。
+	; もしフリーズがPUSH24 HL自体の実行中に起きている場合、この
+	; マーカーは表示されずマーカー1の色のまま止まる。----
+	LD	A,02H
+	CALL	MARK
+
+	; ---- PUSH24が書き込んだメモリの中身を、POP24/MSP24の仕組みを
+	; 一切経由せず直接確認する(SET_M1でデータアクセスのみ24bit拡張
+	; アドレッシングを有効にし、(BC)register-indirect読出しで3byteを
+	; 個別に読む。Phase3で検証済みの経路であり、PUSH24/POP24のMSP24
+	; 加減算ロジックとは完全に独立しているため、「PUSH24の書込み自体」
+	; と「POP24の読出し/MSP24追跡」のどちらに問題があるかを切り分け
+	; られる)。期待値: 01:FFFEh=AAh(LOW), 01:FFFFh=99h(HIGH),
+	; 02:0000h=05h(BANK)。----
+	DEFB	0EDH,091H		; SET_M1 (データアクセスのみ拡張アドレッシング)
+
+	LD	BC,0FFFEH
+	LD	A,01H
+	DEFB	0EDH,004H		; LD BC_B,A (=01h)
+	LD	A,(BC)
+	LD	(T7_PEEK_LO),A		; 期待値 AAh (LOW byte)
+
+	LD	BC,0FFFFH
+	LD	A,01H
+	DEFB	0EDH,004H		; LD BC_B,A (=01h)
+	LD	A,(BC)
+	LD	(T7_PEEK_HI),A		; 期待値 99h (HIGH byte)
+
+	LD	BC,0000H
+	LD	A,02H
+	DEFB	0EDH,004H		; LD BC_B,A (=02h)
+	LD	A,(BC)
+	LD	(T7_PEEK_BANK),A	; 期待値 05h (BANK byte)
+
+	DEFB	0EDH,090H		; SET_M0 (安全な状態へ戻す)
+
+	; ---- 診断マーカー3: PUSH24直後のメモリ直接確認(peek)完了直後。
+	; マーカー2までは表示されマーカー3が表示されない場合、SET_M1配下
+	; の(BC)読出し自体に問題がある(PUSH24自体ではない)ことになる。----
+	LD	A,03H
+	CALL	MARK
+
+	LD	HL,99AAH
+	LD	B,05H
+	LD	DE,MSG_T7_PEEK
+	LD	IX,T7_PEEK_LO
+	CALL	CHECK24_IX
+
+	LD	HL,0000H
+	XOR	A
+	DEFB	0EDH,024H		; LD HL_B,A (clobber)
+	DEFB	0EDH,0E1H		; POP24 HL  ** テスト対象(bank境界またぎ、上向き) **
+
+	; ---- 診断マーカー4: POP24 HL(bank境界またぎ、上向き)の直後。
+	; マーカー3までは表示されマーカー4が表示されない場合、フリーズは
+	; POP24 HL自体の実行中に起きていることになる。----
+	LD	A,04H
+	CALL	MARK
+
+	LD	(T7_HL_LO),HL
+	DEFB	0EDH,02CH		; LD A,HL_B
+	LD	(T7_HL_BANK),A
+
+	LD	HL,99AAH
+	LD	B,05H
+	LD	DE,MSG_T7
+	LD	IX,T7_HL_LO
+	CALL	CHECK24_IX
+
+	; MSP24自体がbank02:0001hへ正しく復帰したことを直接確認する
+	; (LD24 HL,MSPでMSP24をHL24へ読み出す。HLは直前のCHECK24_IXで
+	; 既に使用済みのため破壊して問題ない)。
+	DEFB	0EDH,036H		; LD HL,MSP  (=LD24 HL,MSP)
+
+	; ---- 診断マーカー5: LD24 HL,MSP(ED 36、MSP24読出し)の直後。
+	; マーカー4までは表示されマーカー5が表示されない場合、PUSH24/
+	; POP24自体ではなくLD24 HL,MSP側に問題があることになる。----
+	LD	A,05H
+	CALL	MARK
+
+	LD	(T7_MSP_LO),HL
+	DEFB	0EDH,02CH		; LD A,HL_B
+	LD	(T7_MSP_BANK),A
+
+	LD	HL,0001H
+	LD	B,02H
+	LD	DE,MSG_T7_MSP
+	LD	IX,T7_MSP_LO
+	CALL	CHECK24_IX
+
+	; ==== Test8: POP24単体でのbank境界またぎ試験(PUSH24を経由しない) ====
+	; Test7はPUSH24直後にPOP24を実行する構成だったため、もし2命令の
+	; 連続実行自体(SDRAMコントローラの残留状態など)が原因だった場合、
+	; POP24単体では問題が再現しない可能性がある。これを切り分けるため、
+	; PUSH24を一切使わず、(BC)register-indirect書込み(peekと同じ
+	; SET_M1経路)で対象の3byteを直接メモリへ書いてからLD24 MSP,HLで
+	; MSP24を01:FFFEhへ直接設定し、POP24 HLのみを単独で実行する。
+	; Test7と同じ想定結果(HL24=05:99AAh、MSP24=02:0001h)になるはずである。
+TEST8_ONLY:
+	DEFB	0EDH,091H		; SET_M1 (データアクセスのみ拡張アドレッシング)
+
+	; ---- 診断マーカー7: SET_M1直後。これが表示されない場合、Test7側の
+	; マーカー6完了後、通常のZ80命令(JP/LD/CALL MARK)自体が既に動作
+	; していない(BDOS復帰やVDPポートアクセス自体に問題がある)ことに
+	; なり、Test8固有の問題ではなく、むしろ直前のTest7側処理(診断
+	; マーカー5以降の処理やCHECK24_IX呼出し)に原因がある可能性が高い。
+	LD	A,07H
+	CALL	MARK
+
+	LD	BC,0FFFEH
+	LD	A,01H
+	DEFB	0EDH,004H		; LD BC_B,A (=01h)
+	LD	A,0AAH
+	LD	(BC),A			; 01:FFFEh = AAh (LOW byte)
+
+	; ---- 診断マーカー8: 01:FFFEhへの(BC)書込み直後。Test7のpeek診断
+	; では(BC)経由の"読出し"は実機で動作実績があるが、"書込み"は
+	; Test8で初めて行うため、これが新規未検証の箇所になる。7は表示
+	; され8が表示されない場合、この(BC)書込み自体でフリーズしている
+	; ことになる。----
+	LD	A,08H
+	CALL	MARK
+
+	LD	BC,0FFFFH
+	LD	A,01H
+	DEFB	0EDH,004H		; LD BC_B,A (=01h)
+	LD	A,099H
+	LD	(BC),A			; 01:FFFFh = 99h (HIGH byte)
+
+	; ---- 診断マーカー9: 01:FFFFhへの(BC)書込み直後。----
+	LD	A,09H
+	CALL	MARK
+
+	LD	BC,0000H
+	LD	A,02H
+	DEFB	0EDH,004H		; LD BC_B,A (=02h)
+	LD	A,005H
+	LD	(BC),A			; 02:0000h = 05h (BANK byte)
+
+	; ---- 診断マーカー10: 02:0000hへの(BC)書込み直後。----
+	LD	A,0DH
+	CALL	MARK
+
+	DEFB	0EDH,090H		; SET_M0 (安全な状態へ戻す)
+
+	; ---- 診断マーカー11: SET_M0直後。----
+	LD	A,0EH
+	CALL	MARK
+
+	LD	HL,0FFFEH
+	LD	A,01H
+	DEFB	0EDH,024H		; LD HL_B,A (=01h)
+	DEFB	0EDH,035H		; LD24 MSP,HL  (MSP24 = 01:FFFEh、PUSH24を経由せず直接設定)
+
+	; ---- 診断マーカー12: LD24 MSP,HL(ED 35、MSP24直接設定)直後。
+	; 11は表示され12が表示されない場合、PUSH24を経由しないMSP24直接
+	; 設定(ED 35)自体に、PUSH24経由の設定とは異なる何らかの問題が
+	; あることになる。12まで表示されれば、残る疑いは直後のPOP24命令
+	; 自体(マーカー6との間)に絞られる。----
+	LD	A,0FH
+	CALL	MARK
+
+	LD	HL,0000H
+	XOR	A
+	DEFB	0EDH,024H		; LD HL_B,A (clobber)
+	DEFB	0EDH,0E1H		; POP24 HL  ** テスト対象(PUSH24非経由、単体POP24のbank境界またぎ) **
+
+	; ---- 診断マーカー6: 単体POP24(Test8)実行直後。----
+	LD	A,06H
+	CALL	MARK
+
+	; ---- 【一時切り分け】マーカー6以降をさらに細分化する。各命令の
+	; 直後に異なる背景色でCALL MARKし、具体的にどの命令でフリーズして
+	; いるかを1命令単位で特定する。原因箇所の特定後はこれらの追加
+	; マーカー(6a/6b/6c)を削除してよい。----
+	LD	(T7_HL_LO),HL
+	; ---- 診断マーカー6a: 通常のLD (mem),HL(標準Z80命令、拡張無し)
+	; 完了直後。これが表示されない場合、POP24直後の最初の通常メモリ
+	; 書込み命令自体でフリーズしていることになる。----
+	LD	A,0AH
+	CALL	MARK
+
+	DEFB	0EDH,02CH		; LD A,HL_B
+	; ---- 診断マーカー6b: ED 2C(LD A,HL_B、拡張命令だがメモリ非経由の
+	; 内部レジスタ読出しのみ)完了直後。6aは表示され6bが表示されない
+	; 場合、このED 2C命令自体(メモリバスを伴わないはずの内部読出し)
+	; でフリーズしていることになる。ED 2Cの結果(A=バンク値)は後で
+	; T7_HL_BANKへ格納する必要があるため、PUSH AFで退避してから
+	; マーカー用の値をAへロードする(MARK自体もAF退避/復帰するが、
+	; マーカー値をAへロードする本処理側でも退避しないとED 2Cの結果を
+	; 破壊してしまうため)。----
+	PUSH	AF
+	LD	A,0BH
+	CALL	MARK
+	POP	AF
+
+	LD	(T7_HL_BANK),A
+	; ---- 診断マーカー6c: 通常のLD (mem),A(標準Z80命令)完了直後、
+	; CHECK24_IX呼出し(BDOS経由の文字列表示を含む)の直前。6bは表示
+	; され6cが表示されない場合、この通常メモリ書込み命令でフリーズ
+	; していることになる。6cまで表示されればCHECK24_IX呼出し(BDOS)
+	; 側でフリーズしていることになる。----
+	LD	A,0CH
+	CALL	MARK
+
+	LD	HL,99AAH
+	LD	B,05H
+	LD	DE,MSG_T8
+	LD	IX,T7_HL_LO
+	CALL	CHECK24_IX
+
+	DEFB	0EDH,036H		; LD HL,MSP  (=LD24 HL,MSP)
+	LD	(T7_MSP_LO),HL
+	DEFB	0EDH,02CH		; LD A,HL_B
+	LD	(T7_MSP_BANK),A
+
+	LD	HL,0001H
+	LD	B,02H
+	LD	DE,MSG_T8_MSP
+	LD	IX,T7_MSP_LO
+	CALL	CHECK24_IX
+
+	; ---- Test7/Test8完了。退避しておいた元のVDP R#7(背景色)へ復元する。----
+	LD	A,(T7_ORIG_R7)
+	CALL	MARK
+
+	; MSP24を他のテストと同じ初期値(01:E000h)へ戻しておく
+	; (プログラム終了前の安全な状態に合わせるため)。
+	LD	HL,0E000H
+	LD	A,01H
+	DEFB	0EDH,024H		; LD HL_B,A
+	DEFB	0EDH,035H		; LD24 MSP,HL
+
 	; ---- 安全のため、使用したバンクレジスタを0クリアする ----
 	CALL	SAFE_RESET
 
@@ -323,6 +622,24 @@ SNAP_HL24:
 	DEFB	0EDH,02CH		; LD A,HL_B
 	LD	(SNAP_BANK),A
 	POP	HL
+	RET
+
+;==============================================================================
+; MARK : 診断用の画面色マーカー。Aの値をそのままVDP R#7(背景色)へ直接OUTする
+;   (P1314Testで使用した方式と同じ)。Test7のbank境界またぎフリーズが
+;   具体的にどの命令の実行中に発生しているかを切り分けるために、Test7の
+;   各ステップの直後に異なる値でCALLする。BDOSのメッセージ表示より確実に
+;   即座に画面へ反映されるため、万一この後でCPU/メモリバスが完全にハング
+;   しても、最後に表示されていた色から「どこまで実行が進んでいたか」を
+;   目視で特定できる。
+;   破壊するレジスタ: なし(AF退避/復帰)。
+;==============================================================================
+MARK:
+	PUSH	AF
+	OUT	(VDP_PORT),A
+	LD	A,87H			; R#7 | 80h (レジスタ書込みモード)
+	OUT	(VDP_PORT),A
+	POP	AF
 	RET
 
 ;==============================================================================
@@ -456,6 +773,11 @@ MSG_T5A:	DEFB	"Test5a LIFO: POP24 BC got HL's value$"
 MSG_T5B:	DEFB	"Test5b LIFO: POP24 DE got DE's value$"
 MSG_T5C:	DEFB	"Test5c LIFO: POP24 HL got BC's value$"
 MSG_T6:		DEFB	"Test6 F register unchanged by PUSH24/POP24$"
+MSG_T7:		DEFB	"Test7 PUSH24/POP24 HL across a bank boundary$"
+MSG_T7_PEEK:	DEFB	"Test7 PUSH24 wrote the correct bytes to memory$"
+MSG_T7_MSP:	DEFB	"Test7 MSP24 restored across the same boundary$"
+MSG_T8:		DEFB	"Test8 POP24-only (no PUSH24) across a bank boundary$"
+MSG_T8_MSP:	DEFB	"Test8 MSP24 restored across the same boundary$"
 
 MSG_COLON:	DEFB	": $"
 MSG_PASS:	DEFB	"PASS$"
@@ -496,6 +818,15 @@ T5_HL_BANK:	DEFS	1
 
 F_BEFORE:	DEFS	1
 F_AFTER:	DEFS	1
+
+T7_HL_LO:	DEFS	2
+T7_HL_BANK:	DEFS	1
+T7_PEEK_LO:	DEFS	1		; PUSH24直後に(BC)で直接読んだLOW byte
+T7_PEEK_HI:	DEFS	1		; PUSH24直後に(BC)で直接読んだHIGH byte
+T7_PEEK_BANK:	DEFS	1		; PUSH24直後に(BC)で直接読んだBANK byte
+T7_MSP_LO:	DEFS	2
+T7_MSP_BANK:	DEFS	1
+T7_ORIG_R7:	DEFS	1		; Test7診断マーカー用、元のVDP R#7退避先
 
 PASS_COUNT:	DEFB	0
 FAIL_COUNT:	DEFB	0

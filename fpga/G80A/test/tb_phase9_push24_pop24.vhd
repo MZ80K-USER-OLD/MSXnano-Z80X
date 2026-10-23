@@ -13,18 +13,25 @@
 --   ED D5 PUSH24 DE    ED D1 POP24 DE
 --   ED E5 PUSH24 HL    ED E1 POP24 HL
 --
--- Since the testbench's flat 64KB combinational memory model (no MMU/
--- banking) only indexes memory by the 16bit external address bus 'A', a
--- second parallel array ("bank_mem") records whatever A_Bank was being
--- driven at the moment of each write, so writes can be verified against
--- BOTH their byte value AND the (bank,address) pair they were tagged with
--- - this is what actually proves PUSH24/POP24 route their 3 bytes through
--- the new MSP24/aMSP address path (not plain 16bit SP).
+-- The testbench's memory model is a true (bank,address)-indexed physical
+-- model, selected by the full (A_Bank,A) pair via the memval() function
+-- below (a sparse model covering only the 3 banks this test actually
+-- touches - see its declaration comment for why) - NOT a flat 64KB array
+-- that merely tags writes with whatever bank was on the bus (an earlier
+-- version of this testbench did that, which could not detect a wrong/
+-- stale A_Bank on READS: two different banks aliased to the same 16bit
+-- offset, and a bogus bank byte would still silently read back whatever
+-- had been written through the WRONG bank). With a
+-- true (bank,address)-indexed model, PUSH/POP24 round trips can only
+-- reconstruct the correct value if every read and write genuinely used
+-- the correct physical 24bit address throughout - this is what actually
+-- proves PUSH24/POP24 route their 3 bytes through the new MSP24/aMSP
+-- address path (not plain 16bit SP), on both the write and the read side.
 --
 -- Each test case verifies:
 --   - PUSH24 BC writes BANK/HIGH/LOW (in that order) at MSP24-1/-2/-3,
---     each tagged with the CURRENT bank_msp_r value on the bus at write
---     time (T1)
+--     each landing at the exact physical (bank,address) pair on the bus
+--     at write time (T1)
 --   - MSP24 ends up exactly 3 lower after a PUSH24 (T1, via LD24 HL,MSP
 --     dump) and exactly 3 higher after a following POP24 (T2) - i.e. back
 --     to its original value, proving the round trip is lossless
@@ -33,7 +40,14 @@
 --   - bank byte correctly BORROWS across a 16bit low-word wraparound
 --     during 3 consecutive PUSH24 decrements (00:0001 -> 00:0000 ->
 --     FF:FFFF -> FF:FFFE) (T3), independently computed by the same
---     Python helper that mirrors Addr24_Dec
+--     Python helper that mirrors Addr24_Dec, verified via the MSP24
+--     register dump
+--   - bank byte correctly CARRIES back across the same 16bit low-word
+--     wraparound during 3 consecutive POP24 increments (FF:FFFE ->
+--     FF:FFFF -> 00:0000 -> 00:0001), reading back T3's PUSH24 HL bytes
+--     from their exact physical (bank,address) locations via the true
+--     memory model above and restoring MSP24 to its original pre-push
+--     value (T3B)
 --   - F (flags) register is completely unaffected by PUSH24/POP24 (T4)
 --
 -- NOT covered by this testbench (deferred, same scope limitation as
@@ -94,12 +108,25 @@ architecture sim of tb_phase9_push24_pop24 is
     signal IntE     : std_logic;
     signal Stop     : std_logic;
 
+    -- True (bank,address)-indexed physical model, WITHOUT allocating the
+    -- full 16MB (24bit) address space as a single simulated signal array
+    -- (that was tried first, but a 16M-element signal array is extremely
+    -- heavy for GHDL to elaborate/simulate - each element carries its own
+    -- driver/event bookkeeping). Only 3 banks are ever touched by this
+    -- test (00h program/dump area, 01h, FFh - see memval() below), so a
+    -- sparse model of three ordinary 64KB arrays, selected by bank, gives
+    -- the exact same (bank,address) correctness guarantee at negligible
+    -- simulation cost - see header comment for why (bank,address)
+    -- indexing matters at all.
     type mem_array is array(0 to 65535) of std_logic_vector(7 downto 0);
 
     -- Hand assembled test program (generated with a small Python helper to
     -- keep byte offsets and expected results correct; see header comment
-    -- for the full story).
-    -- Program length: 102 (0x0066) bytes, starting at 0000h.
+    -- for the full story). Lives entirely in bank 00h (mode24_r stays "00"
+    -- throughout this test; instruction fetch and direct (nnnn) addressing
+    -- always use bank 00h per CPU仕様書V10 section5), so its indices here
+    -- equal memval(x"00", addr).
+    -- Program length: 122 (0x007A) bytes, starting at 0000h.
     signal mem : mem_array := (
         16#0000# => x"21", 16#0001# => x"00", 16#0002# => x"E0", 16#0003# => x"3E",
         16#0004# => x"01", 16#0005# => x"ED", 16#0006# => x"24", 16#0007# => x"ED",
@@ -120,18 +147,48 @@ architecture sim of tb_phase9_push24_pop24 is
         16#0040# => x"24", 16#0041# => x"ED", 16#0042# => x"E5", 16#0043# => x"ED",
         16#0044# => x"36", 16#0045# => x"22", 16#0046# => x"09", 16#0047# => x"40",
         16#0048# => x"ED", 16#0049# => x"2C", 16#004A# => x"32", 16#004B# => x"0B",
-        16#004C# => x"40", 16#004D# => x"37", 16#004E# => x"F5", 16#004F# => x"C1",
-        16#0050# => x"79", 16#0051# => x"32", 16#0052# => x"0C", 16#0053# => x"40",
-        16#0054# => x"01", 16#0055# => x"05", 16#0056# => x"04", 16#0057# => x"3E",
-        16#0058# => x"03", 16#0059# => x"ED", 16#005A# => x"04", 16#005B# => x"ED",
-        16#005C# => x"C5", 16#005D# => x"ED", 16#005E# => x"C1", 16#005F# => x"F5",
-        16#0060# => x"C1", 16#0061# => x"79", 16#0062# => x"32", 16#0063# => x"0D",
-        16#0064# => x"40", 16#0065# => x"76",
+        -- ---- T3B (new): POP24 HL back across the same boundary (carry) ----
+        16#004C# => x"40", 16#004D# => x"ED", 16#004E# => x"E1", 16#004F# => x"22",
+        16#0050# => x"0E", 16#0051# => x"40", 16#0052# => x"ED", 16#0053# => x"2C",
+        16#0054# => x"32", 16#0055# => x"10", 16#0056# => x"40", 16#0057# => x"ED",
+        16#0058# => x"36", 16#0059# => x"22", 16#005A# => x"11", 16#005B# => x"40",
+        16#005C# => x"ED", 16#005D# => x"2C", 16#005E# => x"32", 16#005F# => x"13",
+        16#0060# => x"40",
+        -- ---- T4 (unchanged, shifted by T3B's 20 inserted bytes) ----
+        16#0061# => x"37", 16#0062# => x"F5", 16#0063# => x"C1", 16#0064# => x"79",
+        16#0065# => x"32", 16#0066# => x"0C", 16#0067# => x"40", 16#0068# => x"01",
+        16#0069# => x"05", 16#006A# => x"04", 16#006B# => x"3E", 16#006C# => x"03",
+        16#006D# => x"ED", 16#006E# => x"04", 16#006F# => x"ED", 16#0070# => x"C5",
+        16#0071# => x"ED", 16#0072# => x"C1", 16#0073# => x"F5", 16#0074# => x"C1",
+        16#0075# => x"79", 16#0076# => x"32", 16#0077# => x"0D", 16#0078# => x"40",
+        16#0079# => x"76",
         others => x"00");
 
-    -- Records A_Bank at the moment of each write, same 16bit indexing as
-    -- 'mem' above - see header comment.
-    signal bank_mem : mem_array := (others => x"00");
+    -- Bank 01h and FFh: sparse 64KB arrays, only ever written/read at the
+    -- handful of addresses this test's PUSH24/POP24 boundary-crossing
+    -- sequences touch (initialized to 00h, same as 'mem' above).
+    signal mem01 : mem_array := (others => x"00");
+    signal memFF : mem_array := (others => x"00");
+
+    -- memval(): the true (bank,address)-indexed read, selecting among the
+    -- 3 sparse banks above - this is the only thing that lets POP24 reads
+    -- actually prove the physical bank was correct on the bus (see header
+    -- comment). Unrecognized bank values (including the simulator's
+    -- initial 'U'/metavalue A_Bank before RESET_n deasserts, which this
+    -- concurrent/unclocked function sees at time 0 regardless of reset)
+    -- just read back 00h - the write-side case statement below is the
+    -- actual hard-failure bug-catcher for a genuinely wrong bank, since it
+    -- only ever fires on a real, clocked, post-reset memory write cycle.
+    impure function memval(bank : std_logic_vector(7 downto 0); addr : std_logic_vector(15 downto 0)) return std_logic_vector is
+    begin
+        case bank is
+            when x"00" => return mem(to_integer(unsigned(addr)));
+            when x"01" => return mem01(to_integer(unsigned(addr)));
+            when x"FF" => return memFF(to_integer(unsigned(addr)));
+            when others =>
+                return x"00";
+        end case;
+    end function;
 
 begin
 
@@ -177,9 +234,12 @@ begin
             IntE => IntE,
             Stop => Stop);
 
-    -- Flat combinational memory model (M0, no MMU): see tb_phase3_m1_data.vhd
-    -- for the detailed rationale behind the DI_live/DInst/DI split.
-    DI_live <= mem(to_integer(unsigned(A)));
+    -- True (bank,address)-indexed physical memory model: reads and writes
+    -- alike are selected by the full (A_Bank,A) pair via memval()/the case
+    -- statement below (sparse 3-bank model - see its declaration comment)
+    -- - see tb_phase3_m1_data.vhd for the detailed DI_live/DInst/DI split
+    -- rationale, which still applies unchanged here.
+    DI_live <= memval(A_Bank, A);
     DInst <= DI_live;
 
     process (CLK_n)
@@ -190,12 +250,16 @@ begin
             end if;
             -- Memory write-back for the PUSH24 byte writes and the
             -- "LD (nnnn),HL/BC/DE/A" instructions used to dump register/
-            -- flag/MSP24 values for verification. bank_mem records A_Bank
-            -- alongside the data byte so PUSH24's 3 writes can be verified
-            -- against the exact (bank,address) pair they targeted.
+            -- flag/MSP24 values for verification.
             if IORQ = '0' and Write = '1' then
-                mem(to_integer(unsigned(A))) <= DO;
-                bank_mem(to_integer(unsigned(A))) <= A_Bank;
+                case A_Bank is
+                when x"00" => mem(to_integer(unsigned(A))) <= DO;
+                when x"01" => mem01(to_integer(unsigned(A))) <= DO;
+                when x"FF" => memFF(to_integer(unsigned(A))) <= DO;
+                when others =>
+                    report "tb_phase9: unexpected A_Bank=" & to_hstring(A_Bank) &
+                        " write, not covered by the sparse memory model" severity failure;
+                end case;
             end if;
         end if;
     end process;
@@ -217,49 +281,87 @@ begin
 
         -- ---- T1: PUSH24 BC (MSP24=01:E000, BC24=02:1122) ----
         -- BANK byte written first, at MSP24-1 = 01:DFFF
-        assert mem(16#DFFF#) = x"02" and bank_mem(16#DFFF#) = x"01"
-            report "Phase9: PUSH24 BC BANK-byte write mismatch, got data=" & to_hstring(mem(16#DFFF#)) &
-                " bank=" & to_hstring(bank_mem(16#DFFF#)) & ", expected data=02h bank=01h"
+        assert memval(x"01", x"DFFF") = x"02"
+            report "Phase9: PUSH24 BC BANK-byte write mismatch at 01:DFFFh, got data=" &
+                to_hstring(memval(x"01", x"DFFF")) & ", expected 02h"
             severity failure;
         -- HIGH byte written second, at MSP24-2 = 01:DFFE
-        assert mem(16#DFFE#) = x"11" and bank_mem(16#DFFE#) = x"01"
-            report "Phase9: PUSH24 BC HIGH-byte write mismatch, got data=" & to_hstring(mem(16#DFFE#)) &
-                " bank=" & to_hstring(bank_mem(16#DFFE#)) & ", expected data=11h bank=01h"
+        assert memval(x"01", x"DFFE") = x"11"
+            report "Phase9: PUSH24 BC HIGH-byte write mismatch at 01:DFFEh, got data=" &
+                to_hstring(memval(x"01", x"DFFE")) & ", expected 11h"
             severity failure;
         -- LOW byte written third (final MSP24), at MSP24-3 = 01:DFFD
-        assert mem(16#DFFD#) = x"22" and bank_mem(16#DFFD#) = x"01"
-            report "Phase9: PUSH24 BC LOW-byte write mismatch, got data=" & to_hstring(mem(16#DFFD#)) &
-                " bank=" & to_hstring(bank_mem(16#DFFD#)) & ", expected data=22h bank=01h"
+        assert memval(x"01", x"DFFD") = x"22"
+            report "Phase9: PUSH24 BC LOW-byte write mismatch at 01:DFFDh, got data=" &
+                to_hstring(memval(x"01", x"DFFD")) & ", expected 22h"
             severity failure;
         -- MSP24 after the push must be exactly 3 lower: 01:DFFD
-        assert mem(16#4000#) = x"FD" and mem(16#4001#) = x"DF" and mem(16#4002#) = x"01"
-            report "Phase9: PUSH24 BC must leave MSP24=01:DFFD, got lo=" & to_hstring(mem(16#4000#)) &
-                " hi=" & to_hstring(mem(16#4001#)) & " bank=" & to_hstring(mem(16#4002#))
+        assert memval(x"00", x"4000") = x"FD" and memval(x"00", x"4001") = x"DF" and memval(x"00", x"4002") = x"01"
+            report "Phase9: PUSH24 BC must leave MSP24=01:DFFD, got lo=" & to_hstring(memval(x"00", x"4000")) &
+                " hi=" & to_hstring(memval(x"00", x"4001")) & " bank=" & to_hstring(memval(x"00", x"4002"))
             severity failure;
 
         -- ---- T2: POP24 DE (reading back what PUSH24 BC just wrote) ----
-        assert mem(16#4003#) = x"22" and mem(16#4004#) = x"11" and mem(16#4005#) = x"02"
-            report "Phase9: POP24 DE must reconstruct 02:1122h, got lo=" & to_hstring(mem(16#4003#)) &
-                " hi=" & to_hstring(mem(16#4004#)) & " bank=" & to_hstring(mem(16#4005#))
+        assert memval(x"00", x"4003") = x"22" and memval(x"00", x"4004") = x"11" and memval(x"00", x"4005") = x"02"
+            report "Phase9: POP24 DE must reconstruct 02:1122h, got lo=" & to_hstring(memval(x"00", x"4003")) &
+                " hi=" & to_hstring(memval(x"00", x"4004")) & " bank=" & to_hstring(memval(x"00", x"4005"))
             severity failure;
         -- MSP24 after the matching pop must be back to its original value: 01:E000
-        assert mem(16#4006#) = x"00" and mem(16#4007#) = x"E0" and mem(16#4008#) = x"01"
-            report "Phase9: POP24 DE must restore MSP24=01:E000, got lo=" & to_hstring(mem(16#4006#)) &
-                " hi=" & to_hstring(mem(16#4007#)) & " bank=" & to_hstring(mem(16#4008#))
+        assert memval(x"00", x"4006") = x"00" and memval(x"00", x"4007") = x"E0" and memval(x"00", x"4008") = x"01"
+            report "Phase9: POP24 DE must restore MSP24=01:E000, got lo=" & to_hstring(memval(x"00", x"4006")) &
+                " hi=" & to_hstring(memval(x"00", x"4007")) & " bank=" & to_hstring(memval(x"00", x"4008"))
             severity failure;
 
         -- ---- T3: bank borrow across a 16bit low-word wraparound ----
-        -- PUSH24 HL with MSP24=00:0001 decrements three times:
-        --   00:0001 -> 00:0000 -> FF:FFFF (borrow!) -> FF:FFFE (final)
-        assert mem(16#4009#) = x"FE" and mem(16#400A#) = x"FF" and mem(16#400B#) = x"FF"
+        -- PUSH24 HL (HL24=FF:AABB) with MSP24=00:0001 decrements three
+        -- times: 00:0001 -> 00:0000 -> FF:FFFF (borrow!) -> FF:FFFE
+        -- (final). NOTE: the 3 raw physical write addresses straddling the
+        -- crossing (00:0000h/FF:FFFFh/FF:FFFEh) are deliberately NOT
+        -- asserted directly here, even though the true (bank,address)
+        -- model (see memval() above) could support it - by the time this
+        -- whole program reaches HALT, T4's own perturbation PUSH24/POP24
+        -- BC further down reuses this exact same crossing (MSP is back to
+        -- 00:0001 by then, restored by T3B below), so those raw addresses
+        -- get legitimately overwritten again later and would no longer
+        -- reflect T3's own write. The MSP24 register dump below (written
+        -- immediately after T3's push, before anything else touches MSP)
+        -- is what actually captures T3's result reliably.
+        assert memval(x"00", x"4009") = x"FE" and memval(x"00", x"400A") = x"FF" and memval(x"00", x"400B") = x"FF"
             report "Phase9: PUSH24 HL bank-borrow mismatch, expected final MSP24=FF:FFFE, got lo=" &
-                to_hstring(mem(16#4009#)) & " hi=" & to_hstring(mem(16#400A#)) & " bank=" & to_hstring(mem(16#400B#))
+                to_hstring(memval(x"00", x"4009")) & " hi=" & to_hstring(memval(x"00", x"400A")) &
+                " bank=" & to_hstring(memval(x"00", x"400B"))
+            severity failure;
+
+        -- ---- T3B: bank carry across the same 16bit low-word wraparound ----
+        -- POP24 HL, reading back T3's PUSH24 HL bytes from their exact
+        -- physical addresses, with MSP24=FF:FFFE increments three times:
+        -- FF:FFFE -> FF:FFFF -> 00:0000 (carry!) -> 00:0001 (final,
+        -- restoring MSP24 to its original pre-push value). Only possible
+        -- to reconstruct HL24=FF:AABB correctly if every one of the 3
+        -- reads used the true physical (bank,address) pair on the bus -
+        -- with the old flat 64KB model (ignoring A_Bank on reads) this
+        -- would have silently "passed" even with a broken/stale bank on
+        -- the bus, since all 3 addresses (0000h/FFFFh/FFFEh) alias the
+        -- SAME 16bit offsets already used/checked above regardless of bank.
+        assert memval(x"00", x"400E") = x"BB" and memval(x"00", x"400F") = x"AA"
+            report "Phase9: POP24 HL must reconstruct HL24=FF:AABBh low/high word, got lo=" &
+                to_hstring(memval(x"00", x"400E")) & " hi=" & to_hstring(memval(x"00", x"400F"))
+            severity failure;
+        assert memval(x"00", x"4010") = x"FF"
+            report "Phase9: POP24 HL must reconstruct HL24 bank=FFh, got " & to_hstring(memval(x"00", x"4010"))
+            severity failure;
+        assert memval(x"00", x"4011") = x"01" and memval(x"00", x"4012") = x"00"
+            report "Phase9: POP24 HL bank-carry mismatch, expected final MSP24=00:0001, got lo=" &
+                to_hstring(memval(x"00", x"4011")) & " hi=" & to_hstring(memval(x"00", x"4012"))
+            severity failure;
+        assert memval(x"00", x"4013") = x"00"
+            report "Phase9: POP24 HL must restore MSP24 bank=00h, got " & to_hstring(memval(x"00", x"4013"))
             severity failure;
 
         -- ---- T4: F register unaffected by PUSH24/POP24 ----
-        assert mem(16#400C#) = mem(16#400D#)
-            report "Phase9: PUSH24/POP24 must leave F unchanged, F_before=" & to_hstring(mem(16#400C#)) &
-                " F_after=" & to_hstring(mem(16#400D#))
+        assert memval(x"00", x"400C") = memval(x"00", x"400D")
+            report "Phase9: PUSH24/POP24 must leave F unchanged, F_before=" & to_hstring(memval(x"00", x"400C")) &
+                " F_after=" & to_hstring(memval(x"00", x"400D"))
             severity failure;
 
         report "Phase9 PUSH24/POP24 testbench: all assertions passed" severity note;

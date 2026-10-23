@@ -29,9 +29,10 @@ Phaseの実装内容を実機(Tang Nano)またはMSXエミュレータ上のMSX-
 |---|---|---|---|
 | [LD24Test](LD24Test) | Phase7 (LD24系命令) | HL24 hub / MSP24 / IVR24 / NVR24 のレジスタ間24bit転送 | 未実行(ビルド確認のみ。実機実行はまだ行われていない) |
 | [MMUTest](MMUTest) | Phase4/5/6 (MMU) | MMU_DATA/MMU_ATTR.W、論理→物理bank変換・write protection | 実機検証済み(MMU有効時点、全8テストPASS) |
-| [Push24Test](Push24Test) | Phase9 (PUSH24/POP24) | MSP24への3byte push/pop、bank境界またぎの既知の問題を含む | 実機検証済み(bank境界またぎを除く) |
+| [Push24Test](Push24Test) | Phase9 (PUSH24/POP24) | MSP24への3byte push/pop、bank境界またぎ | バス分離RTLでTest7/8を含む全13判定が実機PASS (`PASS=0D FAIL=00`) |
 | [P12Test](P12Test) | Phase12 (モード間制御) | `JP.M0/M1/M2`/`CALL.M0/M1/M2`/`RET.M` | 実機検証済み(全8チェックPASS) |
 | [P1314Test](P1314Test) | Phase13(M2割込み)/Phase14(RST.L) | `RST.L`、M2のIRQ→`IVR24`→`RETI.L`(実機の本物の非同期VDP割込みを使用) | 実機検証済み(全7チェックPASS、`PASS=07 FAIL=00`) |
+| [Ld24MemIndirectTest](Ld24MemIndirectTest) | 追加命令(ED00/01/03/08、2026-10-19実装) | 24bitメモリ間接転送、bank境界またぎ、複数パターン読書き | バス分離とSDRAM要求受理修正後、2026-10-23実機でリセット直後も全19判定が安定PASS (`PASS=13 FAIL=00`) |
 
 各テストプログラムの詳細なビルド手順・テスト内容・安全上の注意・開発経緯
 (実機テストで見つかった問題と対応)は、それぞれのフォルダ内の`README.md`を

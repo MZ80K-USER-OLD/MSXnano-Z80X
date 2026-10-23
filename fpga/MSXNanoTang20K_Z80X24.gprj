@@ -50,6 +50,7 @@
         <File path="src/logo_fm.v" type="file.verilog" enable="1"/>
         <File path="src/megaram.v" type="file.verilog" enable="1"/>
         <File path="src/memory.v" type="file.verilog" enable="1"/>
+        <File path="src/memory_bus_router24.v" type="file.verilog" enable="1"/>
         <File path="src/msx2p_debug.v" type="file.verilog" enable="1"/>
         <File path="src/ocm/rtc.v" type="file.verilog" enable="1"/>
         <File path="src/psg_filter.v" type="file.verilog" enable="1"/>

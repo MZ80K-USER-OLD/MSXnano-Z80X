@@ -485,6 +485,10 @@ wire [7:0] ex_bus_data;
     wire bus_data_reverse;
     wire bus_m1_n;
     wire bus_mreq_n;
+    wire cpu_mreq_n;
+    wire [23:0] extended_addr;
+    wire extended_mreq_n;
+    wire extended_access;
     wire bus_iorq_n;
     wire bus_rd_n;
     wire bus_wr_n;
@@ -662,8 +666,8 @@ assign mmu_physical_bank = cpu_addr24[23:16];
 
     always @ (posedge clk_54m) begin
         cpu_din <= 
+                (extended_access==1) ? (cpu_sdram_bank_in_range ? cpu_sdram_dout : 8'hff) :
                 (mapper_port_read==1) ? mapper_read_data :
-                (cpu_sdram_req==1) ? cpu_sdram_dout :
                 (psg_req_r == 1) ? psg_dout :
                 (ppi_portb_req_r == 1) ? keyboard_data :
                 `ifdef ENABLE_V9958
@@ -816,9 +820,9 @@ assign mmu_physical_bank = cpu_addr24[23:16];
 		.clk_falling (clk_falling_3m6_54),
 `endif
 `ifdef ENABLE_SDCARD
-        .WAIT_n    (bus_wait_n & flash_wait_n),
+        .WAIT_n    (bus_wait_n & flash_wait_n & cpu_sdram_wait_n),
 `else
-        .WAIT_n    (bus_wait_n),
+        .WAIT_n    (bus_wait_n & cpu_sdram_wait_n),
 `endif
     `ifdef ENABLE_V9958
         .INT_n     (bus_int_n & vdp_int),
@@ -828,7 +832,7 @@ assign mmu_physical_bank = cpu_addr24[23:16];
         .NMI_n     (1),
         .BUSRQ_n   (1),
         .M1_n      (bus_m1_n),
-        .MREQ_n    (bus_mreq_n),
+        .MREQ_n    (cpu_mreq_n),
         .IORQ_n    (bus_iorq_n),
         .RD_n      (bus_rd_n),
         .WR_n      (bus_wr_n),
@@ -852,7 +856,18 @@ assign mmu_physical_bank = cpu_addr24[23:16];
         .bank_rst   (cpu_bank_rst),
         .Data_Reverse (bus_data_reverse)
     );
-    assign bus_addr = cpu_addr24[15:0];
+    memory_bus_router24 memory_bus (
+        .cpu_addr(cpu_addr24),
+        .cpu_mreq_n(cpu_mreq_n),
+        .cpu_rd_n(bus_rd_n),
+        .cpu_wr_n(bus_wr_n),
+        .cpu_rfsh_n(bus_rfsh_n),
+        .z80_addr(bus_addr),
+        .z80_mreq_n(bus_mreq_n),
+        .extended_addr(extended_addr),
+        .extended_mreq_n(extended_mreq_n),
+        .extended_access(extended_access)
+    );
 
     //assign led[5:1] = cpu_din[5:1];
 
@@ -1230,40 +1245,147 @@ reg [7:0] megaram_dout;
 localparam [23:0] CPU_SDRAM_BASE = 24'h640000;
 localparam [7:0]  CPU_SDRAM_BANK_MAX = 8'h1B;
 
-reg cpu_sdram_req_r;
-wire cpu_sdram_req;
+// v8 fix (2026-10-17, see doc/jpn/PUSH24_POP24_bank境界またぎバグ_調査
+// レポート.md "追記4"/"追記5" for the full investigation log that led
+// here, including a cycle-accurate GHDL reproduction testbench,
+// fpga/G80A/test/tb_hw_push24_bank_boundary_timing.vhd, that this exact
+// design was validated against across a wide sweep of video-bandwidth-
+// arbitration timings before being ported here). v1-v4 (all now
+// superseded) asserted cpu_sdram_wait_n REACTIVELY, off bus_mreq_n/
+// bus_rd_n/bus_wr_n becoming active - but direct simulation tracing
+// proved this can never be observed in time: fpga/G80A/g80a.vhd asserts
+// those same bus signals AND samples WAIT_n into its internal Wait_s on
+// the EXACT SAME clk_falling edge (both are g80a.vhd processes
+// triggered by that one edge), so a WAIT asserted only in REACTION to
+// those signals cannot possibly be seen by that SAME edge's Wait_s
+// sample (ordinary synchronous-logic causality: a register cannot
+// observe another register's output changing as a RESULT of the very
+// same clock edge) - WAIT was being structurally, unavoidably missed
+// for the specific M-cycle it mattered for, no matter how long it was
+// held afterward (which is why three different "hold it more
+// carefully/longer" fix attempts, v1-v4, all failed identically).
+//
+// v8 instead asserts cpu_sdram_wait_n EARLY, off T80's own "update_addr"
+// output (already wired through as the "update_addr" wire above,
+// unchanged from existing usage elsewhere in this file): it pulses for
+// one CEN(clk_enable)-gated T80-internal cycle at T_Res of EVERY
+// M-cycle - the SAME moment A_Bank_r (hence mmu_physical_bank) is set
+// up for the UPCOMING M-cycle, a full clk_enable-to-clk_falling gap
+// BEFORE that upcoming M-cycle's own bus signals ever assert. Sampling
+// mmu_physical_bank one real clk_54m cycle after update_addr's rising
+// edge (to let A_Bank_r settle) and asserting WAIT immediately if it is
+// non-zero gives a full inter-M-cycle gap of lead time, with no
+// same-edge race.
+//
+// update_addr is NOT a narrow single-cycle pulse - once set it HOLDS
+// high across every real clk_54m cycle until the NEXT CEN tick (up to a
+// full virtual-clock period), so detecting "a NEW T_Res event" requires
+// a genuine 2-stage edge detector (update_addr_prev/update_addr_prev2
+// below) - a naive single-stage "was high last cycle" check re-triggers
+// spuriously on every cycle update_addr happens to still be held high,
+// which (during this investigation) caused a DIFFERENT deadlock: WAIT
+// released correctly, then immediately got spuriously re-asserted for
+// the SAME, not-yet-advanced M-cycle, before memory_ctrl's sdram_seq
+// (parked in its own "return to idle" state, itself waiting for
+// cpu_sdram_req to genuinely drop once the CPU truly moves on) ever got
+// a chance to restart - a permanent deadlock, confirmed and fixed via
+// the same GHDL testbench referenced above.
+reg update_addr_prev;
+reg update_addr_prev2;
+
+localparam [1:0] WS_IDLE = 2'd0, WS_ARMED = 2'd1, WS_WAITING_DONE = 2'd2;
+reg [1:0] wait_state;
+
+wire cpu_sdram_bank_in_range = (mmu_physical_bank != 8'h00) && (mmu_physical_bank <= CPU_SDRAM_BANK_MAX);
+
+// cpu_sdram_active is PURELY combinational (no register delay) - once
+// wait_state reaches WS_ARMED (asserted early, well before this goes
+// high), this is what tells us the real bus request for THIS M-cycle
+// has genuinely arrived.
+wire cpu_sdram_active = ( cpu_sdram_bank_in_range && extended_mreq_n == 0 &&
+                          (bus_rd_n == 0 || bus_wr_n == 0) && bus_rfsh_n == 1 );
+// Publish only after WS_ARMED has latched this cycle's address/write flag.
+wire cpu_sdram_req = cpu_sdram_active && (wait_state == WS_WAITING_DONE);
+
+reg [23:0] cpu_sdram_addr_r;
+reg cpu_sdram_write_r;
 wire cpu_sdram_write;
 wire [23:0] cpu_sdram_addr;
 wire [7:0] cpu_sdram_dout;
-wire cpu_sdram_bank_in_range = (mmu_physical_bank != 8'h00) && (mmu_physical_bank <= CPU_SDRAM_BANK_MAX);
+wire cpu_sdram_busy;
+wire cpu_sdram_done;
 
-always @ (posedge clk_54m) begin
-    cpu_sdram_req_r <= ( cpu_sdram_bank_in_range && bus_mreq_n == 0 &&
-                         (bus_rd_n == 0 || bus_wr_n == 0) && bus_rfsh_n == 1 ) ? 1 : 0;
-end
-assign cpu_sdram_req = cpu_sdram_req_r;
 // No MMU in this build, so there is no per-bank write-protection
 // attribute to gate against (see the MMU24 removal note above): any
 // in-range bank is both readable and writable.
-assign cpu_sdram_write = cpu_sdram_req & ~bus_wr_n;
-assign cpu_sdram_addr = CPU_SDRAM_BASE + { mmu_physical_bank, bus_addr };
+assign cpu_sdram_write = cpu_sdram_req & cpu_sdram_write_r;
+assign cpu_sdram_addr = cpu_sdram_addr_r;
 
-// NOTE (fixed during Phase5 hardware bring-up): this request is qualified
-// purely by mmu_physical_bank and bus_mreq_n/bus_rd_n/bus_wr_n; it does
-// not exclude overlap with the legacy slot/BIOS/mapper decode below,
-// which is qualified independently by pri_slot_num/page_num and knows
-// nothing about mode24/bank registers. Because MSX-DOS2 typically runs
-// its TPA out of Memory Mapper RAM, a 24bit-extended access's 16bit
-// bus_addr will very often *also* satisfy mapper_req, so both mapper_req
-// and cpu_sdram_req can assert for the same bus cycle. memory_ctrl
-// (fpga/src/memory.v) now resolves this by giving cpu_sdram_req top
-// priority over mapper_req/megaram_req, since cpu_sdram_req is only ever
-// non-zero when the CPU deliberately performs a non-zero-bank 24bit
-// access; legacy M0-only software always has cpu_sdram_req = 0, so this
-// has no effect on existing MSX compatibility. Without this priority fix,
-// every extended-memory access silently landed on/read back Memory Mapper
-// RAM instead of the intended cpu_sdram_* window (observed as every
-// non-zero-bank test reading back 00h).
+reg cpu_sdram_wait_n;
+
+always @ (posedge clk_54m) begin
+    if (bus_reset_n == 0) begin
+        cpu_sdram_wait_n <= 1;
+        wait_state <= WS_IDLE;
+        update_addr_prev <= 0;
+        update_addr_prev2 <= 0;
+        cpu_sdram_addr_r <= 24'd0;
+        cpu_sdram_write_r <= 0;
+    end
+    else begin
+        update_addr_prev <= update_addr;
+        update_addr_prev2 <= update_addr_prev;
+
+        case (wait_state)
+            WS_IDLE: begin
+                if (update_addr_prev == 1 && update_addr_prev2 == 0 &&
+                    mmu_physical_bank != 8'h00 && mmu_physical_bank <= CPU_SDRAM_BANK_MAX) begin
+                    // update_addr had a GENUINE 0->1 transition one real
+                    // clk_54m cycle ago (the 2-stage edge detector - see
+                    // the block comment above for why a single-stage
+                    // check is not sufficient) giving mmu_physical_bank
+                    // a full cycle to settle to the NEW M-cycle's bank
+                    // before we read it, and that upcoming M-cycle needs
+                    // the extended SD-RAM window - assert WAIT now, well
+                    // ahead of this M-cycle's own bus signals.
+                    cpu_sdram_wait_n <= 0;
+                    wait_state <= WS_ARMED;
+                end
+            end
+            WS_ARMED: begin
+                if (cpu_sdram_active == 1) begin
+                    // The real bus request for THIS M-cycle has now
+                    // genuinely asserted (extended_mreq_n/bus_rd_n/
+                    // bus_wr_n) - latch its address/write-flag (same
+                    // rationale as v3's latch: protect against
+                    // mmu_physical_bank drifting later) and move on to
+                    // waiting for genuine completion.
+                    cpu_sdram_addr_r <= CPU_SDRAM_BASE + { mmu_physical_bank, extended_addr[15:0] };
+                    cpu_sdram_write_r <= ~bus_wr_n;
+                    wait_state <= WS_WAITING_DONE;
+                end
+            end
+            WS_WAITING_DONE: begin
+                if (cpu_sdram_done == 1) begin
+                    // memory_ctrl's unambiguous "data genuinely
+                    // committed" pulse - see cpu_sdram_done's port
+                    // declaration comment in fpga/src/memory.v. Release
+                    // the CPU and return to idle; the NEXT update_addr
+                    // 0->1 transition (which cannot occur until T80 has
+                    // genuinely advanced past THIS M-cycle) is what
+                    // re-arms.
+                    cpu_sdram_wait_n <= 1;
+                    wait_state <= WS_IDLE;
+                end
+            end
+            default: wait_state <= WS_IDLE;
+        endcase
+    end
+end
+
+// memory_bus blocks all nonzero banks from the legacy MSX memory decoders,
+// including banks outside the implemented SDRAM range. The arbiter's CPU
+// priority remains in place, but is not relied on to prevent slot side effects.
 
 memory_ctrl mem1 (
     .clk_27m(clk_54m),
@@ -1289,6 +1411,8 @@ memory_ctrl mem1 (
     .bus_rfsh_n(bus_rfsh_n),
 
     .cpu_sdram_dout(cpu_sdram_dout),
+    .cpu_sdram_busy(cpu_sdram_busy),
+    .cpu_sdram_done(cpu_sdram_done),
     .mapper_dout(mapper_dout),
     .megaram_dout(megaram_dout),
     .vram_dout(VrmDbi2),
@@ -1904,7 +2028,7 @@ memory_ctrl mem1 (
         if (~bus_reset_n) begin
             ff_sd_en <= 0;
         end else begin
-            if (config_enable_sdcard == 1 && pri_slot_num[SD_SLOT] == 1 && exp_slotx_num[2] == 1 && bus_addr == SDC_ENABLE && ~bus_wr_n && bus_iorq_n && bus_m1_n) 
+            if (config_enable_sdcard == 1 && bus_mreq_n == 0 && pri_slot_num[SD_SLOT] == 1 && exp_slotx_num[2] == 1 && bus_addr == SDC_ENABLE && ~bus_wr_n && bus_iorq_n && bus_m1_n)
                 ff_sd_en <= cpu_dout[0];
         end
     end

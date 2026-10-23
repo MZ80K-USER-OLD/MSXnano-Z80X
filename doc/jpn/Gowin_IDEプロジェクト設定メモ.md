@@ -1,6 +1,19 @@
-# Gowin IDE プロジェクト設定メモ（手動設定が必要・.gprjに永続化されない項目）
+# Gowin IDE プロジェクト設定メモ(手動設定が必要・.gprjに永続化されない項目)
 
-更新日: 2026-10-11
+更新日: 2026-10-17
+
+## インストール場所
+
+Gowin IDE(本プロジェクトでの合成・配置配線に使用するバージョン)は、
+本開発環境では以下にインストールされている:
+
+```
+D:\Gowin\Gowin_V1.9.11.03_Education_x64\IDE
+```
+
+ヘッドレス合成用CLI(`gw_sh.exe`)は `D:\Gowin\Gowin_V1.9.11.03_Education_x64\IDE\bin\gw_sh.exe`。
+下記「ヘッドレス合成用Tclスクリプトの定型」を使う際は、このパスから
+`gw_sh.exe` を実行する。
 
 ## 背景
 
@@ -30,6 +43,18 @@ IDEのプロジェクトファイルには永続化されず、**IDEのローカ
 他の項目（READY/DONE/RECONFIG_N/I2C/MODE等）はチェックなし（デフォルトのまま）。
 
 Tang Nano 20K基板はSD-RAM/SDカード/HDMI等、設定用ピン(SSPI/MSPI)と衝突する配線を使っているため、この2つをGPIOへ転用する設定が必須。この設定が外れていると、該当ピンに接続されたSD-RAM/SDカード等が動作しない、または配置配線（PnR）がピン衝突でエラーになる。
+
+**ヘッドレス（`gw_sh` Tcl経由）で`run pnr`（配置配線）まで実行する場合は、
+この設定もTclスクリプト内で毎回明示的に指定する必要がある**（2026-10-18判明。
+以前の版では「`run syn`のみなら不要」とだけ記載していたが、`run pnr`を
+実行する構成では指定しないと`mspi_cs`/`mspi_sclk`/`mspi_miso`/`mspi_mosi`/
+`m0s[2]`/`m0s[3]`が専用ピン(MSPI/SSPI)に配置できずPnRが
+`PR2028`/`PR2017`エラーで失敗する）:
+
+```tcl
+set_option -use_mspi_as_gpio 1
+set_option -use_sspi_as_gpio 1
+```
 
 ## 2. Verilog言語仕様（Synthesize タブ）
 
@@ -65,14 +90,27 @@ set_option -top_module top
 
 ## まとめ：ヘッドレス合成用Tclスクリプトの定型
 
-上記2・3の設定は`.gprj`に保存されないため、`gw_sh`でのヘッドレス合成を行う際は、毎回以下を含むTclスクリプトを使う（Dual-Purpose
-PinはIDEのGUI設定であり、`run syn`のみを行うヘッドレス合成には影響しないため、Tcl側での設定は通常不要。配置配線まで行う場合は別途`set_option`での指定を要確認）。
+上記2・3の設定は`.gprj`に保存されないため、`gw_sh`でのヘッドレス合成を行う際は、毎回以下を含むTclスクリプトを使う。
+
+**`run syn`（合成）のみの場合**（Dual-Purpose Pinの指定は不要）:
 
 ```tcl
 open_project MSXNanoTang20K_Z80X24.gprj
 set_option -verilog_std sysv2017
 set_option -top_module top
 run syn
+```
+
+**`run pnr`（配置配線）まで行う場合**（1.のDual-Purpose Pin設定も必須）:
+
+```tcl
+open_project MSXNanoTang20K_Z80X24.gprj
+set_option -verilog_std sysv2017
+set_option -top_module top
+set_option -use_mspi_as_gpio 1
+set_option -use_sspi_as_gpio 1
+run syn
+run pnr
 ```
 
 実行後は `fpga/impl`（gitignore対象）を削除し、Gowinが書き換える

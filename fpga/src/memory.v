@@ -27,6 +27,46 @@ module memory_ctrl (
     output reg [7:0] megaram_dout,
 	output reg [15:0] vram_dout,
     output reg [7:0] cpu_sdram_dout,
+    // Z80X24: asserted for the entire duration that the arbitration state
+    // machine below (sdram_seq) is servicing a cpu_sdram_req-originated
+    // access - from the moment the request is first seen pending (state
+    // 3'd0) all the way through to the cycle cpu_sdram_dout is actually
+    // written with this access's real data (state 3'd3) - NOT merely
+    // until its address/write flag have been latched (state 3'd1), which
+    // this signal's first version (incorrectly) used as the release
+    // point. top.v uses this to hold the CPU (via WAIT_n) for this whole
+    // window, closing the known bank-boundary-crossing PUSH24/POP24
+    // hardware freeze (see AVAILABLE_INSTRUCTIONS.md section 7
+    // "既知の問題"): without it, the CPU (which has no other feedback
+    // from this controller) could advance to its NEXT M-cycle - targeting
+    // a DIFFERENT physical bank, as happens mid-PUSH24/POP24 when MSP24
+    // crosses a 64KB boundary - before (a) this access's address/write
+    // flag have been captured here, corrupting the capture (the original
+    // freeze), or (b) for reads, before cpu_sdram_dout actually holds this
+    // access's data, letting the CPU capture a stale/unrelated byte left
+    // over from a previous access (observed on real hardware as Test7 of
+    // hardware_test/Push24Test completing without a freeze but reading
+    // back wrong HL24/MSP24 values - the first version of this fix only
+    // closed the freeze, not this data-timing issue). clk_27m (see below)
+    // is actually wired to clk_54m at this module's instantiation site in
+    // top.v, i.e. the SAME clock domain the CPU/WAIT_n logic uses, so no
+    // additional clock-domain-crossing synchronizer is needed for this
+    // output.
+    output reg cpu_sdram_busy,
+    // v8 fix (2026-10-17, see doc/jpn/PUSH24_POP24_bank境界またぎバグ_
+    // 調査レポート.md "追記4"): unambiguous, single-cycle pulse asserted
+    // for the EXACT cycle a cpu-owned access's data is committed to
+    // cpu_sdram_dout (state 3'd3 with sdram_owner_cpu asserted) - unlike
+    // cpu_sdram_busy above, which also reads '1' from the moment a
+    // request is merely PENDING (state 3'd0, not yet admitted into the
+    // arbitration pipeline), making "busy was seen high" alone an
+    // unreliable "this access is genuinely done" signal (direct GHDL
+    // simulation tracing proved this ambiguity let top.v's WAIT_n
+    // release while an access was still stuck waiting for a
+    // video-bandwidth-arbitration window, silently losing it). top.v's
+    // WAIT-state machine uses this, not cpu_sdram_busy, to decide when
+    // it is actually safe to release the CPU.
+    output wire cpu_sdram_done,
 
     // Magic ports for SDRAM to be inferred
     output wire O_sdram_clk,
@@ -71,6 +111,22 @@ module memory_ctrl (
     wire sdram_dout;
     reg [2:0] sdram_seq;
     reg enable_sdram;
+    // Z80X24: latches whether the access currently in flight through
+    // sdram_seq (states 3'd1-3'd3) belongs to the cpu_sdram_* client (or,
+    // via sdram_owner_mapper, the mapper_* client - see state 3'd3 below),
+    // captured at the SAME time/condition as the sdram_addr/sdram_write
+    // latch in state 3'd1 below. Needed because cpu_sdram_busy must stay
+    // asserted through states 3'd2/3'd3 too (see below) - by the time
+    // those states run, the live cpu_sdram_req wire could ALREADY reflect
+    // a *different*, not-yet-admitted access if some other, non-WAITed
+    // client's request happened to toggle in between, so ownership must be
+    // captured once and reused, not re-sampled from the live wire.
+    reg sdram_owner_cpu;
+    reg sdram_owner_mapper;
+
+    // v8 fix: see cpu_sdram_done's port declaration comment above for the
+    // full rationale.
+    assign cpu_sdram_done = (sdram_seq == 3'd3) && sdram_owner_cpu;
 
     always @ (posedge clk_27m) begin
         if ( bus_reset_n == 0) begin
@@ -78,6 +134,9 @@ module memory_ctrl (
             enable_sdram <= 0;
             sdram_addr <= 0;
             sdram_write <= 0;
+            cpu_sdram_busy <= 0;
+            sdram_owner_cpu <= 0;
+            sdram_owner_mapper <= 0;
         end
         else begin
             enable_sdram <= 0;
@@ -87,6 +146,13 @@ module memory_ctrl (
                     if  ( ( mapper_req == 1 || megaram_req == 1 || cpu_sdram_req == 1 ) && ( video_dlclk == 1 && video_dhclk == 1 ) ) begin
                         sdram_seq <= 3'd1;
                     end
+                    // Z80X24: hold busy (and hence the CPU, via top.v's
+                    // WAIT_n logic) for as long as cpu_sdram_req is
+                    // pending capture - including the time spent here in
+                    // state 0 waiting for the video_dlclk/video_dhclk
+                    // window, during which the CPU must NOT be allowed to
+                    // advance to a different M-cycle/address.
+                    cpu_sdram_busy <= cpu_sdram_req;
                 end
                 3'd1 : begin
                     enable_sdram <= 1;
@@ -115,6 +181,8 @@ module memory_ctrl (
                         sdram_addr <= cpu_sdram_addr[22:0];
     `endif
                         sdram_write <= cpu_sdram_write;
+                        sdram_owner_cpu <= 1;
+                        sdram_owner_mapper <= 0;
                     end
                     else if ( mapper_req == 1 ) begin
     `ifndef SDRAM_32
@@ -123,6 +191,8 @@ module memory_ctrl (
                         sdram_addr <= { 1'b0, mapper_addr[21:0] };
     `endif
                         sdram_write <= mapper_write;
+                        sdram_owner_cpu <= 0;
+                        sdram_owner_mapper <= 1;
                     end
                     else begin
     `ifndef SDRAM_32
@@ -131,8 +201,36 @@ module memory_ctrl (
                         sdram_addr <= { 3'b10, megaram_addr[20:0] };
     `endif
                         sdram_write <= megaram_write;
+                        sdram_owner_cpu <= 0;
+                        sdram_owner_mapper <= 0;
                     end
                     sdram_seq <= 3'd2;
+                    // Z80X24 (revised): sdram_addr/sdram_write have just
+                    // been safely latched above (this same clock edge), but
+                    // for a cpu_sdram_req-owned access the CPU must keep
+                    // being held a little longer - through states 3'd2/
+                    // 3'd3 - because for READS, cpu_sdram_dout (the actual
+                    // byte value the CPU's WAIT_n/T80 core will capture)
+                    // is not written until state 3'd3 below, well AFTER
+                    // this point. Releasing busy here (as the first
+                    // version of this fix did) let the CPU resume and
+                    // capture DI_Reg BEFORE cpu_sdram_dout held this
+                    // access's actual data - and, just as importantly, let
+                    // the CPU start a brand new M-cycle (with a new
+                    // cpu_sdram_addr, e.g. the NEXT byte of a PUSH24/
+                    // POP24) while this state machine was still busy
+                    // servicing the PREVIOUS one, which only resumes
+                    // accepting a new request from state 3'd0 - causing
+                    // that next access to be silently missed/aliased. This
+                    // was observed on real hardware as Test7 (Push24Test)
+                    // completing without a freeze but reading back wrong
+                    // HL24/MSP24 values after a bank-boundary-crossing
+                    // PUSH24/POP24. Non-cpu-sdram accesses (mapper_req/
+                    // megaram_req) do not have a CPU-side WAIT_n watching
+                    // cpu_sdram_busy at all, so releasing busy=0 here for
+                    // those (sdram_owner_cpu=0) is harmless and unchanged
+                    // from before.
+                    cpu_sdram_busy <= cpu_sdram_req;
                 end
                 3'd2 : begin
                     enable_sdram <= 1;
@@ -140,24 +238,55 @@ module memory_ctrl (
                         sdram_write <= 0;
                         sdram_seq <= 3'd3;
                     end
+                    cpu_sdram_busy <= sdram_owner_cpu;
                 end
                 3'd3 : begin
                     enable_sdram <= 1;
                     sdram_write <= 0;
-                    // Priority order must match state 3'd1 above.
-                    if ( cpu_sdram_req == 1 ) begin
+                    // Z80X24: Priority order must match state 3'd1 above -
+                    // but using the LATCHED sdram_owner_cpu/
+                    // sdram_owner_mapper flags, NOT the live cpu_sdram_req/
+                    // mapper_req wires (this was the actual bug: an
+                    // earlier version of this state re-sampled the live
+                    // wires here, exactly the mistake sdram_owner_cpu's
+                    // own declaration comment above warns against). By
+                    // this state, several clk_27m cycles may have elapsed
+                    // since this access was admitted back in state 3'd1
+                    // (states 3'd1/3'd2 can each take multiple cycles,
+                    // e.g. waiting on video_dlclk/video_dhclk bandwidth
+                    // arbitration in state 3'd2) - during that window the
+                    // live wires can already reflect a DIFFERENT,
+                    // not-yet-admitted access. Re-sampling them here could
+                    // route this access's just-read RamDbi to the WRONG
+                    // destination register, leaving the actual intended
+                    // destination (e.g. cpu_sdram_dout) holding stale data
+                    // left over from a previous access - this is suspected
+                    // to be the actual root cause of hardware_test/
+                    // Push24Test's Test7 PUSH24/POP24 bank-boundary-
+                    // crossing failure surviving 3 unrelated WAIT-timing
+                    // fix attempts in fpga/top.v completely unchanged (see
+                    // that test's README "bank境界またぎPUSH24/POP24の
+                    // 経緯" for the full investigation log).
+                    if ( sdram_owner_cpu == 1 ) begin
                         cpu_sdram_dout <= RamDbi;
                     end
-                    else if ( mapper_req == 1 ) begin
+                    else if ( sdram_owner_mapper == 1 ) begin
                         mapper_dout <= RamDbi;
                     end
                     else begin
                         megaram_dout <= RamDbi;
                     end
                     sdram_seq <= 3'd4;
+                    // Z80X24: cpu_sdram_dout has just been set above (this
+                    // same clock edge) with this access's real data - now
+                    // it is finally safe to release the CPU.
+                    cpu_sdram_busy <= 0;
                 end
                 3'd4 : begin
-                    if ( mapper_req == 0 && megaram_req == 0 && cpu_sdram_req == 0 ) begin
+                    // An unaccepted CPU request must not block retirement
+                    // of a legacy access; it needs state 0 to be admitted.
+                    if ( mapper_req == 0 && megaram_req == 0 &&
+                         (cpu_sdram_req == 0 || sdram_owner_cpu == 0) ) begin
                         sdram_seq <= 3'd0;
                     end
                 end

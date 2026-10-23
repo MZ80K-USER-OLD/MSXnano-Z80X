@@ -131,16 +131,27 @@ end T80;
 
 architecture rtl of T80 is
 
-    constant aNone  : std_logic_vector(2 downto 0) := "111";
-    constant aBC    : std_logic_vector(2 downto 0) := "000";
-    constant aDE    : std_logic_vector(2 downto 0) := "001";
-    constant aXY    : std_logic_vector(2 downto 0) := "010";
-    constant aIOA   : std_logic_vector(2 downto 0) := "100";
-    constant aSP    : std_logic_vector(2 downto 0) := "101";
-    constant aZI    : std_logic_vector(2 downto 0) := "110";
+    constant aNone  : std_logic_vector(3 downto 0) := "0111";
+    constant aBC    : std_logic_vector(3 downto 0) := "0000";
+    constant aDE    : std_logic_vector(3 downto 0) := "0001";
+    constant aXY    : std_logic_vector(3 downto 0) := "0010";
+    constant aIOA   : std_logic_vector(3 downto 0) := "0100";
+    constant aSP    : std_logic_vector(3 downto 0) := "0101";
+    constant aZI    : std_logic_vector(3 downto 0) := "0110";
     -- Phase9: MSP24 (PUSH24/POP24) address source; must match the aMSP
-    -- constant added to t80_mcode.vhd.
-    constant aMSP   : std_logic_vector(2 downto 0) := "011";
+    -- constant added to t80_mcode.vhd. The bus was widened from 3 to 4
+    -- bits (2026-10-19) to make room for aXfer below; all 8 original
+    -- codes are simply zero-extended on their new MSB, so every existing
+    -- comparison (Set_Addr_To = aMSP etc.) still matches unchanged.
+    constant aMSP   : std_logic_vector(3 downto 0) := "0011";
+    -- 2026-10-19 (不足転送命令追加案): dedicated address source for the new
+    -- ED00/01/03/08 (LD24 BC/DE,(HL) / LD24 (HL),BC/DE) sequential 3byte
+    -- HL-indirect transfer instructions; must match the aXfer constant
+    -- added to t80_mcode.vhd. See the aXfer case in the Set_Addr_To
+    -- interpretation block below, and the TmpAddr/TmpBank auto-increment
+    -- logic added to the "Phase9: PUSH24/POP24 MSP24 pointer adjustment"
+    -- case statement.
+    constant aXfer  : std_logic_vector(3 downto 0) := "1000";
 
     -- Registers
     signal ACC, F           : std_logic_vector(7 downto 0);
@@ -283,7 +294,7 @@ architecture rtl of T80 is
     signal Save_ALU         : std_logic;
     signal PreserveC        : std_logic;
     signal Arith16          : std_logic;
-    signal Set_Addr_To      : std_logic_vector(2 downto 0);
+    signal Set_Addr_To      : std_logic_vector(3 downto 0);
     signal Jump             : std_logic;
     -- Phase11: see matching JumpL comment in t80_mcode.vhd's entity port.
     signal JumpL            : std_logic;
@@ -1094,6 +1105,25 @@ begin
                                 A(15 downto 8) <= DI_Reg;
                                 A(7 downto 0) <= TmpAddr(7 downto 0);
                             end if;
+                        when aXfer =>
+                            -- 2026-10-19 (不足転送命令追加案): ED00/01/03/08
+                            -- (LD24 BC/DE,(HL) / LD24 (HL),BC/DE) 2nd/3rd
+                            -- byte address, auto-incremented across the
+                            -- 64KB bank boundary (TmpAddr/TmpBank are kept
+                            -- up to date by the dedicated advance logic in
+                            -- the "Phase9: PUSH24/POP24 MSP24 pointer
+                            -- adjustment" case statement below, reusing
+                            -- the Addr24_Inc helper). Unlike aXY, this is
+                            -- read unconditionally regardless of XY_State,
+                            -- since none of these opcodes can ever be
+                            -- active while a DD/FD prefix is pending.
+                            -- Mirrors aBC/aDE/aXY's existing M0 bank-
+                            -- bypass convention (Phase3): in M0 the bank
+                            -- byte is simply not applied to the address.
+                            A <= TmpAddr;
+                            if mode24_r /= "00" then
+                                A_Bank_r <= TmpBank;
+                            end if;
                         when others =>
                             A <= std_logic_vector(PC);
                             -- Phase10: generic opcode-fetch / operand-byte
@@ -1434,6 +1464,43 @@ begin
                             bank_msp_r <= addr24_tmp(23 downto 16);
                             MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
+                    -- 2026-10-19 (不足転送命令追加案): ED00/01 (LD24 BC/DE,
+                    -- (HL)) / ED03/08 (LD24 (HL),BC/DE) TmpAddr/TmpBank
+                    -- "xfer pointer" advance, generating the 2nd/3rd
+                    -- byte's address one mcycle ahead (same TState=2,
+                    -- Wait_n=1 trigger idiom as every other 24bit pointer
+                    -- adjustment above, so this exercises the identical
+                    -- WAIT-sensitive code path currently under
+                    -- investigation for the PUSH24/POP24 bank-boundary
+                    -- bug - see PUSH24_POP24_bank境界またぎバグ_調査
+                    -- レポート.md). Unlike MSP24, HL24 itself (HL/
+                    -- bank_hl_r) is NEVER written here - only the
+                    -- temporary TmpAddr/TmpBank pointer advances, so the
+                    -- source/dest HL24 register stays unchanged as
+                    -- required by the spec addendum. The 1st byte (M2)
+                    -- always reads/writes at HL24 itself (via aXY in
+                    -- mcode, see the new ED00/01/03/08 cases), so the
+                    -- FIRST advance (fired during M2, preparing M3's
+                    -- address) must compute from the live HL/bank_hl_r;
+                    -- the SECOND advance (fired during M3, preparing M4's
+                    -- address) continues from the now-current TmpAddr/
+                    -- TmpBank.
+                    when x"00" | x"01" | x"03" | x"08" =>
+                        if TState = 2 and Wait_n = '1' and
+                           (MCycle = "0010" or MCycle = "0011") then
+                            if MCycle = "0010" then
+                                -- RegBusC reflects HL's current value here
+                                -- thanks to the RegAddrC override added
+                                -- above (not read via "A"/RegBusA, since
+                                -- those are delayed an extra cycle - see
+                                -- that override's comment).
+                                addr24_tmp := Addr24_Inc(bank_hl_r, RegBusC);
+                            else
+                                addr24_tmp := Addr24_Inc(TmpBank, TmpAddr);
+                            end if;
+                            TmpBank <= addr24_tmp(23 downto 16);
+                            TmpAddr <= addr24_tmp(15 downto 0);
+                        end if;
                     when others => null;
                     end case;
                 end if;
@@ -1567,6 +1634,24 @@ begin
                     when x"C5" => DO <= bank_bc_r;
                     when x"D5" => DO <= bank_de_r;
                     when x"E5" => DO <= bank_hl_r;
+                    when others => null;
+                    end case;
+                end if;
+                -- 2026-10-19 (不足転送命令追加案): ED03 (LD24 (HL),BC) /
+                -- ED08 (LD24 (HL),DE) BANK-byte write override. Unlike
+                -- PUSH24 (stack order: BANK written FIRST at MCycle=2),
+                -- these are forward sequential writes (LOW at HL24,
+                -- HIGH at HL24+1, BANK at HL24+2 - matching the design
+                -- doc's "LOW->HIGH->BANK" memory order), so BANK is
+                -- written LAST, at MCycle=4 (same bank_xx_r direct-read
+                -- technique as PUSH24's override above, just at a
+                -- different mcycle - the LOW/HIGH bytes at MCycle=2/3 go
+                -- through the normal Set_BusB_To/BusB staged path, set up
+                -- by the new ED00/01/03/08 mcode case).
+                if ISet = "10" and MCycle = "0100" then
+                    case IR is
+                    when x"03" => DO <= bank_bc_r;
+                    when x"08" => DO <= bank_de_r;
                     when others => null;
                     end case;
                 end if;
@@ -1785,6 +1870,14 @@ begin
                         when x"C1" => bank_bc_r <= DI_Reg;
                         when x"D1" => bank_de_r <= DI_Reg;
                         when x"E1" => bank_hl_r <= DI_Reg;
+                        -- 2026-10-19 (不足転送命令追加案): ED00 (LD24 BC,
+                        -- (HL)) / ED01 (LD24 DE,(HL)) BANK-byte read
+                        -- capture (3rd of 3 bytes, at HL24+2), identical
+                        -- mechanism to POP24's own BANK capture above -
+                        -- dest bank_bc_r/bank_de_r, NOT bank_hl_r (HL24
+                        -- itself must stay unchanged per spec).
+                        when x"00" => bank_bc_r <= DI_Reg;
+                        when x"01" => bank_de_r <= DI_Reg;
                         when others => null;
                         end case;
                     end if;
@@ -2075,6 +2168,21 @@ begin
                          x"07" | x"17" | x"27" | x"37" | x"0F" | x"1F" |
                          x"2F" | x"3F" | x"3D" =>
                         RegAddrC <= Alternate & "10";    -- dest/compare HL
+                    -- 2026-10-19 (不足転送命令追加案): ED00/01/03/08 (LD24
+                    -- BC/DE,(HL) / LD24 (HL),BC/DE) need RegBusC to show
+                    -- HL's current 16bit value throughout M1/M2 (for the
+                    -- TmpAddr/TmpBank "xfer pointer" advance logic's
+                    -- Addr24_Inc(bank_hl_r, HL) computation at M2's
+                    -- TState=2 - see the matching case added to the
+                    -- "Phase9: PUSH24/POP24 MSP24 pointer adjustment" case
+                    -- statement), overriding the generic Set_Addr_To=aXfer
+                    -- -> RegAddrC default (which would otherwise point at
+                    -- BC, same mechanism/rationale as the ALU24 HL-read
+                    -- override directly above). Harmless to also hold
+                    -- during M3/M4, since nothing else reads RegBusC for
+                    -- these opcodes by then.
+                    when x"00" | x"01" | x"03" | x"08" =>
+                        RegAddrC <= Alternate & "10";    -- HL (xfer base)
                     when others => null;
                     end case;
                 end if;

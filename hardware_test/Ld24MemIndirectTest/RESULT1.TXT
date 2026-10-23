@@ -1,0 +1,25 @@
+Z80X24 LD24 mem-indirect v2 MODE-SAFE
+MSXnano-Z80X / msxnano-24bit
+
+Test1 R/W patterns 01:9000: FAIL (got=0599AA, want=000000)
+  first failing step=01
+Test1 setup byte-readback: PASS
+Test1 ED00 LD24 BC,(HL) normal read: PASS
+Test1 HL24 unchanged after ED00: PASS
+Test2 R/W patterns 01:9010: PASS
+Test2 setup byte-readback: PASS
+Test2 ED01 LD24 DE,(HL) normal read: PASS
+Test2 HL24 unchanged after ED01: PASS
+Test3 R/W patterns 01:9020: PASS
+Test3 ED03 LD24 (HL),BC normal write: PASS
+Test4 R/W patterns 01:9030: PASS
+Test4 ED08 LD24 (HL),DE normal write: PASS
+Test5 R/W patterns 01:FFFE-02:0000: PASS
+Test5 setup byte-readback across boundary: PASS
+Test5 ED00 LD24 BC,(HL) across a bank boundary: PASS
+Test5 HL24 unchanged across the same boundary: PASS
+Test6 R/W patterns 01:FFFE-02:0000: PASS
+Test6 ED03 LD24 (HL),BC across a bank boundary: PASS
+Test_F F register unchanged by ED00: PASS
+
+PASS=12 FAIL=01

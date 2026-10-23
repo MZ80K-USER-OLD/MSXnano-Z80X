@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="452" viewBox="0 0 860 452">
+  <rect width="860" height="452" fill="#202020"/>
+  <g font-family="monospace" font-size="17" fill="#ffffff">
+    <text x="20" y="30">LD24MI v2 marker colors (approximate default MSX palette)</text>
+    <text x="20" y="58">Marker    Background       Last completed stage</text>
+    <rect x="20" y="76" width="150" height="28" fill="#000000"/>
+    <text x="28" y="97">F1 / E1</text>
+    <text x="190" y="97">Black</text>
+    <text x="390" y="97">F1: Test5 entered M1</text>
+    <rect x="20" y="116" width="150" height="28" fill="#21c842"/>
+    <text x="28" y="137">F2 / E2</text>
+    <text x="190" y="137">Medium green</text>
+    <text x="390" y="137">F2: write 01:FFFE completed</text>
+    <rect x="20" y="156" width="150" height="28" fill="#5edc78"/>
+    <text x="28" y="177">F3 / E3</text>
+    <text x="190" y="177">Light green</text>
+    <text x="390" y="177">F3: write 01:FFFF completed</text>
+    <rect x="20" y="196" width="150" height="28" fill="#5455ed"/>
+    <text x="28" y="217">F4 / E4</text>
+    <text x="190" y="217">Dark blue</text>
+    <text x="390" y="217">F4: write 02:0000 completed</text>
+    <rect x="20" y="236" width="150" height="28" fill="#7d76fc"/>
+    <text x="28" y="257">F5</text>
+    <text x="190" y="257">Light blue</text>
+    <text x="390" y="257">Test5 readback saved; before ED00</text>
+    <rect x="20" y="276" width="150" height="28" fill="#d4524d"/>
+    <text x="28" y="297">F6</text>
+    <text x="190" y="297">Dark red</text>
+    <text x="390" y="297">Test5 ED00 completed</text>
+    <text x="20" y="340">E1: Test5 result saved   E2: before Test6 ED03</text>
+    <text x="20" y="370">E3: Test6 ED03 completed E4: Test6 readback saved</text>
+    <text x="20" y="410">F*: white text. E*: gray text. Same low nibble = same background.</text>
+    <text x="20" y="436">Actual colors depend on the VDP palette and display.</text>
+  </g>
+</svg>
