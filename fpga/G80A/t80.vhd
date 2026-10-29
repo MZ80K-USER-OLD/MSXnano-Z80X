@@ -208,7 +208,7 @@ architecture rtl of T80 is
     signal bank_msp_r       : std_logic_vector(7 downto 0);   -- MSP24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 MSP)
     signal bank_int_r       : std_logic_vector(7 downto 0);   -- IVR24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 IVR)
     signal bank_nvr_r       : std_logic_vector(7 downto 0);   -- NVR24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 NVR)
-    signal bank_rst_r       : std_logic_vector(7 downto 0);   -- RST_B (V8/V7 finalized opcode: ED3A LD RST_B,A / ED3E LD A,RST_B)
+    signal bank_rst_r       : std_logic_vector(7 downto 0);   -- IBR: ED3A write / EDEF read; bank_rst debug port retained.
 
     -- Phase8: dedicated 24bit ALU (fully combinational, see the process
     -- near RegAddrA_r/RegAddrB_r below and Alu24_AddSub in t80_pack.vhd).
@@ -371,6 +371,7 @@ begin
             XY_State => XY_State,
             LeaXY => LeaXY,
             Mode24 => mode24_r,
+            IStatus => IStatus,
             MCycles => MCycles_d,
             TStates => TStates,
             Prefix => Prefix,
@@ -484,6 +485,7 @@ begin
         -- for the generic SP/IncDec_16 path, PUSH24/POP24, CALL.L/RET.L,
         -- CALL.M0/M1/CALL.M2/RET.M).
         variable addr24_tmp : std_logic_vector(23 downto 0);
+        variable next_mode24 : std_logic_vector(1 downto 0);
     begin
         if RESET_n = '0' then
             PC <= (others => '0');  -- Program Counter
@@ -543,6 +545,7 @@ begin
         elsif CLK_n'event and CLK_n = '1' then
 
             if ClkEn = '1' then
+            next_mode24 := mode24_r;
 
 			update_addr <= '0';
             ALU_Op_r <= "0000";
@@ -599,9 +602,7 @@ begin
                     end if;
 
                     if mode24_r = "10" and (IntCycle = '1' or NMICycle = '1') then
-                        -- Phase13 (V10仕様書 section13): "M2のIRQは
-                        -- IM0/1/2の設定に関係なくIVR24へ直接分岐する".
-                        -- M2 interrupts always dispatch through the
+                        -- M2 interrupts dispatch through the
                         -- "00000000" NOP-opcode path (handled specially
                         -- via NMICycle/IntCycle/Mode24 in t80_mcode.vhd),
                         -- regardless of IStatus - this check must come
@@ -752,7 +753,7 @@ begin
                         -- 64KB segment" per CPU仕様書V8/roadmap Phase11
                         -- ("通常CALL/RETは同一64KB segment内用...PC_B=
                         -- 不変") - bank_pc_r is intentionally left
-                        -- UNTOUCHED here (preserved), unlike JP/JR/RST's
+                        -- UNTOUCHED here (preserved), unlike JP/JR's
                         -- "16bit immediate=>bank00h" rule. A_Bank_r needs
                         -- an explicit override since the top-of-block
                         -- default resets it to 00h; RET's matching JumpR
@@ -761,24 +762,23 @@ begin
                     elsif RstP = '1' then
                         A <= TmpAddr;
                         PC <= unsigned(TmpAddr);
-                        bank_pc_r <= (others => '0');
+                        -- V16.1: ordinary RST stays in the current M2 bank.
+                        if mode24_r = "10" then
+                            A_Bank_r <= bank_pc_r;
+                        else
+                            bank_pc_r <= (others => '0');
+                        end if;
                     elsif RstL = '1' then
-                        -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/
-                        -- FF), M2 commit. TmpAddr already holds the same
+                        -- V16.1 RST.L, M2 commit. TmpAddr holds the same
                         -- "00"&IR(5:3)&"000" vector as plain RST (shared
-                        -- compute block above), but unlike RstP's own
-                        -- commit (which always zeroes bank_pc_r for plain
-                        -- RST/other 16bit-immediate-target instructions
-                        -- per CPU仕様書V8 section5), RST.L's M2 path
-                        -- jumps to PC24={RST_B,00h,vector}: the 3byte
+                        -- compute block above). Ordinary RST preserves
+                        -- the current M2 bank; RST.L
+                        -- jumps to PC24={IBR,00h,vector}: the 3byte
                         -- PC24 return frame (bank_pc_r/PC_H/PC_L) was
                         -- already pushed to MSP24 by the preceding write
                         -- cycles (see the matching MSP24-decrement/BANK-
                         -- byte-DO blocks below, mirroring Phase9's
-                        -- PUSH24). M0/M1 execution of this same opcode
-                        -- never sets RstL (mcode selects RstP/aSP/16bit
-                        -- push instead - see t80_mcode.vhd), so this
-                        -- branch is M2-only by construction.
+                        -- PUSH24). M0/M1 treat this opcode as NOP.
                         A <= TmpAddr;
                         PC <= unsigned(TmpAddr);
                         A_Bank_r <= bank_rst_r;
@@ -861,12 +861,12 @@ begin
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
                         bank_pc_r <= (others => '0');
                         if IR = x"93" then
-                            mode24_r <= "00";
+                            next_mode24 := "00";
                         else
-                            mode24_r <= "01";
+                            next_mode24 := "01";
                         end if;
                     elsif JumpM2 = '1' then
-                        -- Phase12: JP.M2 addr24 (ED 95). Same 3byte
+                        -- V16.1: JP.M2 addr24 (ED 9B). Same 3byte
                         -- target shape as JP.L (TmpAddr low/high + DI_Reg
                         -- bank), but UNCONDITIONALLY switches mode24_r to
                         -- M2 and applies the fetched bank byte (unlike
@@ -877,7 +877,7 @@ begin
                         PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
                         bank_pc_r <= DI_Reg;
-                        mode24_r <= "10";
+                        next_mode24 := "10";
                     elsif CallM01 = '1' then
                         -- Phase12: CALL.M0 addr16 (ED 96) / CALL.M1 addr16
                         -- (ED 97). The 4byte return frame (MODE/PC_B/
@@ -893,9 +893,9 @@ begin
                         PC <= unsigned(TmpAddr);
                         bank_pc_r <= (others => '0');
                         if IR = x"96" then
-                            mode24_r <= "00";
+                            next_mode24 := "00";
                         else
-                            mode24_r <= "01";
+                            next_mode24 := "01";
                         end if;
                     elsif CallM2 = '1' then
                         -- Phase12: CALL.M2 addr24 (ED 98). The 4byte
@@ -915,7 +915,7 @@ begin
                         PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
                         bank_pc_r <= TmpBank;
-                        mode24_r <= "10";
+                        next_mode24 := "10";
                     elsif RetM = '1' then
                         -- Phase12: RET.M (ED 99). TmpAddr holds the
                         -- latched low+high bytes (via LDZ/LDW at MCycle
@@ -933,35 +933,37 @@ begin
                         PC(15 downto 8) <= unsigned(TmpAddr(15 downto 8));
                         PC(7 downto 0) <= unsigned(TmpAddr(7 downto 0));
                         bank_pc_r <= TmpBank;
-                        mode24_r <= DI_Reg(1 downto 0);
+                        next_mode24 := DI_Reg(1 downto 0);
+                    elsif mode24_r = "10" and
+                          ((IntCycle = '1' and IStatus = "10") or
+                           (ISet = "10" and IR = x"C6")) and MCycle = "0101" then
+                        A <= I & TmpAddr(7 downto 0);
+                        A_Bank_r <= bank_rst_r;
+                    elsif mode24_r = "10" and
+                          ((IntCycle = '1' and IStatus = "10") or
+                           (ISet = "10" and IR = x"C6")) and MCycle = "0110" then
+                        -- Wrap within IBR; never carry into the table bank.
+                        A <= std_logic_vector(unsigned(A) + 1);
+                        A_Bank_r <= bank_rst_r;
+                    elsif mode24_r = "10" and ISet = "10" and IR = x"C6" and MCycle = "0111" then
+                        A <= DI_Reg & TmpAddr(7 downto 0);
+                        PC <= unsigned(DI_Reg & TmpAddr(7 downto 0));
+                        A_Bank_r <= bank_rst_r;
+                        bank_pc_r <= bank_rst_r;
                     elsif IntM2 = '1' then
-                        -- Phase13 (V10仕様書 section13): M2 interrupt
-                        -- entry commit. The 4byte frame (MODE/PC_B/PC_H/
-                        -- PC_L) was already pushed to MSP24 by the
-                        -- preceding write cycles (see the MSP24-decrement
-                        -- / MODE-PC_B-byte-DO override blocks below,
-                        -- mirroring CALL.Mx). Target is chosen directly
-                        -- from NMICycle vs IntCycle, WITHOUT consulting
-                        -- IStatus/IM ("M2のIRQはIM0/1/2の設定に関係なく
-                        -- IVR24へ直接分岐する"). mode24_r is explicitly
-                        -- re-asserted to M2 (redundant since this path
-                        -- only ever fires when already in M2, but kept
-                        -- explicit/safe to mirror JumpM2/CallM2's own
-                        -- pattern).
+                        A_Bank_r <= bank_rst_r;
+                        bank_pc_r <= bank_rst_r;
                         if NMICycle = '1' then
-                            A(15 downto 8) <= std_logic_vector(NVR(15 downto 8));
-                            A(7 downto 0) <= std_logic_vector(NVR(7 downto 0));
-                            A_Bank_r <= bank_nvr_r;
-                            PC <= NVR;
-                            bank_pc_r <= bank_nvr_r;
+                            A <= x"0066";
+                            PC <= x"0066";
+                        elsif IStatus = "10" then
+                            A <= DI_Reg & TmpAddr(7 downto 0);
+                            PC <= unsigned(DI_Reg & TmpAddr(7 downto 0));
                         else
-                            A(15 downto 8) <= std_logic_vector(IVR(15 downto 8));
-                            A(7 downto 0) <= std_logic_vector(IVR(7 downto 0));
-                            A_Bank_r <= bank_int_r;
-                            PC <= IVR;
-                            bank_pc_r <= bank_int_r;
+                            A <= x"0038";
+                            PC <= x"0038";
                         end if;
-                        mode24_r <= "10";
+                        next_mode24 := "10";
                     elsif MCycle = MCycles and NMICycle = '1' and mode24_r /= "10" then
                         -- Phase13: guarded with mode24_r/="10" - this is
                         -- the OLD M0/M1-only "NMI jumps to fixed 0066h"
@@ -1214,8 +1216,7 @@ begin
                         PC <= PC - 2;
                     end if;
                     if RstP = '1' or RstL = '1' then
-                        -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/
-                        -- FF) shares this IDENTICAL vector compute with
+                        -- V16.1 RST.L shares this vector compute with
                         -- plain RST p (same IR(5:3) bit position, same
                         -- byte value regardless of ED prefix) - only the
                         -- T_Res commit (below) differs in BANK handling.
@@ -1252,6 +1253,18 @@ begin
                             TmpBank <= Addr24_AddDisp8(bank_iy_r, RegBusC, DI_Reg)(23 downto 16);
                         end if;
                     end if;
+                end if;
+
+                -- Advance only after a nonfinal data byte has completed WAIT.
+                -- TmpAddr/TmpBank, not IX/IY or the destination pair, own EA.
+                if ISet = "00" and mode24_r /= "00" and XY_State /= "00" and
+                   (IR = x"07" or IR = x"17" or IR = x"27" or
+                    IR = x"0F" or IR = x"1F" or IR = x"2F" or IsIndex24(IR)) and
+                   (MCycle = "0010" or (IsIndex24(IR) and MCycle = "0011")) and
+                   TState = 2 and Wait_n = '1' then
+                    addr24_tmp := Addr24_Inc(TmpBank, TmpAddr);
+                    TmpAddr <= addr24_tmp(15 downto 0);
+                    TmpBank <= addr24_tmp(23 downto 16);
                 end if;
 
                 -- New (V4 21.2): LEA.L HL,(IX/IY+d) (DD/FD ED 68 d) / LEA.L
@@ -1342,6 +1355,16 @@ begin
                 -- final value.
                 if ISet = "10" and XY_State = "00" then
                     case IR is
+                    when x"C6" => -- SYSCALL: operand, then three-byte return frame.
+                        if mode24_r = "10" and
+                           ((MCycle = "0010" and
+                             ((Mode = 1 and TState = 2 and Wait_n = '1') or
+                              (Mode /= 1 and TState = 3))) or
+                            (TState = 2 and Wait_n = '1' and (MCycle = "0011" or MCycle = "0100"))) then
+                            addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
+                            bank_msp_r <= addr24_tmp(23 downto 16);
+                            MSP <= unsigned(addr24_tmp(15 downto 0));
+                        end if;
                     when x"C5" | x"D5" | x"E5" =>  -- PUSH24 BC/DE/HL
                         if (TState = 4 and MCycle = "0001") or
                            (TState = 2 and Wait_n = '1' and (MCycle = "0010" or MCycle = "0011")) then
@@ -1356,19 +1379,12 @@ begin
                             bank_msp_r <= addr24_tmp(23 downto 16);
                             MSP <= unsigned(addr24_tmp(15 downto 0));
                         end if;
-                    -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/FF)
+                    -- V16.1 RST.L (ED 85/8D/95/9D/A5/AD/B5/BD)
                     -- MSP24 pointer adjustment, M2-only, same decrement-
                     -- before-write schedule as PUSH24 above (no preceding
                     -- operand-fetch phase, so the push starts right at
-                    -- M1, identically to PUSH24). M0/M1 execution of this
-                    -- SAME opcode instead uses the regular SP via
-                    -- IncDec_16 (see t80_mcode.vhd's Mode24 branch) and
-                    -- never reaches this code with matching MCycle/
-                    -- TState values in a way that should touch MSP - the
-                    -- explicit mode24_r guard here prevents a spurious
-                    -- MSP decrement if it ever did (same lesson as the
-                    -- Phase13 mode24_r-guard bug fix).
-                    when x"C7" | x"CF" | x"D7" | x"DF" | x"E7" | x"EF" | x"F7" | x"FF" =>
+                    -- M1, identically to PUSH24). M0/M1 must not change MSP.
+                    when x"85" | x"8D" | x"95" | x"9D" | x"A5" | x"AD" | x"B5" | x"BD" =>
                         if mode24_r = "10" and
                            ((TState = 4 and MCycle = "0001") or
                             (TState = 2 and Wait_n = '1' and (MCycle = "0010" or MCycle = "0011"))) then
@@ -1454,10 +1470,10 @@ begin
                     -- increments (one more than RET.L's 3, for the extra
                     -- MODE byte), identical TState=2,Wait_n=1 pattern to
                     -- RET.L above just extended to MCycle=101(5) too.
-                    -- Phase13: RETI.L (ED 4E) / RETN.L (ED 8C) share this
+                    -- RETI.L (ED F3) / RETN.L (ED 8C) share this
                     -- identical pop mechanism (see the matching mcode
-                    -- "10011001"|"01001110"|"10001100" shared case).
-                    when x"99" | x"4E" | x"8C" =>
+                    -- RET.M/RETI.L/RETN.L shared case).
+                    when x"99" | x"F3" | x"8C" =>
                         if TState = 2 and Wait_n = '1' and
                            (MCycle = "0010" or MCycle = "0011" or MCycle = "0100" or MCycle = "0101") then
                             addr24_tmp := Addr24_Inc(bank_msp_r, std_logic_vector(MSP));
@@ -1506,7 +1522,7 @@ begin
                 end if;
 
                 -- Phase13 (V10仕様書 section13): M2 interrupt entry
-                -- (NMI->NVR24, IRQ->IVR24) MSP24 pointer adjustment. 4
+                -- (IBR targets) MSP24 pointer adjustment. 4
                 -- decrements, mirroring CALL.M0/M1's own 4-decrement
                 -- shape above (see the IR=x"96"|x"97" case) but shifted 2
                 -- mcycles earlier throughout (M1/M2/M3/M4 instead of
@@ -1655,7 +1671,15 @@ begin
                     when others => null;
                     end case;
                 end if;
-                -- Phase14(next): RST.L (ED C7/CF/D7/DF/E7/EF/F7/FF) BANK-
+                if ISet = "00" and mode24_r /= "00" and XY_State /= "00" and
+                   IsIndex24(IR) and IR(5) = '1' and MCycle = "0100" then
+                    case Index24Pair(IR) is
+                    when "00" => DO <= bank_bc_r;
+                    when "01" => DO <= bank_de_r;
+                    when others => DO <= bank_hl_r;
+                    end case;
+                end if;
+                -- V16.1 RST.L (ED 85/8D/95/9D/A5/AD/B5/BD) BANK-
                 -- byte write override, M2-only (same MCycle=2 slot as
                 -- PUSH24's own override above, since RST.L's push also
                 -- starts right at M1 with no preceding operand-fetch
@@ -1666,9 +1690,12 @@ begin
                 -- M0/M1's PC_H write would be silently corrupted.
                 if ISet = "10" and MCycle = "0010" and mode24_r = "10" then
                     case IR is
-                    when x"C7" | x"CF" | x"D7" | x"DF" | x"E7" | x"EF" | x"F7" | x"FF" => DO <= bank_pc_r;
+                    when x"85" | x"8D" | x"95" | x"9D" | x"A5" | x"AD" | x"B5" | x"BD" => DO <= bank_pc_r;
                     when others => null;
                     end case;
+                end if;
+                if ISet = "10" and IR = x"C6" and MCycle = "0011" and mode24_r = "10" then
+                    DO <= bank_pc_r;
                 end if;
                 -- Phase11: CALL.L addr24 / CALL.L cc,addr24 (ED CD / ED
                 -- C4/CC/D4/DC/E4/EC/F4/FC) BANK-byte write override. This
@@ -1761,10 +1788,10 @@ begin
             if T_Res = '1' then
                     if ISet = "10" then
                         case IR is
-                        when x"90" => mode24_r <= "00";
-                        when x"91" => mode24_r <= "01";
+                        when x"90" => next_mode24 := "00";
+                        when x"91" => next_mode24 := "01";
                         when x"92" =>
-                            mode24_r <= "10";
+                            next_mode24 := "10";
                             -- Phase10: SET_M2 (CPU仕様書V8 section 2:
                             -- "SET_M2はM0/M1→M2でPC_B<-00h、M2→M2では
                             -- PC_B保持"). mode24_r here still holds the
@@ -1781,13 +1808,13 @@ begin
                         when x"24" => bank_hl_r <= ACC;    -- LD HL_B,A
                         when x"05" => bank_ix_r <= ACC;    -- LD IX_B,A
                         when x"15" => bank_iy_r <= ACC;    -- LD IY_B,A
-                        when x"3A" => bank_rst_r <= ACC;   -- LD RST_B,A
+                        when x"3A" => bank_rst_r <= ACC;   -- LD IBR,A
                         when x"0C" => ACC <= bank_bc_r;    -- LD A,BC_B
                         when x"1C" => ACC <= bank_de_r;    -- LD A,DE_B
                         when x"2C" => ACC <= bank_hl_r;    -- LD A,HL_B
                         when x"0D" => ACC <= bank_ix_r;    -- LD A,IX_B
                         when x"1D" => ACC <= bank_iy_r;    -- LD A,IY_B
-                        when x"3E" => ACC <= bank_rst_r;   -- LD A,RST_B
+                        when x"EF" => ACC <= bank_rst_r;   -- LD A,IBR
                         -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 transfer
                         -- (MSX_T80_24bit化_実装手順_V2 section 9 "Phase 7").
                         -- full 24bit, source and F unchanged. The 16bit
@@ -1803,7 +1830,6 @@ begin
                         when x"1E" => bank_de_r <= bank_hl_r;   -- LD24 DE,HL
                         when x"35" => MSP <= unsigned(RegBusB); bank_msp_r <= bank_hl_r; -- LD24 MSP,HL
                         when x"36" => bank_hl_r <= bank_msp_r;  -- LD24 HL,MSP
-                        when x"9B" => IVR <= unsigned(RegBusB); bank_int_r <= bank_hl_r; -- LD24 IVR,HL
                         when x"9C" => bank_hl_r <= bank_int_r;  -- LD24 HL,IVR
                         when x"9E" => NVR <= unsigned(RegBusB); bank_nvr_r <= bank_hl_r; -- LD24 NVR,HL
                         when x"9F" => bank_hl_r <= bank_nvr_r;  -- LD24 HL,NVR
@@ -1882,6 +1908,15 @@ begin
                         end case;
                     end if;
 
+                    if ISet = "00" and mode24_r /= "00" and XY_State /= "00" and
+                       IsIndex24(IR) and IR(5) = '0' and MCycle = "0100" then
+                        case Index24Pair(IR) is
+                        when "00" => bank_bc_r <= DI_Reg;
+                        when "01" => bank_de_r <= DI_Reg;
+                        when others => bank_hl_r <= DI_Reg;
+                        end case;
+                    end if;
+
                 Read_To_Reg_r(3 downto 0) <= Set_BusA_To;
                 Read_To_Reg_r(4) <= Read_To_Reg;
                 if Read_To_Acc = '1' then
@@ -1918,6 +1953,12 @@ begin
                 if XYbit_undoc='1' then
                     DO <= ALU_Q;
                 end if;
+            end if;
+
+            mode24_r <= next_mode24;
+            -- Apply on the transition edge, including restored MODE.
+            if mode24_r /= "10" and next_mode24 = "10" and IStatus = "00" then
+                IStatus <= "01";
             end if;
 
         end if;
@@ -2089,7 +2130,7 @@ begin
                     when others => null;
                     end case;
                     case IR is
-                    when x"0E" | x"1E" | x"35" | x"9B" | x"9E" =>
+                    when x"0E" | x"1E" | x"35" | x"9E" =>
                         RegAddrB_r <= Alternate & "10";    -- src HL
                     when x"06" =>
                         RegAddrB_r <= Alternate & "00";    -- src BC
@@ -2593,7 +2634,7 @@ begin
                                 Pre_XY_F_M <= "0010";
                             end if;
                         elsif (MCycle = "0111" and XYF_Pending = '1') or
-                            (MCycle = "0110" and Mode = 1 and ISet /= "01") then
+                            (MCycle = "0110" and XYF_Pending = '1' and Mode = 1 and ISet /= "01") then
                             MCycle <= std_logic_vector(unsigned(Pre_XY_F_M) + 1);
                             XYF_Pending <= '0';
                         elsif (MCycle = MCycles) or

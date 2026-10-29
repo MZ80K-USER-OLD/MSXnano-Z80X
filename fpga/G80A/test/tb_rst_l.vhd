@@ -1,3 +1,5 @@
+-- Historical pre-V16.1 fixture: old RST.L codes and M0/M1 degrade.
+-- Replaced by run_v161_rst.ps1 -LongRST with independent physical banks.
 --
 -- RST.L self-checking testbench (next phase after Phase13, V10仕様書
 -- section12 "RST.L"; roadmap Phase12 "M2 control... RST.L").

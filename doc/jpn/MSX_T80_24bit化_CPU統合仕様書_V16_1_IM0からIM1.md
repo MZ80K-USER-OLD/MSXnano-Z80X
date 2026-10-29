@@ -1,0 +1,333 @@
+# MSXnano T80 24ビット拡張 CPU統合仕様書 V16.1（V15手直し版ベース）
+
+**整理日：2026-10-24**  
+**位置づけ：ユーザー手直し済みV15を基礎に、RST.Lの追加とJP.M2移設を反映。実装・試験報告は保持。**
+
+## 1. 目的・互換性
+
+T80ベースのZ80互換CPUに24ビットのプログラムカウンタ、データアドレス、汎用レジスタバンク、拡張スタックを追加する。M0でMSX/Z80互換を維持する。既存Z80のI/Oポートアドレス方式を全モードで維持し、eZ80固有のI/O拡張命令は互換対象から除外する。eZ80非I/O命令のコードをできる限り保護する。eZ80と同じ割り当てでも、命令の動作幅は本CPUのMODEに従う。
+
+この仕様はRTL実装完了や実機試験合格を意味しない。クロック数、全プレフィックス列、未定義コードの互換性は別途検証が必要。
+
+## 2. 動作モード
+
+| MODE | PC | データアドレス | 通常スタック | 説明 |
+|---|---|---|---|---|
+| M0 | PC16 | Z80互換16bit | SP16 | リセット時の互換モード |
+| M1 | PC16 | 24bit拡張可能 | SP16 | データアクセス拡張 |
+| M2 | PC24 | 24bit | MSP24 | 24bit実行モード |
+
+`ED 90 SET_M0`、`ED 91 SET_M1`、`ED 92 SET_M2`。旧`ED 70/71/72`は廃止。M0/M1からSET_M2でPC_Bを00hに設定し、M2からSET_M2ならPC_Bを保持する。MODE切替はFおよびYを変更しない。**M0/M1からM2への移行時にIM0が設定されていればIM1へ変更する。** IM1/IM2は維持する。
+
+## 3. レジスタ・リセット
+
+- `BC24={BC_B,BC}`、`DE24={DE_B,DE}`、`HL24={HL_B,HL}`、`IX24={IX_B,IX}`、`IY24={IY_B,IY}`。
+- `PC24={PC_B,PC}`。16bit PCとバンクの組み合わせで実装する。
+- `MSP24={MSP_B,MSP[15:0]}`。従来のSP16とは独立。
+- `IBR`（Interrupt Bank Register、8bit）はM2の割り込み・RST.L・SYSCALLで使用する。Z80互換RSTはIBRを参照しない。
+- RESETでMODE=M0、各バンクレジスタ/IBR=00h、MSP24=000000h。その他のリセット値は既存T80/Z80仕様に従う。
+- バンクレジスタの読み書きは付録AのV15割り当てに従う。フラグは変更しない。
+
+## 4. アドレス生成・メモリマップ
+
+- 24bit演算は`mod 2^24`。M0の`(IX/IY+d)`は16bitでwrap。M1/M2では符号付きdをIX24/IY24全体に加算し、バンクをまたぐ。
+- M2でZ80既存命令の16bit絶対メモリアドレスを使う場合、バンク00hを参照する。M1/M2の対応するレジスタ間接アクセスは24bitレジスタのバンクを使う。
+- **標準構成はMMUなし**。bank00は既存MSX互換64KBのスロット/BIOS/メモリマッパー経路、bank01以降は拡張メモリへのstraight-through mapping。全モードでI/OはZ80互換16bit空間。
+- MMU（論理→物理バンク変換・書込属性）は**オプション**。標準ビルドでの有効化は保証しない。
+- MSXnano-Z80X実装例（SDRAM 8MB）ではbank01～1Bが拡張メモリ、bank1C以降は未接続。これは実装例の容量制限であり、CPUの24bit論理空間の制限ではない。
+
+## 5. 16bit境界検出、TEST、WTOC
+
+- **Wは独立した追加フラグではなく、F.bit5（Z80のYビット）を利用**する。M1/M2の通常の16bit `INC/DEC BC,DE,HL,IX,IY`だけがW/Yを更新する。SP/MSPは対象外。M0では更新しない。
+- INC時に演算前値がFFFFh、DEC時に0000hならY=1、それ以外はY=0。対象命令の通常のFフラグはY以外保持する。その他の命令は本機能としてのYを更新しない（通常のZ80命令によるFの更新は既存命令仕様に従う）。
+- `TEST BC/DE/HL/IX/IY`は16bit値、`TEST24 BC/DE/HL/IX/IY`は24bit値を比較し、**Zだけ更新**、その他のFビットを保持する。SP/MSPはTEST対象外。
+- `WTOC`（ED FE）は`F.C ← F.bit5`を実行し、その他のFビットを保持する。Yの内容は保持される。
+
+## 6. 24bit演算
+
+- `ADD24 HL,BC/DE/HL/SP`＝ED 09/19/29/39、`SUB24 HL,BC/DE/HL/SP`＝ED F9/FB/FD/FF。
+- `INC24 HL`＝ED F1、`DEC24 HL`＝ED 2B。`CP24 HL,DE`＝ED 3DはV15命令表に存在するが、フラグ詳細は別途RTL仕様確認を要する。
+- **ADC24/SBC24は採用しない**。SUB24は入力Cを参照しない。
+- ADD24/SUB24/INC24/DEC24のフラグはS,Z,P/V,N,Cを更新し、H,X,Yを保持する。Cは24bitのcarry/borrow（INC24/DEC24は24bit境界越え）を示す。P/Vは24bit符号付きoverflow。Nは減算系で1、加算系で0。
+- M2で24bit演算のSPオペランドを指定した場合はMSP24を参照する。ただし通常の`INC SP/DEC SP/LD SP,HL`はSP16を操作する。
+- DD/FDでのHL→IX/IY置換は従来仕様にあるが、**V15表に明示的な個別コードがない派生形は確定コードとして扱わない**。
+
+## 7. 転送・実効アドレス
+
+実装進捗（V15第1段階）: 16bit indexed pair転送12種のRTLと専用GHDL試験を追加。
+M0のZ80互換動作、M1/M2の転送、WAIT・変位・境界条件を対象とする。
+検証用データと実測結果は[検証データフォルダ](../../verification_data/v15_index16/README.md)へ保存する。
+2026-10-24、[INDEX16.COM](../../hardware_test/Index16Test/README.md)のM1実機試験で
+`PASS=18 FAIL=00`（全24判定PASS）のユーザー報告あり。M2の実機確認や他のV15項目の実装完了を意味しない。
+
+- HL24をハブとしてBC24、DE24、IX24、IY24との転送を行う。MSP24との転送、24bit即値ロードは付録Aに従う。
+- 16bit indexed pair転送：`DD/FD 07/17/27 d`がBC/DE/HLへの読込、`DD/FD 0F/1F/2F d`が書込。eZ80と同一割り当て。
+- 24bit indexed pair転送：`DD/FD 08/10/18 d`がBC24/DE24/HL24への読込、`DD/FD 20/28/30 d`が書込。MSX独自拡張。
+
+実装進捗（V15第2段階）: 上記24bit indexed pair転送12種のRTLを追加。
+LOW/HIGH/BANK順の転送に16bit版の経路を再利用する。
+M0互換・M1/M2・WAIT・5アドレス条件の[検証データ](../../verification_data/v15_index24/README.md)と、
+[M1実機用INDEX24.COM](../../hardware_test/Index24Test/README.md)を追加。
+2026-10-24、実機で`PASS=18 FAIL=00`（全24判定PASS）のユーザー報告あり。
+M2の実機確認や他のV15項目の実装完了を意味しない。
+
+M2実機確認用として[I16M2.COM](../../hardware_test/Index16Test/README.md#m2実機用-i16m2com)と
+[I24M2.COM](../../hardware_test/Index24Test/README.md#m2実機用-i24m2com)を追加。
+各24判定のCOM実行シミュレーションと故障注入は期待どおり。
+2026-10-24、I16M2.COM・I24M2.COMとも実機で`PASS=18 FAIL=00`のユーザー報告あり。
+M2確認はDI・bank00コードでの各COMの範囲に限り、他のV15項目の実装完了を意味しない。
+測定はDI/M2、表示はM0で行い、MSP24・通常SPの保持も比較する。
+- `DD/FD ED 68 d LEA.L HL,(IX/IY+d)`、`DD/FD ED 69 d LEA.L DE,(IX/IY+d)`。符号付きdを加算した24bit実効アドレスをレジスタに格納し、メモリにはアクセスしない。F、IX/IY、SP/MSPは不変。PEA.Lは採用しない。
+- DD/FDプレフィックス無視規則とM0での命令長はT80デコーダの実装監査が必要。
+
+## 8. スタック
+
+- 通常のPUSH/POPはM2でもMSP24を使うが**転送幅は2byte**。通常のCALL/RETもM2ではMSP24を使いPC16の2byteだけを退避/復帰し、PC_Bを維持する。
+- `PUSH24/POP24 BC/DE/HL/IX/IY`は3byte転送でMSP24を使用する。アドレス境界を越えて連続アクセスする。
+- `CALL.L/RET.L`はM2でPC24を3byte保存/復元。`CALL.Mx/RET.M`はPC24とMODEの4byteを保存/復元する。
+- `EX (SP),HL/IX/IY`はM2でもMSP24上の2byteだけを交換し、バンクバイトは不変。
+
+## 9. 分岐・MODE間呼び出し
+
+- `JR.L`：ED 18（無条件）、ED 20/28/30/38（NZ/Z/NC/C）、ED A7/AF/B7/BF（PO/PE/P/M）。16bit符号付き相対変位。M2ではPC24に加算、M0/M1ではPC16でwrap。
+- `JP.L`：ED C3と条件付きED C2/CA/D2/DA/E2/EA/F2/FA。24bit即値`bl bh bn`を使用。
+- `CALL.L`：ED CDと条件付きED C4/CC/D4/DC/E4/EC/F4/FC。M2専用、3byte復帰アドレスをMSPへ保存。
+- `RET.L`：ED C9と条件付きED C0/C8/D0/D8/E0/E8/F0/F8。M2専用、3byte復帰アドレスをMSPから取得。
+- `JP.M0=ED93 al ah`、`JP.M1=ED94 al ah`、`JP.M2=ED9B al ah ab`。
+- `CALL.M0=ED96 al ah`、`CALL.M1=ED97 al ah`、`CALL.M2=ED98 al ah ab`、`RET.M=ED99`。呼び出し時のフレームはPC_L,PC_H,PC_B,MODEの4byte。復帰時にMODEとPC24を復元。
+
+## 10. 割り込み・RST・SYSCALL
+
+**V16.1変更点：M2でIM0を指定した場合、およびIM0のままM2へ移行した場合、IM設定をIM1へ変更する。**
+
+実装進捗: IM0→IM1変換と全4ミラーの動作をRTLへ反映し、
+ED 4Eを戻すためRETI.LをED F3へ移設した。
+通常RSTもM2ではPC_Bを維持するよう反映した。3バンクを分離した96条件、
+8ベクタずつ計768回で2byte退避・通常RET復帰、WAIT、MSP境界越え、
+F/IFF保持を確認した（[通常RST検証記録](../../verification_data/v161_rst/README.md)）。
+さらに新RST.Lコード・JP.M2のED 9Bへの移設・IBRのED 3A書込み/ED EF読出しを反映した。
+旧ED 9BのLD24 IVR,HL、旧RST.Lコード、旧ED 3E読出しは廃止した。
+M0/M1での新RST.Lは2byte NOPとし、通常RSTへのdegradeは行わない。
+IRQ/NMIのIBR統合とIM2テーブル読出しもRTLへ反映した。
+IM1はIBR:0038、NMIはIBR:0066、IM2は{IBR,I,vector8}からtarget16を読み、
+同じIBRへ分岐する。FFFFの次は同じIBRの0000へラップする。
+512条件の専用試験範囲は[IBR割込み検証記録](../../verification_data/v161_interrupt/README.md)を参照。
+SYSCALLもIM2のテーブル経路を共用して反映した。
+208条件の検証範囲は[SYSCALL検証記録](../../verification_data/v161_syscall/README.md)を参照。
+ペアバンクコード移設などは未反映。配置配線・実機再確認も未実施である。
+M2割込みを使う場合は、IBR内に4byteフレーム対応のハンドラを準備すること。
+旧P1314T.COMはIVRと旧RST.Lコードを使うため現RTLでは実行しない。
+移設と互換性は[新RST.L検証記録](../../verification_data/v161_rst_l/README.md)を参照。
+既存COMとの互換性と検証範囲は[IM0検証記録](../../verification_data/v161_im0/README.md)を参照。
+
+- Z80のEI遅延、HALT、IFF1/IFF2、RETI通知、RETNのIFF復元、NMI動作を基本とし、MODEは割り込みで自動変更しない。
+- M0/M1のIM0/IM1/IM2/NMIはZ80互換。M2ではIM1=`{IBR,0038h}`、NMI=`{IBR,0066h}`へ分岐。
+- **M2で`IM 0`を実行すると、IM0ではなくIM1を設定する。** 対象は`ED 46/4E/66/6E`の全ミラーコード。MODE、F/W、IFFは変更しない。
+- **M0/M1でIM0を設定した状態からM2へ移行する際は、IM設定自体をIM1へ変更する。** M2のIM1 IRQ分岐先は`{IBR,0038h}`。IRQの受付可否は従来どおりIFF1に従う。M2ではIM0の外部供給命令を実行しない。
+- このIM0→IM1変換は**M0/M1からM2へ入るすべての経路**に適用する。`SET_M2`だけでなく、`JP.M2`、`CALL.M2`、`RET.M`によるM2復帰、およびMODEを復元する命令でM0/M1からM2へ入る場合も同じとする。IM1/IM2は保持し、MODE切替に伴ってF/WやIFFを変更しない。すでにM2の場合の再指定・M2内の呼出し/復帰ではIM設定を強制変更しない。これはM2でIM0を残さないための予防措置であり、M0/M1のIM0互換動作を廃止するものではない。
+- **M2からM0/M1へ戻ってもIM1設定を維持する。** 以前のIM0設定への自動復元は行わない。IM0が必要なソフトウェアはM0/M1で明示的に`IM 0`を実行する。M2でIM2が選択されている場合はIM2を維持し、IM1へ強制変更しない。
+- M2のIM2テーブルアドレスは**`{IBR,I,vector8}`（×2しない、bit0をマスクしない）**。ここからtarget16を読み、`PC24={IBR,target16}`に分岐する。
+- **IM2とSYSCALLのテーブル読出しは、下位16bitでラップアラウンドする。** エントリ先頭が`IBR:FFFFh`なら、target16の下位バイトを`IBR:FFFFh`、上位バイトを**同じIBRの`0000h`**から読む。次のバンクへは進まず、IBRは変更しない。分岐先も`{IBR,target16}`とする。
+- M2のIRQ/NMI受理時はMSP24へPC24+MODEの4byteを保存。フレームの低位からの配置は`[MSP+0]=PC_L`、`+1=PC_H`、`+2=PC_B`、`+3=MODE`。復帰は**`RETI.L=ED F3`**または`RETN.L=ED 8C`で4byteを復元。RETI.Lは従来RETIの外部通知も行う。
+- **Z80互換RST**（C7/CF/D7/DF/E7/EF/F7/FF）はM0/M1でZ80互換。M2でも通常CALL/RETと同じくPC下位16bitをMSP24に2byte保存し、PC_Bを保持してPC下位16bitをRSTベクタ（0000h～0038h）に設定する。IBRは参照せず、通常RETで復帰する。PC_B≠00hでbank00のBIOSへ直接分岐するものではない。
+- **RST.L（M2専用）**：ED 85/8D/95/9D/A5/AD/B5/BDをそれぞれRST.L 00h/08h/10h/18h/20h/28h/30h/38hに割り当てる。PC24をMSP24に3byte保存し、`PC24={IBR,0000h/0008h/0010h/0018h/0020h/0028h/0030h/0038h}`へ分岐する。RET.Lで復帰する。MODE、IBR、IFF、Fは不変。命令長2byteで、EDに続くコードのbit5:3がRSTベクタ番号となる。
+- `JP.M2`は`ED 95 al ah ab`から**`ED 9B al ah ab`へ移設**。即値と動作は不変。
+- **`SYSCALL n=ED C6 n`（3byte、M2専用）**：テーブル`{IBR,I,n}`からtarget16を読み、`{IBR,target16}`へ分岐。MSP24に戻りPC24を3byte保存しRET.Lで復帰。MODE、IBR、IFFは変更しない。nは8bit値をそのまま使い、偶数への制限やbit0マスクをしない。
+- **M0/M1のSYSCALLコード**：従来の未定義ED命令との互換性を維持し、`ED C6`の2byteだけをNOPとして扱う。続くn相当のbyteは、次の通常命令のopcodeとして実行する（3byte NOPにはしない）。
+- IM3は現行実装対象外。ED 8E～8Fは予約（ED 8DはRST.Lに変更）。
+
+## 11. 未定義コード・命令時間・実装上の注意
+
+- 拡張領域で未定義・予約とされたコードはNOP扱いを基本とし、trapは発生させない。ただしM0のZ80未文書化ED別名やDD/FD無視規則を含む完全互換性は未検証。
+- 既存T80のデコーダ、状態機械、アドレス生成を拡張し、24bit算術には専用ALUを使う。実際のT-stateとバスサイクルはRTL検証事項。
+- 拡張メモリ要求とMSX既存クライアントが物理メモリを共用する場合、拡張要求を正しく優先すること。バンク境界のPUSH24/POP24、CALL/RET、割り込みフレームを重点試験する。
+
+## 12. 仕様の適用順位・未確定事項
+
+1. ユーザーが確定したMODE、W/Y、割り込み、24bit演算の最新方針。
+2. V16拡張命令一覧（RST.L反映版）のオペコード。
+3. V14 CPU仕様書の上記と矛盾しない動作規定。
+4. Zilog公式eZ80ユーザマニュアル（eZ80命令割り当ての一次資料）。ただしeZ80固有I/O命令は互換対象外。
+
+**留保事項**：本V16は静的な割り当て整理版。eZ80全DD/FDプレフィックス組み合わせ、M0の未文書化命令、全RTL実行試験、正確なT-state、CP24フラグ詳細、すべてのモードにおける拡張命令の不正実行時の挙動は完了判定していない。V15命令表の「仕様状態」が暫定・提案のものは、そのまま暫定扱いとする。
+
+## 付録A. V16拡張命令一覧（eZ80対応区分付き、全行）
+
+以下は別添CSVの全169行を転記したもの。
+
+| 分類 | オペコード | 命令 | 対象モード | 仕様状態 | eZ80対応区分 |
+|---|---|---|---|---|---|
+| モード | ED 90 | SET_M0 | 全モード | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| モード | ED 91 | SET_M1 | 全モード | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| モード | ED 92 | SET_M2 | 全モード | 確定 | eZ80独自I/O領域を転用 |
+| バンク | ED E3 | LD BC_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED E6 | LD A,BC_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED E7 | LD DE_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED E9 | LD A,DE_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED EB | LD HL_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED EE | LD A,HL_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 05 | LD IX_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 0D | LD A,IX_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 15 | LD IY_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 1D | LD A,IY_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 3A | LD IBR,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED EF | LD A,IBR | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| 16bit境界検出 | 03 | INC BC | M0/M1/M2 | 既存Z80命令＋W追加 | MSX独自拡張（eZ80同一割当なし） |
+| 16bit境界検出 | 0B | DEC BC | M0/M1/M2 | 既存Z80命令＋W追加 | MSX独自拡張（eZ80同一割当なし） |
+| 16bit境界検出 | 13 | INC DE | M0/M1/M2 | 既存Z80命令＋W追加 | MSX独自拡張（eZ80同一割当なし） |
+| 16bit境界検出 | 1B | DEC DE | M0/M1/M2 | 既存Z80命令＋W追加 | MSX独自拡張（eZ80同一割当なし） |
+| 16bit境界検出 | 23 | INC HL | M0/M1/M2 | 既存Z80命令＋W追加 | MSX独自拡張（eZ80同一割当なし） |
+| 16bit境界検出 | 2B | DEC HL | M0/M1/M2 | 既存Z80命令＋W追加 | MSX独自拡張（eZ80同一割当なし） |
+| 標準16bit演算 | 33 | INC SP | M0/M1/M2 | 既存Z80命令 | Z80/eZ80共通コード |
+| 標準16bit演算 | 3B | DEC SP | M0/M1/M2 | 既存Z80命令 | Z80/eZ80共通コード |
+| 16bit境界検出 | DD 23 | INC IX | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
+| 16bit境界検出 | DD 2B | DEC IX | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
+| 16bit境界検出 | FD 23 | INC IY | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
+| 16bit境界検出 | FD 2B | DEC IY | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
+| TEST | ED D3 | TEST BC | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED D6 | TEST DE | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED D9 | TEST HL | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DB | TEST IX | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DD | TEST IY | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DE | TEST24 BC | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DF | TEST24 DE | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED F5 | TEST24 HL | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED F6 | TEST24 IX | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED F7 | TEST24 IY | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| W | ED FE | WTOC | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED F1 | INC24 HL | M1/M2 | フラグ改訂・opcode既存案 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 2B | DEC24 HL | M1/M2 | フラグ改訂・opcode既存案 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 09 | ADD24 HL,BC | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
+| 24bit演算 | ED 19 | ADD24 HL,DE | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
+| 24bit演算 | ED 29 | ADD24 HL,HL | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
+| 24bit演算 | ED 39 | ADD24 HL,SP | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
+| 24bit演算 | ED 3D | CP24 HL,DE | M1/M2 | 既存V13案 | MSX独自拡張（eZ80同一割当なし） |
+| index16 | DD 07 d | LD BC,(IX+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | DD 17 d | LD DE,(IX+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | DD 27 d | LD HL,(IX+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | DD 0F d | LD (IX+d),BC | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | DD 1F d | LD (IX+d),DE | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | DD 2F d | LD (IX+d),HL | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index24 | DD 08 d | LD24 BC,(IX+d) | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | DD 10 d | LD24 DE,(IX+d) | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | DD 18 d | LD24 HL,(IX+d) | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | DD 20 d | LD24 (IX+d),BC | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | DD 28 d | LD24 (IX+d),DE | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | DD 30 d | LD24 (IX+d),HL | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| LEA | DD ED 68 d | LEA.L HL,(IX+d) | 全モード | V13確定 | MSX独自拡張（eZ80同一割当なし） |
+| LEA | DD ED 69 d | LEA.L DE,(IX+d) | 全モード | V13確定 | MSX独自拡張（eZ80同一割当なし） |
+| index16 | FD 07 d | LD BC,(IY+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | FD 17 d | LD DE,(IY+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | FD 27 d | LD HL,(IY+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | FD 0F d | LD (IY+d),BC | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | FD 1F d | LD (IY+d),DE | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index16 | FD 2F d | LD (IY+d),HL | M1/M2 | V13案／照合待ち | eZ80同一割当 |
+| index24 | FD 08 d | LD24 BC,(IY+d) | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | FD 10 d | LD24 DE,(IY+d) | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | FD 18 d | LD24 HL,(IY+d) | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | FD 20 d | LD24 (IY+d),BC | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | FD 28 d | LD24 (IY+d),DE | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| index24 | FD 30 d | LD24 (IY+d),HL | M1/M2 | V13暫定／M0はZ80動作 | MSX独自拡張（eZ80同一割当なし） |
+| LEA | FD ED 68 d | LEA.L HL,(IY+d) | 全モード | V13確定 | MSX独自拡張（eZ80同一割当なし） |
+| LEA | FD ED 69 d | LEA.L DE,(IY+d) | 全モード | V13確定 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 06 | LD24 HL,BC | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 0E | LD24 BC,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 16 | LD24 HL,DE | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 1E | LD24 DE,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 9E bl bh bn | LD24 MSP,imm24 | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 35 | LD24 MSP,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 36 | LD24 HL,MSP | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | DD ED 26 | LD24 HL,IX | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | DD ED 2E | LD24 IX,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | FD ED 26 | LD24 HL,IY | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | FD ED 2E | LD24 IY,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | ED C5 | PUSH24 BC | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | ED D5 | PUSH24 DE | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | ED E5 | PUSH24 HL | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | ED C1 | POP24 BC | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | ED D1 | POP24 DE | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | ED E1 | POP24 HL | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | DD ED E5 | PUSH24 IX | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | DD ED E1 | POP24 IX | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | FD ED E5 | PUSH24 IY | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | FD ED E1 | POP24 IY | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED 18 dl dh | JR.L | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED 20 dl dh | JR.L NZ | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED 28 dl dh | JR.L Z | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED 30 dl dh | JR.L NC | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED 38 dl dh | JR.L C | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED A7 dl dh | JR.L PO | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED AF dl dh | JR.L PE | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED B7 dl dh | JR.L P | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED BF dl dh | JR.L M | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED C3 bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED C2 bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED CA bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED D2 bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED DA bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED E2 bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED EA bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED F2 bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED FA bl bh bn | JP.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED CD bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED C4 bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED CC bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED D4 bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED DC bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED E4 bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED EC bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED F4 bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED FC bl bh bn | CALL.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED C9 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED C0 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED C8 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED D0 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED D8 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED E0 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED E8 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED F0 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| 制御分岐 | ED F8 | RET.L | M2 | V13記載／条件別 | MSX独自拡張（eZ80同一割当なし） |
+| モード分岐 | ED 93 al ah | JP.M0 | 仕様参照 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| モード分岐 | ED 94 al ah | JP.M1 | 仕様参照 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| モード分岐 | ED 9B al ah ab | JP.M2 | 仕様参照 | RST.L導入による移設確定 | MSX独自拡張（eZ80同一割当なし） |
+| モード分岐 | ED 96 al ah | CALL.M0 | 仕様参照 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| モード分岐 | ED 97 al ah | CALL.M1 | 仕様参照 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| モード分岐 | ED 98 al ah ab | CALL.M2 | 仕様参照 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| モード分岐 | ED 99 | RET.M | 仕様参照 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 割込 | ED F3 | RETI.L | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 割込 | ED 8C | RETN.L | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 割込 | ED C6 | SYSCALL n | M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| RST | C7 | RST 00h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| RST | CF | RST 08h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| RST | D7 | RST 10h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| RST | DF | RST 18h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| RST | E7 | RST 20h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| RST | EF | RST 28h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| RST | F7 | RST 30h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| RST | FF | RST 38h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
+| 24bit演算 | ED F9 | SUB24 HL,BC | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED FB | SUB24 HL,DE | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED FD | SUB24 HL,HL | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED FF | SUB24 HL,SP | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED 85 | RST.L 00h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED 8D | RST.L 08h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED 95 | RST.L 10h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED 9D | RST.L 18h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED A5 | RST.L 20h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED AD | RST.L 28h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED B5 | RST.L 30h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| RST.L | ED BD | RST.L 38h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
+| 予約 | ED 8E–8F | RESERVED | 全モード | 予約 | MSX独自拡張（eZ80同一割当なし） |
+| 割込モード | ED 46 | IM 0 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード（M2のIM0指定は動作変更） |
+| 割込モード | ED 4E | IM 0 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード（M2のIM0指定は動作変更） |
+| 割込モード | ED 66 | IM 0 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード（M2のIM0指定は動作変更） |
+| 割込モード | ED 6E | IM 0 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード（M2のIM0指定は動作変更） |
+| 割込モード | ED 56 | IM 1 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード |
+| 割込モード | ED 76 | IM 1 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード |
+| 割込モード | ED 5E | IM 2 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード |
+| 割込モード | ED 7E | IM 2 | M0/M1/M2 | Z80互換命令のM2動作変更 | Z80/eZ80共通コード |
+
+## 付録B. 出典
+
+- ユーザー手直し済みV15統合仕様書・拡張命令一覧CSV
+- Zilog eZ80ユーザマニュアル、既存ED256照合表（再検証は別途）

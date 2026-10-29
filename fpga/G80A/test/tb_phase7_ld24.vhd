@@ -1,3 +1,5 @@
+-- Historical fixture: ED9B IVR writer was removed by V16.1.
+-- Do not run on current RTL; see verification_data/v161_rst_l/README.md.
 --
 -- Phase7 self-checking testbench: LD24 register-transfer instructions
 -- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 9 "Phase 7";

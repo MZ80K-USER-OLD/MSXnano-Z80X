@@ -1,0 +1,23 @@
+{
+  "displayed_percent": 86,
+  "synthesis_complete": true,
+  "alu": 1630,
+  "logic_capacity": 20736,
+  "place_route_run": false,
+  "source_sha256": {
+    "fpga\\G80A\\t80_pack.vhd": "D743F4B12921C1991B5FB0D625AF0FB609E49FA66EFC61D665C5751CC425F646",
+    "fpga\\G80A\\t80.vhd": "862429B178AD158BA4565370929090DB422ECBAF07BC2BD155BE91AE32D2709E",
+    "fpga\\G80A\\t80_alu.vhd": "AB549FD5E5A4C0845C1CB6BED1C2926E9AF3785A9B2D7A3EA727B231DE41D3A1",
+    "fpga\\G80A\\t80_mcode.vhd": "F1C87D143202562C1D30241AE4DBFD1EBC4456FFEDF08BAB2DF2BBA99B6C3BD1",
+    "fpga\\G80A\\t80_reg.vhd": "D9C0A8B4F2945DD1E8A4E6A31B450358DA66E75EA4DE08825FB8DFFA8F6DCF1D"
+  },
+  "delta_logic": -49,
+  "lut": 15684,
+  "recorded_utc": "2026-10-24T11:57:12.9441838Z",
+  "hardware_tested": false,
+  "ram16": 63,
+  "report_sha256": "97D622D57C22ED21EE6CF5D7E4DD40D85B8095FFF47B6C3D646327D91A21FA05",
+  "logic": 17692,
+  "previous_logic": 17741,
+  "project": "MSXNanoTang20K_Z80X24"
+}

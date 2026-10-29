@@ -1,0 +1,15 @@
+t80_mcode.vhd:281:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:319:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:320:17:warning: declaration of "IR" hides port "IR" [-Whide]
+                IR : std_logic_vector(7 downto 0)
+                ^
+PASS through mode=0 cpu=0 : 4 scenarios (Syscall=True)
+PASS through mode=0 cpu=1 : 8 scenarios (Syscall=True)
+PASS through mode=1 cpu=0 : 12 scenarios (Syscall=True)
+PASS through mode=1 cpu=1 : 16 scenarios (Syscall=True)
+PASS through mode=2 cpu=0 : 112 scenarios (Syscall=True)
+PASS through mode=2 cpu=1 : 208 scenarios (Syscall=True)

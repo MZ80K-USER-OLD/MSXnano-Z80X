@@ -1,5 +1,12 @@
 # Z80X24 Phase7 LD24レジスタ転送 実機検証テスト (LD24TEST.COM)
 
+> **現行RTLでは実行禁止（旧命令の履歴用）**。
+> Test6の旧ED9B LD24 IVR,HLは廃止され、現在はJP.M2である。
+> 既存COMも再ビルドした同ソースも新RTLと非互換。
+> 通常の`make`は明示エラーで停止する。旧RTLでの履歴再現に限り
+> `make LEGACY_OPCODES=1`を使用する。
+> [V16.1移行記録](../../verification_data/v161_rst_l/README.md)を参照。
+
 MSXnano-Z80X ([msxnano-24bit](../..) リポジトリ、24bit CPU拡張 "Z80X24") の
 **Phase7「LD24系命令」**のうち、本増分で実装したレジスタ間24bit転送命令
 (HL24 hub / MSP24 / IVR24 / NVR24) を、実機(Tang Nano)またはMSXエミュレータ上の

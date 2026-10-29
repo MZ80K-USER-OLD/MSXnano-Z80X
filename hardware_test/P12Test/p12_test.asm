@@ -17,7 +17,7 @@
 ;              挙動の違いを通じた間接的な確認方法を用いる。)
 ;   Test2a/2b: JP.M1 addr16 (ED 94)。M0からM1へ切替わることを、Test1と逆方向
 ;              の書込み挙動(bank01hへ"bank対応"書込みされる)で確認する。
-;   Test3    : JP.M2 addr24 (ED 95)。物理bank02hへ実際にコードを書き込み
+;   Test3    : JP.M2 addr24 (ED 9B)。物理bank02hへ実際にコードを書き込み
 ;              (bank-aware (HL)書込みで1byteずつコピー)、そこへJP.M2で
 ;              ジャンプして実行させ、専用のマーカー変数が書き換わることで
 ;              「正しい物理bankへジャンプして実行した」ことを確認する
@@ -85,7 +85,7 @@ BDOS_TERM0	EQU	0		; BDOS function 0: プログラム終了、MSX-DOSへ復帰
 ; ED 35        LD24 MSP,HL                     (Phase7, MSP24の設定に使用)
 ; ED 93        JP.M0 addr16                    (Phase12, 本プログラムの対象)
 ; ED 94        JP.M1 addr16                    (Phase12, 本プログラムの対象)
-; ED 95        JP.M2 addr24                    (Phase12, 本プログラムの対象)
+; ED 9B        JP.M2 addr24                    (V16.1, 本プログラムの対象)
 ; ED 96        CALL.M0 addr16                  (Phase12, 本プログラムの対象)
 ; ED 97        CALL.M1 addr16                  (Phase12, 本プログラムの対象)
 ; ED 98        CALL.M2 addr24                  (Phase12, 本プログラムの対象)
@@ -211,7 +211,7 @@ T2_CONT:
 	LD	B,9			; SUB_FOR_JPM2の総バイト数 (下記参照)
 	CALL	COPY_TO_BANK2
 
-	DEFB	0EDH,095H		; JP.M2 02:TARGET_CODE  ** テスト対象 **
+	DEFB	0EDH,09BH		; JP.M2 02:TARGET_CODE (V16.1)
 	DEFW	TARGET_CODE
 	DEFB	02H
 	; (この直後には戻ってこない。bank02hへコピーしたSUB_FOR_JPM2が実行

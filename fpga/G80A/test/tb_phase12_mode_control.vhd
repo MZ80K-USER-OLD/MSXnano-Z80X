@@ -22,7 +22,7 @@
 -- Program layout (MSP24 is set to 01:E000h up front):
 --   0x0000: SET_M2; LD HL,0E000h; LD A,01h; LD HL_B,A; LD24 MSP,HL
 --     (MSP24 = 01:E000h).
---   0x000B: JP.M2 02:1000h (ED 95). Already in M2 (set at 0x0000), so
+--   0x000B: JP.M2 02:1000h (ED 9B). Already in M2 (set at 0x0000), so
 --     this is a trivial M2->M2 mode "switch" - but must still apply the
 --     fetched bank byte and jump unconditionally (unlike JP.L, which
 --     only applies the bank byte when ALREADY in M2 - JP.M2 always
@@ -128,7 +128,7 @@ architecture sim of tb_phase12_mode_control is
         16#0005# => x"3E", 16#0006# => x"01",
         16#0007# => x"ED", 16#0008# => x"24",
         16#0009# => x"ED", 16#000A# => x"35",
-        16#000B# => x"ED", 16#000C# => x"95", 16#000D# => x"00", 16#000E# => x"10", 16#000F# => x"02",
+        16#000B# => x"ED", 16#000C# => x"9B", 16#000D# => x"00", 16#000E# => x"10", 16#000F# => x"02",
         16#1000# => x"ED", 16#1001# => x"93", 16#1002# => x"00", 16#1003# => x"20",
         16#2000# => x"ED", 16#2001# => x"94", 16#2002# => x"00", 16#2003# => x"30",
         16#3000# => x"ED", 16#3001# => x"92",
@@ -228,7 +228,7 @@ begin
         -- testbench-side delta-cycle race avoidance as all previous
         -- Phase10/11 testbenches.
 
-        -- ---- Test1: JP.M2 addr24 (ED 95), already in M2, lands on
+        -- ---- Test1: JP.M2 addr24 (ED 9B), already in M2, lands on
         -- A=0x1000 with bank_pc=02h. ----
         wait until A = x"1000" and M1_n = '0';
         wait for 1 ns;

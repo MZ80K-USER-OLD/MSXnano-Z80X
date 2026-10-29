@@ -1,0 +1,22 @@
+PASS: write=0 legacy-delay=-1 address=659000 completion/retirement
+PASS: write=0 legacy-delay=0 address=659000 completion/retirement
+PASS: write=0 legacy-delay=1 address=659000 completion/retirement
+PASS: write=0 legacy-delay=2 address=659000 completion/retirement
+PASS: write=0 legacy-delay=3 address=659000 completion/retirement
+PASS: write=0 legacy-delay=4 address=659000 completion/retirement
+PASS: write=0 legacy-delay=5 address=659000 completion/retirement
+PASS: write=0 legacy-delay=6 address=659000 completion/retirement
+PASS: write=0 legacy-delay=7 address=659000 completion/retirement
+PASS: write=1 legacy-delay=-1 address=659000 completion/retirement
+PASS: write=1 legacy-delay=0 address=659000 completion/retirement
+PASS: write=1 legacy-delay=1 address=659000 completion/retirement
+PASS: write=1 legacy-delay=2 address=659000 completion/retirement
+PASS: write=1 legacy-delay=3 address=659000 completion/retirement
+PASS: write=1 legacy-delay=4 address=659000 completion/retirement
+PASS: write=1 legacy-delay=5 address=659000 completion/retirement
+PASS: write=1 legacy-delay=6 address=659000 completion/retirement
+PASS: write=1 legacy-delay=7 address=659000 completion/retirement
+PASS: internal M-cycle releases WAIT after three falling edges
+PASS: MREQ-held write is serviced after late WR
+PASS: 20 request timing regression cases (fixed RTL)
+D:\users\HeroineFactory\Documents\GIT\MSXNano-Z80X\msxnano-24bit\fpga\G80A\test\tb_cpu_sdram_request_timing.sv:169: $finish called at 13400000 (1ps)

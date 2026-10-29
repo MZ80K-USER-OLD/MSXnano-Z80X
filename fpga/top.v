@@ -1295,6 +1295,13 @@ reg update_addr_prev2;
 
 localparam [1:0] WS_IDLE = 2'd0, WS_ARMED = 2'd1, WS_WAITING_DONE = 2'd2;
 reg [1:0] wait_state;
+// v9: update_addr also starts internal (NoRead) M-cycles and interrupt
+// acknowledge cycles, whose bank can be a non-zero PC bank in M2 (e.g. the
+// JR/DJNZ displacement-add cycle) but which never assert MREQ. Memory
+// cycles assert MREQ/RD at the first CPU falling edge and WR at the second;
+// if MREQ is still inactive by the third, release WAIT instead of waiting
+// forever for a request that cannot arrive.
+reg [1:0] wait_armed_falls;
 
 wire cpu_sdram_bank_in_range = (mmu_physical_bank != 8'h00) && (mmu_physical_bank <= CPU_SDRAM_BANK_MAX);
 
@@ -1327,6 +1334,7 @@ always @ (posedge clk_54m) begin
     if (bus_reset_n == 0) begin
         cpu_sdram_wait_n <= 1;
         wait_state <= WS_IDLE;
+        wait_armed_falls <= 2'd0;
         update_addr_prev <= 0;
         update_addr_prev2 <= 0;
         cpu_sdram_addr_r <= 24'd0;
@@ -1349,10 +1357,14 @@ always @ (posedge clk_54m) begin
                     // the extended SD-RAM window - assert WAIT now, well
                     // ahead of this M-cycle's own bus signals.
                     cpu_sdram_wait_n <= 0;
+                    wait_armed_falls <= 2'd0;
                     wait_state <= WS_ARMED;
                 end
             end
             WS_ARMED: begin
+                if (clk_falling_3m6_54 == 1 && wait_armed_falls != 2'd3)
+                    wait_armed_falls <= wait_armed_falls + 2'd1;
+
                 if (cpu_sdram_active == 1) begin
                     // The real bus request for THIS M-cycle has now
                     // genuinely asserted (extended_mreq_n/bus_rd_n/
@@ -1363,6 +1375,10 @@ always @ (posedge clk_54m) begin
                     cpu_sdram_addr_r <= CPU_SDRAM_BASE + { mmu_physical_bank, extended_addr[15:0] };
                     cpu_sdram_write_r <= ~bus_wr_n;
                     wait_state <= WS_WAITING_DONE;
+                end
+                else if (wait_armed_falls == 2'd3 && extended_mreq_n == 1) begin
+                    cpu_sdram_wait_n <= 1;
+                    wait_state <= WS_IDLE;
                 end
             end
             WS_WAITING_DONE: begin

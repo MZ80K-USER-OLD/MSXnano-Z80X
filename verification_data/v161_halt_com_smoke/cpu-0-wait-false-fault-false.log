@@ -1,0 +1,28 @@
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+test\tb_ld24mi_com.vhd:299:33:@38070ns:(report note): V16.1 HALT / VDP IM2: M0 M1 M2
+test\tb_ld24mi_com.vhd:299:33:@69370ns:(report note): HALT arming M00
+test\tb_ld24mi_com.vhd:299:33:@669770ns:(report note): HALT M00: PASS
+test\tb_ld24mi_com.vhd:299:33:@702250ns:(report note): HALT arming M01
+test\tb_ld24mi_com.vhd:299:33:@1302830ns:(report note): HALT M01: PASS
+test\tb_ld24mi_com.vhd:299:33:@1335310ns:(report note): HALT arming M02
+test\tb_ld24mi_com.vhd:299:33:@1943950ns:(report note): HALT M02: PASS
+test\tb_ld24mi_com.vhd:299:33:@1990130ns:(report note): PASS=03 FAIL=00
+test\tb_ld24mi_com.vhd:360:33:@1993550ns:(report note): HALT M0 IRQ=2 return=2 frame-bytes=4 vector-bytes=0
+test\tb_ld24mi_com.vhd:360:33:@1993550ns:(report note): HALT M1 IRQ=2 return=2 frame-bytes=4 vector-bytes=0
+test\tb_ld24mi_com.vhd:360:33:@1993550ns:(report note): HALT M2 IRQ=2 return=2 frame-bytes=8 vector-bytes=4
+test\tb_ld24mi_com.vhd:367:29:@1993550ns:(assertion failure): Missing HALT IM2 vector coverage
+ghdl:error: assertion failed
+  instance: /tb_ld24mi_com/P5
+ghdl:error: simulation failed

@@ -1,0 +1,26 @@
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+test\tb_ld24mi_com.vhd:306:33:@36470ns:(report note): V16.1 VDP IRQ / IBR / RETI.L
+test\tb_ld24mi_com.vhd:306:33:@706390ns:(report note): No-handler timeout: PASS (VRAM TM1OK)
+test\tb_ld24mi_com.vhd:306:33:@735790ns:(report note): Arming case 00
+test\tb_ld24mi_com.vhd:306:33:@3142850ns:(report note): Case 00: PASS
+test\tb_ld24mi_com.vhd:306:33:@3173190ns:(report note): Arming case 01
+test\tb_ld24mi_com.vhd:306:33:@5642710ns:(report note): Case 01: PASS
+test\tb_ld24mi_com.vhd:306:33:@5673050ns:(report note): Arming case 02
+test\tb_ld24mi_com.vhd:306:33:@8142170ns:(report note): Case 02: PASS
+test\tb_ld24mi_com.vhd:306:33:@8172510ns:(report note): Arming case 03
+test\tb_ld24mi_com.vhd:306:33:@10641690ns:(report note): Case 03: PASS
+test\tb_ld24mi_com.vhd:306:33:@10686450ns:(report note): PASS=04 FAIL=00
+test\tb_ld24mi_com.vhd:507:9:@10689690ns:(report note): COM: output, M0 BDOS, measurement DI and interrupt checks passed
+simulation stopped @10689690ns

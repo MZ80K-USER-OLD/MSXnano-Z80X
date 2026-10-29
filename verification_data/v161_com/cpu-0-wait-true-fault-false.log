@@ -1,0 +1,43 @@
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+test\tb_ld24mi_com.vhd:306:33:@65670ns:(report note): V16.1 RST.L / IBR / SYSCALL (DI)
+test\tb_ld24mi_com.vhd:306:33:@195370ns:(report note): Case 00: PASS
+test\tb_ld24mi_com.vhd:306:33:@327770ns:(report note): Case 01: PASS
+test\tb_ld24mi_com.vhd:306:33:@459070ns:(report note): Case 02: PASS
+test\tb_ld24mi_com.vhd:306:33:@595170ns:(report note): Case 03: PASS
+test\tb_ld24mi_com.vhd:306:33:@726470ns:(report note): Case 04: PASS
+test\tb_ld24mi_com.vhd:306:33:@858770ns:(report note): Case 05: PASS
+test\tb_ld24mi_com.vhd:306:33:@993870ns:(report note): Case 06: PASS
+test\tb_ld24mi_com.vhd:306:33:@1126170ns:(report note): Case 07: PASS
+test\tb_ld24mi_com.vhd:306:33:@1257570ns:(report note): Case 08: PASS
+test\tb_ld24mi_com.vhd:306:33:@1393670ns:(report note): Case 09: PASS
+test\tb_ld24mi_com.vhd:306:33:@1529070ns:(report note): Case 0A: PASS
+test\tb_ld24mi_com.vhd:306:33:@1665270ns:(report note): Case 0B: PASS
+test\tb_ld24mi_com.vhd:306:33:@1796770ns:(report note): Case 0C: PASS
+test\tb_ld24mi_com.vhd:306:33:@1932970ns:(report note): Case 0D: PASS
+test\tb_ld24mi_com.vhd:306:33:@2068170ns:(report note): Case 0E: PASS
+test\tb_ld24mi_com.vhd:306:33:@2204370ns:(report note): Case 0F: PASS
+test\tb_ld24mi_com.vhd:306:33:@2330870ns:(report note): Case 10: PASS
+test\tb_ld24mi_com.vhd:306:33:@2458370ns:(report note): Case 11: PASS
+test\tb_ld24mi_com.vhd:306:33:@2588670ns:(report note): Case 12: PASS
+test\tb_ld24mi_com.vhd:306:33:@2716170ns:(report note): Case 13: PASS
+test\tb_ld24mi_com.vhd:306:33:@2846570ns:(report note): Case 14: PASS
+test\tb_ld24mi_com.vhd:306:33:@2974170ns:(report note): Case 15: PASS
+test\tb_ld24mi_com.vhd:306:33:@3104570ns:(report note): Case 16: PASS
+test\tb_ld24mi_com.vhd:306:33:@3232070ns:(report note): Case 17: PASS
+test\tb_ld24mi_com.vhd:306:33:@3333470ns:(report note): Case 18: PASS
+test\tb_ld24mi_com.vhd:306:33:@3434770ns:(report note): Case 19: PASS
+test\tb_ld24mi_com.vhd:306:33:@3513770ns:(report note): PASS=1A FAIL=00
+test\tb_ld24mi_com.vhd:507:9:@3518270ns:(report note): COM: output, M0 BDOS, measurement DI and interrupt checks passed
+simulation stopped @3518270ns

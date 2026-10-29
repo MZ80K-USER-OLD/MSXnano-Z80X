@@ -22,7 +22,7 @@ try {
     # Compile the actual top.v block, not a manually maintained copy.
     $header = @'
 module cpu_request_frontend (
-    input clk_54m, bus_reset_n, update_addr,
+    input clk_54m, bus_reset_n, update_addr, clk_falling_3m6_54,
     input [7:0] mmu_physical_bank,
     input [23:0] extended_addr,
     input extended_mreq_n, bus_rd_n, bus_wr_n, bus_rfsh_n,

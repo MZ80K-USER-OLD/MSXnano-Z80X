@@ -1,0 +1,567 @@
+; IBR IRQ/RETI.L test: code bank01, IBR bank02, no nested stack use.
+IFDEF SIMULATION
+IRQ_WAIT_TICKS EQU 01000H
+ELSE
+IRQ_WAIT_TICKS EQU 0FFFFH
+ENDIF
+TIMEOUT_PROBE_TICKS EQU 00100H
+    ORG 0100H
+START:
+    DI
+    DEFB 0EDH,090H
+    CALL RESET_BANKS
+    LD A,I
+    LD (SAVED_I),A
+    DEFB 0EDH,0EFH
+    LD (SAVED_IBR),A
+    DEFB 0EDH,036H
+    LD (SAVED_MSP),HL
+    DEFB 0EDH,02CH
+    LD (SAVED_MSP+2),A
+    LD A,(0F3E0H)
+    LD (SAVED_R1),A
+    LD A,(0F3E6H)
+    LD (SAVED_R7),A
+    CALL RESET_BANKS
+    EI
+    LD DE,BANNER
+    CALL PRINT
+    LD DE,TIMEOUT_LABEL
+    CALL PRINT
+    CALL TIMEOUT_PREFLIGHT
+    EI
+    LD DE,TIMEOUT_PASS
+    CALL PRINT
+    JR NEXT_CASE
+NEXT_CASE:
+    LD DE,ARMED
+    CALL PRINT
+    LD A,(CASE_ID)
+    CALL HEX
+    LD DE,CRLF
+    CALL PRINT
+    DI
+    LD (EXPECTED+8),SP
+    LD HL,ACTUAL
+    LD B,20
+    XOR A
+CLEAR:
+    LD (HL),A
+    INC HL
+    DJNZ CLEAR
+    LD A,0E0H
+    LD (EXPECTED+5),A
+    LD A,0DFH
+    LD (EXPECTED+15),A
+    LD A,2
+    LD (EXPECTED+16),A
+    LD A,(CASE_ID)
+    AND 1
+    JR Z,STACK_READY
+    XOR A
+    LD (EXPECTED+5),A
+    DEC A
+    LD (EXPECTED+15),A
+    LD A,1
+    LD (EXPECTED+16),A
+STACK_READY:
+    DEFB 0EDH,091H
+    LD A,1
+    DEFB 0EDH,024H
+    LD HL,08000H
+    LD DE,CODE
+    LD C,CODE_END-CODE
+    CALL COPY_BYTES
+    LD A,2
+    DEFB 0EDH,024H
+    LD HL,00038H
+    LD DE,VECTOR
+    LD C,5
+    CALL COPY_BYTES
+    LD HL,08181H
+    LD DE,VECTOR_TRAMP
+    LD C,VECTOR_TRAMP_END-VECTOR_TRAMP
+    CALL COPY_BYTES
+    LD HL,08190H
+    LD DE,HANDLER
+    LD C,HANDLER_END-HANDLER
+    CALL COPY_BYTES
+    ; Every vector is safe; this board supplies FF on interrupt acknowledge.
+    LD HL,0FF00H
+    LD B,0
+FILL_TABLE:
+    LD (HL),081H
+    INC HL
+    DJNZ FILL_TABLE
+    LD (HL),081H
+    LD HL,(EXPECTED+4)
+    LD A,2
+    DEFB 0EDH,035H
+    DEFB 0EDH,03AH
+    DEFB 0EDH,090H
+    CALL RESET_BANKS
+    LD A,0FFH
+    LD I,A
+    IM 1
+    LD A,(CASE_ID)
+    CP 2
+    JR C,IM_READY
+    IM 2
+IM_READY:
+    ; Select status register 0 explicitly, independent of the DOS caller.
+    XOR A
+    OUT (099H),A
+    LD A,08FH
+    OUT (099H),A
+    IN A,(099H)
+    XOR A
+    OUT (099H),A
+    LD A,040H
+    OUT (099H),A
+    LD A,' '
+    LD B,10
+CLEAR_VRAM_MARKERS:
+    OUT (098H),A
+    DJNZ CLEAR_VRAM_MARKERS
+    XOR A
+    OUT (099H),A
+    LD A,040H
+    OUT (099H),A
+    LD A,'A'
+    OUT (098H),A
+    LD A,(SAVED_R1)
+    OR 020H
+    OUT (099H),A
+    LD A,081H
+    OUT (099H),A
+    XOR A
+    OUT (099H),A
+    LD A,08FH
+    OUT (099H),A
+    DEFB 0EDH,09BH,000H,080H,001H
+RETURN_M0:
+    DI
+    LD A,'M'
+    OUT (098H),A
+    DEFB 0EDH,036H
+    LD (ACTUAL+4),HL
+    DEFB 0EDH,02CH
+    LD (ACTUAL+6),A
+    DEFB 0EDH,0EFH
+    LD (ACTUAL+7),A
+    LD (ACTUAL+8),SP
+    IM 1
+    LD A,(SAVED_I)
+    LD I,A
+    LD A,(SAVED_R1)
+    OUT (099H),A
+    LD A,081H
+    OUT (099H),A
+    LD A,(SAVED_R7)
+    OUT (099H),A
+    LD A,087H
+    OUT (099H),A
+    XOR A
+    OUT (099H),A
+    LD A,08FH
+    OUT (099H),A
+    IN A,(099H)
+    CALL RESET_BANKS
+    EI
+    ; The final frame must point into the second interrupt wait loop.
+    LD A,(ACTUAL+10)
+    LD (EXPECTED+10),A
+    CP SECOND_WAIT-CODE
+    JR C,PC_CHECK_DONE
+    CP SECOND_END-CODE+1
+    JR NC,PC_CHECK_DONE
+    LD A,1
+    LD (ACTUAL+18),A
+PC_CHECK_DONE:
+    LD DE,CASE_TEXT
+    CALL PRINT
+    LD A,(CASE_ID)
+    CALL HEX
+    LD HL,ACTUAL
+    LD DE,EXPECTED
+    LD B,20
+COMPARE:
+    LD A,(DE)
+    CP (HL)
+    JR NZ,FAILED
+    INC HL
+    INC DE
+    DJNZ COMPARE
+    LD HL,PASS_COUNT
+    INC (HL)
+    LD DE,PASS_TEXT
+    CALL PRINT
+    JR ADVANCE
+FAILED:
+    LD A,(HL)
+    LD (BAD_GOT),A
+    LD A,(DE)
+    LD (BAD_WANT),A
+    LD A,20
+    SUB B
+    LD (BAD_OFFSET),A
+    LD HL,FAIL_COUNT
+    INC (HL)
+    LD DE,FAIL_TEXT
+    CALL PRINT
+    LD A,(BAD_OFFSET)
+    CALL HEX
+    LD DE,GOT_TEXT
+    CALL PRINT
+    LD A,(BAD_GOT)
+    CALL HEX
+    LD DE,WANT_TEXT
+    CALL PRINT
+    LD A,(BAD_WANT)
+    CALL HEX
+    LD DE,CRLF
+    CALL PRINT
+ADVANCE:
+    LD A,(CASE_ID)
+    INC A
+    LD (CASE_ID),A
+    CP 4
+    JP C,NEXT_CASE
+    DI
+    LD A,(SAVED_MSP+2)
+    DEFB 0EDH,024H
+    LD HL,(SAVED_MSP)
+    DEFB 0EDH,035H
+    LD A,(SAVED_IBR)
+    DEFB 0EDH,03AH
+    CALL RESET_BANKS
+    EI
+    LD DE,TOTAL
+    CALL PRINT
+    LD A,(PASS_COUNT)
+    CALL HEX
+    LD DE,TOTAL_FAIL
+    CALL PRINT
+    LD A,(FAIL_COUNT)
+    CALL HEX
+    LD DE,CRLF
+    CALL PRINT
+    LD C,0
+    CALL 5
+    RET
+COPY_BYTES:
+    LD A,(DE)
+    LD (HL),A
+    INC DE
+    INC HL
+    DEC C
+    JR NZ,COPY_BYTES
+    RET
+TIMEOUT_PREFLIGHT:
+    DI
+    XOR A
+    OUT (099H),A
+    LD A,08FH
+    OUT (099H),A
+    IN A,(099H)
+    LD A,(SAVED_R1)
+    AND 0DFH
+    OUT (099H),A
+    LD A,081H
+    OUT (099H),A
+    XOR A
+    OUT (099H),A
+    LD A,040H
+    OUT (099H),A
+    LD A,'T'
+    OUT (098H),A
+    DEFB 0EDH,091H
+    LD A,1
+    DEFB 0EDH,024H
+    LD HL,08000H
+    LD DE,TIMEOUT_CODE
+    LD C,TIMEOUT_CODE_END-TIMEOUT_CODE
+    CALL COPY_BYTES
+    DEFB 0EDH,090H
+    CALL RESET_BANKS
+    DEFB 0EDH,09BH,000H,080H,001H
+TIMEOUT_RETURN:
+    DI
+    LD A,(SAVED_R1)
+    OUT (099H),A
+    LD A,081H
+    OUT (099H),A
+    XOR A
+    OUT (099H),A
+    LD A,08FH
+    OUT (099H),A
+    IN A,(099H)
+    CALL RESET_BANKS
+    RET
+RESET_BANKS:
+    XOR A
+    DEFB 0EDH,004H,0EDH,014H,0EDH,024H,0EDH,005H,0EDH,015H
+    RET
+PRINT:
+    LD C,9
+    CALL 5
+    DI
+    RET
+HEX:
+    PUSH AF
+    RRCA
+    RRCA
+    RRCA
+    RRCA
+    CALL NIBBLE
+    POP AF
+NIBBLE:
+    AND 0FH
+    ADD A,'0'
+    CP '9'+1
+    JR C,EMIT
+    ADD A,7
+EMIT:
+    LD E,A
+    LD C,2
+    CALL 5
+    DI
+    RET
+TIMEOUT_CODE:
+    LD A,'M'
+    OUT (098H),A
+    LD DE,TIMEOUT_PROBE_TICKS
+    LD A,'1'
+    OUT (098H),A
+    DEC DE
+    LD A,'a'
+    OUT (098H),A
+    LD A,D
+    OR E
+    LD A,'b'
+    OUT (098H),A
+    JR Z,TIMEOUT_DONE
+    LD A,'c'
+    OUT (098H),A
+TIMEOUT_WAIT:
+    DEC DE
+    LD A,D
+    OR E
+    JR Z,TIMEOUT_DONE
+    LD A,D
+    OR A
+    JR NZ,TIMEOUT_WAIT
+    LD A,E
+    CP 0C0H
+    JR Z,TIMEOUT_MARK_2
+    CP 080H
+    JR Z,TIMEOUT_MARK_3
+    CP 040H
+    JR Z,TIMEOUT_MARK_4
+    CP 001H
+    JR Z,TIMEOUT_MARK_5
+    JR TIMEOUT_WAIT
+TIMEOUT_MARK_2:
+    LD A,'2'
+    OUT (098H),A
+    JR TIMEOUT_WAIT
+TIMEOUT_MARK_3:
+    LD A,'3'
+    OUT (098H),A
+    JR TIMEOUT_WAIT
+TIMEOUT_MARK_4:
+    LD A,'4'
+    OUT (098H),A
+    JR TIMEOUT_WAIT
+TIMEOUT_MARK_5:
+    LD A,'5'
+    OUT (098H),A
+TIMEOUT_DONE:
+    LD A,'O'
+    OUT (098H),A
+    LD A,'K'
+    OUT (098H),A
+    JR TIMEOUT_RETURN_M0
+TIMEOUT_RETURN_M0:
+    DI
+    DEFB 0EDH,093H
+    DEFW TIMEOUT_RETURN
+TIMEOUT_CODE_END:
+CODE:
+    LD A,'B'
+    OUT (098H),A
+    LD B,1
+    LD DE,IRQ_WAIT_TICKS
+    LD A,'C'
+    EI
+    OUT (098H),A
+FIRST_WAIT:
+    LD A,(ACTUAL)
+    OR A
+    JR NZ,FIRST_DONE
+    DEC DE
+    LD A,D
+    OR E
+    JR NZ,FIRST_WAIT
+    DJNZ FIRST_WAIT
+    LD A,1
+    LD (ACTUAL+17),A
+    LD A,'1'
+    OUT (098H),A
+FIRST_DONE:
+    LD A,I
+    PUSH AF
+    POP HL
+    LD A,L
+    AND 4
+    LD (ACTUAL+2),A
+    ; Leave IFF untouched for long enough to span multiple VDP frames.
+    LD DE,IRQ_WAIT_TICKS
+HOLD:
+    DEC DE
+    LD A,D
+    OR E
+    JR NZ,HOLD
+    LD A,(ACTUAL)
+    LD (ACTUAL+1),A
+    OR A
+    JR Z,FIRST_IRQ_TIMEOUT
+    LD A,'D'
+    OUT (098H),A
+    JR SECOND_STAGE
+FIRST_IRQ_TIMEOUT:
+    LD A,'2'
+    OUT (098H),A
+    LD A,'!'
+    OUT (098H),A
+    IN A,(099H)
+    AND 080H
+    LD A,'N'
+    JR Z,FIRST_IRQ_STATUS
+    LD A,'P'
+FIRST_IRQ_STATUS:
+    OUT (098H),A
+    LD A,I
+    PUSH AF
+    POP HL
+    LD A,L
+    AND 4
+    LD A,'D'
+    JR Z,FIRST_IFF_STATUS
+    LD A,'E'
+FIRST_IFF_STATUS:
+    OUT (098H),A
+SECOND_STAGE:
+    LD B,1
+    LD DE,IRQ_WAIT_TICKS
+    EI
+SECOND_WAIT:
+    LD A,(ACTUAL)
+    CP 2
+    JR NC,SECOND_DONE
+    DEC DE
+    LD A,D
+    OR E
+    JR NZ,SECOND_WAIT
+    DJNZ SECOND_WAIT
+SECOND_END:
+    LD A,1
+    LD (ACTUAL+17),A
+    LD A,'!'
+    OUT (098H),A
+    IN A,(099H)
+    AND 080H
+    LD A,'N'
+    JR Z,SECOND_IRQ_STATUS
+    LD A,'P'
+SECOND_IRQ_STATUS:
+    OUT (098H),A
+    LD A,I
+    PUSH AF
+    POP HL
+    LD A,L
+    AND 4
+    LD A,'D'
+    JR Z,SECOND_IFF_STATUS
+    LD A,'E'
+SECOND_IFF_STATUS:
+    OUT (098H),A
+SECOND_DONE:
+    LD A,I
+    PUSH AF
+    POP HL
+    LD A,L
+    AND 4
+    LD (ACTUAL+3),A
+    DI
+    DEFB 0EDH,093H
+    DEFW RETURN_M0
+CODE_END:
+VECTOR:
+    DEFB 0EDH,0C3H,081H,081H,002H
+VECTOR_TRAMP:
+    EX AF,AF'
+    LD A,'V'
+    OUT (098H),A
+    EX AF,AF'
+    DEFB 0EDH,0C3H,090H,081H,002H
+VECTOR_TRAMP_END:
+HANDLER:
+    ; The alternate AF holds the interrupted AF until RETI.L.
+    EX AF,AF'
+    LD A,05AH
+    LD (ACTUAL+19),A
+    LD A,'H'
+    OUT (098H),A
+    EXX
+    DEFB 0EDH,036H
+    LD (ACTUAL+14),HL
+    DEFB 0EDH,02CH
+    LD (ACTUAL+16),A
+    LD DE,ACTUAL+10
+    LD B,4
+HANDLER_COPY:
+    LD A,(HL)
+    LD (DE),A
+    INC HL
+    INC DE
+    DJNZ HANDLER_COPY
+    XOR A
+    DEFB 0EDH,024H
+    IN A,(099H)
+    LD A,(ACTUAL)
+    INC A
+    LD (ACTUAL),A
+    EXX
+    EX AF,AF'
+    DEFB 0EDH,0F3H
+HANDLER_END:
+BANNER: DEFB "V16.1 VDP IRQ / IBR / RETI.L",13,10,"$"
+TIMEOUT_LABEL: DEFB "No-handler timeout: ", "$"
+TIMEOUT_PASS: DEFB "PASS (VRAM TM1OK)",13,10,"$"
+TIMEOUT_FAIL: DEFB "FAIL (timeout path not reached)",13,10,"$"
+ARMED: DEFB "Arming case $"
+CASE_TEXT: DEFB "Case $"
+PASS_TEXT: DEFB ": PASS",13,10,"$"
+FAIL_TEXT: DEFB ": FAIL offset=$"
+GOT_TEXT: DEFB " got=$"
+WANT_TEXT: DEFB " want=$"
+TOTAL: DEFB "PASS=$"
+TOTAL_FAIL: DEFB " FAIL=$"
+CRLF: DEFB 13,10,"$"
+EXPECTED:
+    DEFB 2,1,0,0,0,0E0H,2,2
+    DEFW 0
+    DEFB 0,080H,1,2,0FCH,0DFH,2,0,1,05AH
+ACTUAL: DEFS 20
+SAVED_I: DEFB 0
+SAVED_IBR: DEFB 0
+SAVED_MSP: DEFS 3
+SAVED_R1: DEFB 0
+SAVED_R7: DEFB 0
+CASE_ID: DEFB 0
+PASS_COUNT: DEFB 0
+FAIL_COUNT: DEFB 0
+BAD_OFFSET: DEFB 0
+BAD_GOT: DEFB 0
+BAD_WANT: DEFB 0

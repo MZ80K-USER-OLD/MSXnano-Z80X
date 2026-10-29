@@ -1,0 +1,43 @@
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+test\tb_ld24mi_com.vhd:306:33:@44590ns:(report note): V16.1 RST.L / IBR / SYSCALL (DI)
+test\tb_ld24mi_com.vhd:306:33:@190490ns:(report note): Case 00: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@338030ns:(report note): Case 01: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@487550ns:(report note): Case 02: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@635110ns:(report note): Case 03: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@779230ns:(report note): Case 04: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@929470ns:(report note): Case 05: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@1076310ns:(report note): Case 06: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@1223850ns:(report note): Case 07: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@1370670ns:(report note): Case 08: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@1518210ns:(report note): Case 09: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@1667810ns:(report note): Case 0A: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@1815450ns:(report note): Case 0B: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@1959670ns:(report note): Case 0C: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@2110010ns:(report note): Case 0D: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@2256930ns:(report note): Case 0E: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@2404570ns:(report note): Case 0F: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@2547470ns:(report note): Case 10: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@2691130ns:(report note): Case 11: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@2834070ns:(report note): Case 12: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@2977710ns:(report note): Case 13: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@3123410ns:(report note): Case 14: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@3267150ns:(report note): Case 15: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@3410090ns:(report note): Case 16: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@3553750ns:(report note): Case 17: FAIL offset=00 got=A5 want=5A
+test\tb_ld24mi_com.vhd:306:33:@3626570ns:(report note): Case 18: PASS
+test\tb_ld24mi_com.vhd:306:33:@3696910ns:(report note): Case 19: PASS
+test\tb_ld24mi_com.vhd:306:33:@3749650ns:(report note): PASS=02 FAIL=18
+test\tb_ld24mi_com.vhd:507:9:@3752810ns:(report note): COM: output, M0 BDOS, measurement DI and interrupt checks passed
+simulation stopped @3752810ns

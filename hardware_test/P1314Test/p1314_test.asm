@@ -148,7 +148,7 @@ VDP_PORT	EQU	099H		; VDPコントロールポート(直接OUT用。診断
 ; ED E7        RST.L 20H                       (Phase14, 本プログラムの対象)
 ; ED FF        RST.L 38H                       (Phase14, 本プログラムの対象)
 ; ED C9        RET.L                           (Phase11, RST.L M2の復帰先)
-; ED 4E        RETI.L                          (Phase13, 本プログラムの対象)
+; ED F3        RETI.L                          (V16.1コード、本プログラムの対象)
 ; ED 8C        RETN.L                          (Phase13, 本プログラムの対象)
 ; ED 9B        LD24 IVR,HL                     (Phase7, IVR24の設定に使用)
 ;------------------------------------------------------------------------------
@@ -586,7 +586,7 @@ IVR_HANDLER:
 	OUT	(VDP_PORT),A
 
 	EX	AF,AF'			; AFを復元
-	DEFB	0EDH,04EH		; RETI.L
+	DEFB	0EDH,0F3H		; RETI.L
 
 ;==============================================================================
 ; COPY_TO_BANKX : テンプレートバイト列を物理bank(呼出し前にHL_B設定済み)

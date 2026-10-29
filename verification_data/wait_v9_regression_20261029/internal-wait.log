@@ -1,0 +1,10 @@
+t80_mcode.vhd:281:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:319:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:320:17:warning: declaration of "IR" hides port "IR" [-Whide]
+                IR : std_logic_vector(7 downto 0)
+                ^
+test\tb_hw_m2_internal_cycle_wait.vhd:286:9:@104765ns:(report note): PASS: M2 bank01 DJNZ/JR/ADD HL internal cycles and HALT IRQ acknowledge; releases=9

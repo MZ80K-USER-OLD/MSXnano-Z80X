@@ -1,0 +1,2085 @@
+{
+  "analysis_summary": {
+    "Numbers of Hold Violated Endpoints": "39",
+    "Numbers of Endpoints Analyzed": "19187",
+    "Numbers of Falling Endpoints": "72",
+    "Hold Delay Model": "Fast 1.05V 0C C8/I7",
+    "Numbers of Paths Analyzed": "37450",
+    "Setup Delay Model": "Slow 0.95V 85C C8/I7",
+    "Numbers of Setup Violated Endpoints": "205"
+  },
+  "artifact_identity": {
+    "fpga\\impl\\gwsynthesis\\MSXNanoTang20K_Z80X24.vg": {
+      "modified_utc": "2026-10-28T16:28:26.1974088Z",
+      "length": 5201925,
+      "sha256": "00FC97B48EC70CF6A2DAAF08A5932391BAEDC97978A664FA0A4692B8E0156DDB"
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24.fs": {
+      "modified_utc": "2026-10-28T16:29:45.1728695Z",
+      "length": 7264153,
+      "sha256": "90DC27593A9ED53B1277269A1251F2FB3771ED9B9E3762760730DDC158DE8A91"
+    },
+    "fpga\\tang20k.cst": {
+      "modified_utc": "2026-09-14T14:47:55.1128650Z",
+      "length": 2701,
+      "sha256": "86E419B8B4D9D72CA8A13863612145698CCBB00F53661782D45DE90298F2338A"
+    },
+    "fpga\\tang20k.sdc": {
+      "modified_utc": "2026-08-14T14:08:24.4030660Z",
+      "length": 11237,
+      "sha256": "681D876BA6ADCF360890A3122C50E8E41021B22652C3D3D5B5EB30283A0CB0F4"
+    },
+    "fpga\\MSXNanoTang20K_Z80X24.gprj": {
+      "modified_utc": "2026-10-22T13:59:42.8744386Z",
+      "length": 9992,
+      "sha256": "3469E7034FA7D4C4BD804406F71B2EFC47792422C98FAAAB6D1CAF4CE4D380F5"
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24_tr_content.html": {
+      "modified_utc": "2026-10-28T16:29:47.0035290Z",
+      "length": 2513703,
+      "sha256": "2494E05B56AB9515947711F0DDBBA04911A68501B7C690C62204EED6B0AFC154"
+    },
+    "fpga\\MSXNanoTang20K_Z80X24.gprj.user": {
+      "modified_utc": "2026-10-28T16:47:06.1502930Z",
+      "length": 5473,
+      "sha256": "43A38781E8D801D08CF5202C276018BFA1A16F6366EC4A0A91B0F6D8FC709F84"
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24.rpt.txt": {
+      "modified_utc": "2026-10-28T16:29:45.6117464Z",
+      "length": 52264,
+      "sha256": "BF967D6BB07614163AE693B2C6930C823E3F4E2FB0E0E1400D9455A0D84CA93C"
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24.log": {
+      "modified_utc": "2026-10-28T16:29:47.2464466Z",
+      "length": 2212,
+      "sha256": "D634380FD1A4F09D35145A33FFE2BDFB4DCC6636DF9BD42705101D0595B01639"
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24.timing_paths": {
+      "modified_utc": "2026-10-28T16:29:46.4481482Z",
+      "length": 82924,
+      "sha256": "FA18B8B592E221BD485F5E59CC5DABBD28818CAD2B80DE4AF9EC70ADCD5FB76F"
+    }
+  },
+  "fmax": [
+    {
+      "actual_fmax": "322.018(MHz)",
+      "clock": "clock_audio",
+      "constraint": "3.600(MHz)"
+    },
+    {
+      "actual_fmax": "67.948(MHz)",
+      "clock": "clock_27m",
+      "constraint": "27.000(MHz)"
+    },
+    {
+      "actual_fmax": "54.670(MHz)",
+      "clock": "clock_54m",
+      "constraint": "54.000(MHz)"
+    },
+    {
+      "actual_fmax": "156.489(MHz)",
+      "clock": "clock_108m",
+      "constraint": "108.000(MHz)"
+    },
+    {
+      "actual_fmax": "139.741(MHz)",
+      "clock": "fpga_companion_inst/mcu/n4_24",
+      "constraint": "100.000(MHz)"
+    }
+  ],
+  "inspected_utc": "2026-10-29T12:38:09.4677254Z",
+  "path_tables": {
+    "Removal_Slack_Table": {
+      "worst_reported_slack_ns": -0.885,
+      "reported_paths": 25,
+      "negative_reported_paths": 13,
+      "negative_paths": [
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/env_hold_s0/CLEAR",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.885,
+          "number": 1,
+          "to_node": "psg1/env_hold_s0/CLEAR"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1890_s0/I1",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.642,
+          "number": 2,
+          "to_node": "psg1/env_inc_s0/CLEAR"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1890_s0/I1",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.642,
+          "number": 3,
+          "to_node": "psg1/env_vol_1_s1/PRESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1890_s0/I1",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.642,
+          "number": 4,
+          "to_node": "psg1/env_vol_4_s1/PRESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1890_s0/I1",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.398,
+          "number": 5,
+          "to_node": "psg1/env_vol_0_s1/PRESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1890_s0/I1",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.398,
+          "number": 6,
+          "to_node": "psg1/env_vol_2_s1/PRESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1890_s0/I1",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.398,
+          "number": 7,
+          "to_node": "psg1/env_vol_3_s1/PRESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1912_s0/I0",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.264,
+          "number": 8,
+          "to_node": "psg1/env_inc_s1/PRESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1912_s0/I0",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.264,
+          "number": 9,
+          "to_node": "psg1/env_vol_1_s0/CLEAR"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1912_s0/I0",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.013,
+          "number": 10,
+          "to_node": "psg1/env_vol_0_s0/CLEAR"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1912_s0/I0",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.013,
+          "number": 11,
+          "to_node": "psg1/env_vol_2_s0/CLEAR"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1912_s0/I0",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.013,
+          "number": 12,
+          "to_node": "psg1/env_vol_3_s0/CLEAR"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/n1912_s0/I0",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.013,
+          "number": 13,
+          "to_node": "psg1/env_vol_4_s0/CLEAR"
+        }
+      ]
+    },
+    "Recovery_Slack_Table": {
+      "worst_reported_slack_ns": -1.665,
+      "reported_paths": 25,
+      "negative_reported_paths": 3,
+      "negative_paths": [
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[R]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -1.665,
+          "number": 1,
+          "to_node": "fpga_companion_inst/mcu/spi_io_dout_s0/CLEAR"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.04,
+          "number": 2,
+          "to_node": "fpga_companion_inst/mcu/spi_cnt_0_s1/CLEAR"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.04,
+          "number": 3,
+          "to_node": "fpga_companion_inst/mcu/spi_cnt_2_s1/CLEAR"
+        }
+      ]
+    },
+    "Hold_Slack_Table": {
+      "worst_reported_slack_ns": -1.265,
+      "reported_paths": 25,
+      "negative_reported_paths": 25,
+      "negative_paths": [
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "vdp4/audioclkd/n126_s0/I3",
+          "from_clock": "clock_audio:[R]",
+          "slack_ns": -1.265,
+          "number": 1,
+          "to_node": "vdp4/audioclkd/clkd_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n1358_s8/I0",
+          "from_clock": "clock_VideoDHClk:[R]",
+          "slack_ns": -0.756,
+          "number": 2,
+          "to_node": "mem1/ff_sdr_seq_0_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n1356_s7/I0",
+          "from_clock": "clock_VideoDHClk:[R]",
+          "slack_ns": -0.578,
+          "number": 3,
+          "to_node": "mem1/ff_sdr_seq_2_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n761_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.47,
+          "number": 4,
+          "to_node": "mem1/n889_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n760_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.47,
+          "number": 5,
+          "to_node": "mem1/n888_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n576_s3/I1",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.467,
+          "number": 6,
+          "to_node": "mem1/SdrSta_2_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n592_s2/I0",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.45,
+          "number": 7,
+          "to_node": "mem1/SdrSta_1_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/env_vol_0_s8/I2",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.44,
+          "number": 8,
+          "to_node": "psg1/env_vol_0_s1/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n763_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.325,
+          "number": 9,
+          "to_node": "mem1/n891_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n762_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.325,
+          "number": 10,
+          "to_node": "mem1/n890_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n767_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.316,
+          "number": 11,
+          "to_node": "mem1/n895_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n766_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.316,
+          "number": 12,
+          "to_node": "mem1/n894_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n765_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.316,
+          "number": 13,
+          "to_node": "mem1/n893_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n764_s0/I3",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.316,
+          "number": 14,
+          "to_node": "mem1/n892_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/n1357_s7/I0",
+          "from_clock": "clock_VideoDHClk:[R]",
+          "slack_ns": -0.295,
+          "number": 15,
+          "to_node": "mem1/ff_sdr_seq_1_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/env_vol_0_s8/I2",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.291,
+          "number": 16,
+          "to_node": "psg1/env_vol_0_s0/D"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/SdrSta_1_s6/I1",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.29,
+          "number": 17,
+          "to_node": "mem1/SdrSta_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/SdrSta_1_s6/I1",
+          "from_clock": "clock_VideoDLClk:[R]",
+          "slack_ns": -0.29,
+          "number": 18,
+          "to_node": "mem1/SdrSta_1_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/env_vol_4_s11/I2",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.164,
+          "number": 19,
+          "to_node": "psg1/env_vol_4_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/env_vol_0_s8/I2",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.069,
+          "number": 20,
+          "to_node": "psg1/env_vol_1_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/env_vol_0_s8/I2",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.069,
+          "number": 21,
+          "to_node": "psg1/env_vol_1_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "psg1/env_vol_0_s8/I2",
+          "from_clock": "clock_env_reset:[R]",
+          "slack_ns": -0.049,
+          "number": 22,
+          "to_node": "psg1/env_vol_3_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "vdp4/hdmi_ntsc/true_hdmi_output.packet_picker/audio_clock_regeneration_packet/internal_clk_audio_counter_wrap_s1/Q",
+          "from_clock": "clock_audio:[R]",
+          "slack_ns": -0.048,
+          "number": 23,
+          "to_node": "vdp4/hdmi_ntsc/true_hdmi_output.packet_picker/audio_clock_regeneration_packet/clk_audio_counter_wrap_synchronizer_chain_1_s0/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/sdram_write_s5/I2",
+          "from_clock": "clock_VideoDHClk:[R]",
+          "slack_ns": -0.038,
+          "number": 24,
+          "to_node": "mem1/sdram_seq_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/sdram_write_s5/I2",
+          "from_clock": "clock_VideoDHClk:[R]",
+          "slack_ns": -0.038,
+          "number": 25,
+          "to_node": "mem1/sdram_seq_1_s1/CE"
+        }
+      ]
+    },
+    "Setup_Slack_Table": {
+      "worst_reported_slack_ns": -4.762,
+      "reported_paths": 400,
+      "negative_reported_paths": 202,
+      "negative_paths": [
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_target_7_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -4.762,
+          "number": 1,
+          "to_node": "fpga_companion_inst/mcu/spi_io_dout_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.674,
+          "number": 2,
+          "to_node": "ff_sd_sector_8_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.674,
+          "number": 3,
+          "to_node": "ff_sd_sector_9_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.374,
+          "number": 4,
+          "to_node": "ff_sd_sector_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.374,
+          "number": 5,
+          "to_node": "ff_sd_sector_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.306,
+          "number": 6,
+          "to_node": "ff_sd_sector_11_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.306,
+          "number": 7,
+          "to_node": "ff_sd_sector_13_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.265,
+          "number": 8,
+          "to_node": "ff_sd_sector_14_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.265,
+          "number": 9,
+          "to_node": "ff_sd_sector_15_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.259,
+          "number": 10,
+          "to_node": "ff_sd_sector_10_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.259,
+          "number": 11,
+          "to_node": "ff_sd_sector_12_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/r_SCLK_s2/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.219,
+          "number": 12,
+          "to_node": "flash1/r_SCLK_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.19,
+          "number": 13,
+          "to_node": "ff_sd_sector_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.19,
+          "number": 14,
+          "to_node": "ff_sd_sector_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.19,
+          "number": 15,
+          "to_node": "ff_sd_sector_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.19,
+          "number": 16,
+          "to_node": "ff_sd_sector_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.183,
+          "number": 17,
+          "to_node": "ff_sd_sector_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.183,
+          "number": 18,
+          "to_node": "ff_sd_sector_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.168,
+          "number": 19,
+          "to_node": "ff_sd_sector_17_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.168,
+          "number": 20,
+          "to_node": "ff_sd_sector_22_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.067,
+          "number": 21,
+          "to_node": "mem1/megaram_dout_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -3.026,
+          "number": 22,
+          "to_node": "mem1/megaram_dout_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.937,
+          "number": 23,
+          "to_node": "ff_sd_sector_27_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.883,
+          "number": 24,
+          "to_node": "mem1/megaram_dout_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.883,
+          "number": 25,
+          "to_node": "mem1/megaram_dout_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.707,
+          "number": 26,
+          "to_node": "flash1/dataIn_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.707,
+          "number": 27,
+          "to_node": "flash1/dataIn_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.617,
+          "number": 28,
+          "to_node": "ff_sd_sector_18_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.617,
+          "number": 29,
+          "to_node": "ff_sd_sector_19_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.523,
+          "number": 30,
+          "to_node": "flash1/dataIn_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.523,
+          "number": 31,
+          "to_node": "flash1/dataIn_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.481,
+          "number": 32,
+          "to_node": "flash1/dataInBuffer_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.481,
+          "number": 33,
+          "to_node": "flash1/dataInBuffer_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.478,
+          "number": 34,
+          "to_node": "mem1/mapper_dout_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.471,
+          "number": 35,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.471,
+          "number": 36,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.471,
+          "number": 37,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.471,
+          "number": 38,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.433,
+          "number": 39,
+          "to_node": "ff_sd_sector_16_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.433,
+          "number": 40,
+          "to_node": "ff_sd_sector_20_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.433,
+          "number": 41,
+          "to_node": "ff_sd_sector_21_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.433,
+          "number": 42,
+          "to_node": "ff_sd_sector_23_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.427,
+          "number": 43,
+          "to_node": "fpga_companion_inst/sysctrl/port_cmd_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.427,
+          "number": 44,
+          "to_node": "fpga_companion_inst/sysctrl/port_cmd_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.427,
+          "number": 45,
+          "to_node": "fpga_companion_inst/sysctrl/port_cmd_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.427,
+          "number": 46,
+          "to_node": "fpga_companion_inst/sysctrl/port_cmd_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/SccVol_0_s11/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.402,
+          "number": 47,
+          "to_node": "ocm_ports/SccVol_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.386,
+          "number": 48,
+          "to_node": "ff_sd_sector_25_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.386,
+          "number": 49,
+          "to_node": "ff_sd_sector_26_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.386,
+          "number": 50,
+          "to_node": "ff_sd_sector_28_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.386,
+          "number": 51,
+          "to_node": "ff_sd_sector_29_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.378,
+          "number": 52,
+          "to_node": "ff_sd_sector_24_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.367,
+          "number": 53,
+          "to_node": "mem1/mapper_dout_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.367,
+          "number": 54,
+          "to_node": "mem1/mapper_dout_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/Red_sta_s6/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.323,
+          "number": 55,
+          "to_node": "ocm_ports/Red_sta_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.313,
+          "number": 56,
+          "to_node": "ff_sd_cd_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.313,
+          "number": 57,
+          "to_node": "ff_sd_cd_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.307,
+          "number": 58,
+          "to_node": "flash1/dataIn_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.307,
+          "number": 59,
+          "to_node": "flash1/dataIn_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.297,
+          "number": 60,
+          "to_node": "flash1/dataInBuffer_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.297,
+          "number": 61,
+          "to_node": "flash1/dataInBuffer_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.296,
+          "number": 62,
+          "to_node": "mem1/megaram_dout_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.296,
+          "number": 63,
+          "to_node": "mem1/megaram_dout_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.288,
+          "number": 64,
+          "to_node": "mem1/mapper_dout_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.288,
+          "number": 65,
+          "to_node": "mem1/mapper_dout_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "config_enable_sdcard_s1/Q",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -2.26,
+          "number": 66,
+          "to_node": "ff_sd_en_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_0_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.257,
+          "number": 67,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_0_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.252,
+          "number": 68,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.252,
+          "number": 69,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.252,
+          "number": 70,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1668_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.252,
+          "number": 71,
+          "to_node": "fpga_companion_inst/sysctrl/port_index_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/OpllVol_2_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.249,
+          "number": 72,
+          "to_node": "ocm_ports/OpllVol_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_4_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.248,
+          "number": 73,
+          "to_node": "fpga_companion_inst/mcu/spi_target_4_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.243,
+          "number": 74,
+          "to_node": "fpga_companion_inst/sysctrl/port_cmd_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.243,
+          "number": 75,
+          "to_node": "fpga_companion_inst/sysctrl/port_cmd_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.243,
+          "number": 76,
+          "to_node": "fpga_companion_inst/sysctrl/port_cmd_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "config_enable_sdcard_s1/Q",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -2.242,
+          "number": 77,
+          "to_node": "sd_cs_w_s0/RESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "config_enable_sdcard_s1/Q",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -2.242,
+          "number": 78,
+          "to_node": "sram_cs_w_s0/RESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/SccVol_2_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.239,
+          "number": 79,
+          "to_node": "ocm_ports/SccVol_1_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/SccVol_2_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.239,
+          "number": 80,
+          "to_node": "ocm_ports/SccVol_2_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.163,
+          "number": 81,
+          "to_node": "ff_sd_sector_30_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4715_s3/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.163,
+          "number": 82,
+          "to_node": "ff_sd_sector_31_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_5_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.125,
+          "number": 83,
+          "to_node": "fpga_companion_inst/mcu/spi_target_5_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_ready_s2/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.119,
+          "number": 84,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_readyD_0_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_7_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.107,
+          "number": 85,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_7_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_2_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.101,
+          "number": 86,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_2_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_6_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.101,
+          "number": 87,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_6_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_2_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.101,
+          "number": 88,
+          "to_node": "fpga_companion_inst/mcu/spi_target_2_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_3_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.101,
+          "number": 89,
+          "to_node": "fpga_companion_inst/mcu/spi_target_3_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_6_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -2.101,
+          "number": 90,
+          "to_node": "fpga_companion_inst/mcu/spi_target_6_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.101,
+          "number": 91,
+          "to_node": "ff_sd_cd_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.101,
+          "number": 92,
+          "to_node": "ff_sd_cd_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.097,
+          "number": 93,
+          "to_node": "ff_sd_cd_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/hid_inst/data_out_0_s4/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.084,
+          "number": 94,
+          "to_node": "fpga_companion_inst/hid_inst/data_out_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.065,
+          "number": 95,
+          "to_node": "flash1/readAddress_15_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/sysctrl/n1652_s2/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.056,
+          "number": 96,
+          "to_node": "fpga_companion_inst/sysctrl/int_ack_0_s0/RESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1610_s10/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -2.032,
+          "number": 97,
+          "to_node": "ocm_ports/SccVol_0_s1/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.964,
+          "number": 98,
+          "to_node": "mem1/mapper_dout_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.964,
+          "number": 99,
+          "to_node": "mem1/mapper_dout_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.936,
+          "number": 100,
+          "to_node": "flash1/dataIn_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n578_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.936,
+          "number": 101,
+          "to_node": "flash1/dataIn_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/warmRESET_s6/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.931,
+          "number": 102,
+          "to_node": "ocm_ports/warmRESET_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.93,
+          "number": 103,
+          "to_node": "ff_sd_cd_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.93,
+          "number": 104,
+          "to_node": "ff_sd_cd_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/io43_id212_4_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.922,
+          "number": 105,
+          "to_node": "ocm_ports/io43_id212_4_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1632_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.902,
+          "number": 106,
+          "to_node": "ocm_ports/Red_sta_s1/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.894,
+          "number": 107,
+          "to_node": "mem1/megaram_dout_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n283_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.889,
+          "number": 108,
+          "to_node": "mem1/mapper_dout_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "sd1/n3811_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.887,
+          "number": 109,
+          "to_node": "sd1/crc_stat_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "sd1/n3811_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.887,
+          "number": 110,
+          "to_node": "sd1/crc_stat_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "sd1/n3811_s1/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.887,
+          "number": 111,
+          "to_node": "sd1/crc_stat_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_0_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -1.886,
+          "number": 112,
+          "to_node": "fpga_companion_inst/mcu/spi_target_0_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_7_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -1.886,
+          "number": 113,
+          "to_node": "fpga_companion_inst/mcu/spi_target_7_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_5_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -1.882,
+          "number": 114,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_5_s0/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.881,
+          "number": 115,
+          "to_node": "flash1/readAddress_13_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/WarmMSXlogo_s2/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.881,
+          "number": 116,
+          "to_node": "ocm_ports/WarmMSXlogo_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_1_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -1.88,
+          "number": 117,
+          "to_node": "fpga_companion_inst/mcu/spi_target_1_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/CustomSpeed_2_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.869,
+          "number": 118,
+          "to_node": "ocm_ports/CustomSpeed_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/CustomSpeed_2_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.869,
+          "number": 119,
+          "to_node": "ocm_ports/CustomSpeed_1_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/CustomSpeed_2_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.869,
+          "number": 120,
+          "to_node": "ocm_ports/CustomSpeed_2_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1606_s8/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.828,
+          "number": 121,
+          "to_node": "ocm_ports/OpllVol_1_s1/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "config_mapper_slot_ff_0_s1/Q",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -1.774,
+          "number": 122,
+          "to_node": "mapper_req12_s0/RESET"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1607_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.773,
+          "number": 123,
+          "to_node": "ocm_ports/OpllVol_0_s1/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.759,
+          "number": 124,
+          "to_node": "flash1/readAddress_2_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.759,
+          "number": 125,
+          "to_node": "flash1/readAddress_8_s0/CE"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/RstSeq_4_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.751,
+          "number": 126,
+          "to_node": "mem1/RstSeq_1_s1/CE"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/RstSeq_4_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.751,
+          "number": 127,
+          "to_node": "mem1/RstSeq_2_s1/CE"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/RstSeq_4_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.751,
+          "number": 128,
+          "to_node": "mem1/RstSeq_3_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/MstrVol_1_s7/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.739,
+          "number": 129,
+          "to_node": "ocm_ports/MstrVol_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/MstrVol_1_s7/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.739,
+          "number": 130,
+          "to_node": "ocm_ports/MstrVol_1_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/MstrVol_1_s7/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.739,
+          "number": 131,
+          "to_node": "ocm_ports/MstrVol_2_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_1_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -1.73,
+          "number": 132,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_1_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_3_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -1.73,
+          "number": 133,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_3_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "fpga_companion_inst/mcu/spi_data_in_4_s1/Q",
+          "from_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "slack_ns": -1.727,
+          "number": 134,
+          "to_node": "fpga_companion_inst/mcu/spi_in_data_4_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/PsgVol_0_s9/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.718,
+          "number": 135,
+          "to_node": "ocm_ports/PsgVol_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/PsgVol_0_s9/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.718,
+          "number": 136,
+          "to_node": "ocm_ports/PsgVol_2_s1/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.714,
+          "number": 137,
+          "to_node": "flash1/dataInBuffer_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.714,
+          "number": 138,
+          "to_node": "flash1/dataInBuffer_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/io43_id212_7_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.611,
+          "number": 139,
+          "to_node": "ocm_ports/io43_id212_7_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/OpllVol_2_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.568,
+          "number": 140,
+          "to_node": "ocm_ports/OpllVol_1_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/OpllVol_2_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.568,
+          "number": 141,
+          "to_node": "ocm_ports/OpllVol_2_s1/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "config_enable_sdcard_s1/Q",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -1.555,
+          "number": 142,
+          "to_node": "megarom_req_s0/RESET"
+        },
+        {
+          "to_clock": "clock_108m:[R]",
+          "from_node": "mem1/RstSeq_4_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.535,
+          "number": 143,
+          "to_node": "mem1/RstSeq_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/PsgVol_0_s9/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.535,
+          "number": 144,
+          "to_node": "ocm_ports/PsgVol_1_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/Slot0_req_s4/I1",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.526,
+          "number": 145,
+          "to_node": "ocm_ports/Slot0_req_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1605_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.526,
+          "number": 146,
+          "to_node": "ocm_ports/OpllVol_2_s1/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.51,
+          "number": 147,
+          "to_node": "flash1/readAddress_0_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.51,
+          "number": 148,
+          "to_node": "flash1/readAddress_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.51,
+          "number": 149,
+          "to_node": "flash1/readAddress_3_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.51,
+          "number": 150,
+          "to_node": "flash1/readAddress_9_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.51,
+          "number": 151,
+          "to_node": "flash1/readAddress_10_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.51,
+          "number": 152,
+          "to_node": "flash1/readAddress_14_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "ff_flash_terminate_s5/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.504,
+          "number": 153,
+          "to_node": "ff_flash_terminate_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.499,
+          "number": 154,
+          "to_node": "flash1/readAddress_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.499,
+          "number": 155,
+          "to_node": "flash1/readAddress_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.499,
+          "number": 156,
+          "to_node": "flash1/readAddress_16_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.499,
+          "number": 157,
+          "to_node": "flash1/readAddress_20_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.495,
+          "number": 158,
+          "to_node": "flash1/dataInBuffer_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n560_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.495,
+          "number": 159,
+          "to_node": "flash1/dataInBuffer_6_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "mem1/n291_s1/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.495,
+          "number": 160,
+          "to_node": "mem1/megaram_dout_1_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/ntsc_pal_type_s6/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.495,
+          "number": 161,
+          "to_node": "ocm_ports/ntsc_pal_type_s1/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/r_busy_s4/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.494,
+          "number": 162,
+          "to_node": "flash1/r_busy_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "n4717_s0/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.468,
+          "number": 163,
+          "to_node": "ff_sd_cd_7_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1637_s12/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.418,
+          "number": 164,
+          "to_node": "ocm_ports/ntsc_pal_type_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1616_s7/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.418,
+          "number": 165,
+          "to_node": "ocm_ports/MstrVol_0_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1614_s8/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.418,
+          "number": 166,
+          "to_node": "ocm_ports/MstrVol_2_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1608_s17/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.391,
+          "number": 167,
+          "to_node": "ocm_ports/SccVol_2_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1579_s3/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.391,
+          "number": 168,
+          "to_node": "ocm_ports/io42_id212_1_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1576_s3/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.391,
+          "number": 169,
+          "to_node": "ocm_ports/io42_id212_4_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1615_s8/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.382,
+          "number": 170,
+          "to_node": "ocm_ports/MstrVol_1_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1611_s15/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.382,
+          "number": 171,
+          "to_node": "ocm_ports/PsgVol_2_s1/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.328,
+          "number": 172,
+          "to_node": "flash1/readAddress_4_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.328,
+          "number": 173,
+          "to_node": "flash1/readAddress_5_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "config_enable_mapper12_s1/Q",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -1.31,
+          "number": 174,
+          "to_node": "mapper_req12_s0/D"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.287,
+          "number": 175,
+          "to_node": "flash1/readAddress_11_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "flash1/n700_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.287,
+          "number": 176,
+          "to_node": "flash1/readAddress_12_s0/CE"
+        },
+        {
+          "to_clock": "clock_54m:[R]",
+          "from_node": "config_enable_mapper3_s1/Q",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -1.236,
+          "number": 177,
+          "to_node": "mapper_req3_s0/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1624_s7/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.219,
+          "number": 178,
+          "to_node": "ocm_ports/Mapper_req_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1620_s8/I2",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.192,
+          "number": 179,
+          "to_node": "ocm_ports/CustomSpeed_0_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1577_s3/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.192,
+          "number": 180,
+          "to_node": "ocm_ports/io42_id212_3_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1580_s1/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.192,
+          "number": 181,
+          "to_node": "ocm_ports/io42_id212_0_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1612_s10/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.183,
+          "number": 182,
+          "to_node": "ocm_ports/PsgVol_1_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1592_s11/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.183,
+          "number": 183,
+          "to_node": "ocm_ports/io43_id212_4_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1578_s3/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.183,
+          "number": 184,
+          "to_node": "ocm_ports/io42_id212_2_s1/D"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "ocm_ports/n1575_s6/I3",
+          "from_clock": "ex_bus_reset_n:[F]",
+          "slack_ns": -1.183,
+          "number": 185,
+          "to_node": "ocm_ports/io42_id212_5_s1/D"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -1.141,
+          "number": 186,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_4_s1/CE"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -1.141,
+          "number": 187,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_6_s1/CE"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -1.141,
+          "number": 188,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_7_s1/CE"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.958,
+          "number": 189,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_ready_s2/CE"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.958,
+          "number": 190,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_1_s1/CE"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.958,
+          "number": 191,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_5_s1/CE"
+        },
+        {
+          "to_clock": "ex_bus_reset_n:[R]",
+          "from_node": "config1_ff_4_s1/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.797,
+          "number": 192,
+          "to_node": "config_mapper_slot_ff_0_s1/D"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.77,
+          "number": 193,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_2_s1/CE"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.77,
+          "number": 194,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_3_s1/CE"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.767,
+          "number": 195,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_0_s1/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "sd1/crc_ena_s0/CE",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -0.639,
+          "number": 196,
+          "to_node": "sd1/crc_ena_s0/CE"
+        },
+        {
+          "to_clock": "clock_27m:[R]",
+          "from_node": "opll/u_pg/rm_xor_s0/CE",
+          "from_clock": "ex_bus_reset_n:[R]",
+          "slack_ns": -0.639,
+          "number": 197,
+          "to_node": "opll/u_pg/rm_xor_s0/CE"
+        },
+        {
+          "to_clock": "ex_bus_reset_n:[R]",
+          "from_node": "config1_ff_4_s1/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.478,
+          "number": 198,
+          "to_node": "config_enable_mapper12_s1/D"
+        },
+        {
+          "to_clock": "ex_bus_reset_n:[R]",
+          "from_node": "config1_ff_4_s1/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.478,
+          "number": 199,
+          "to_node": "config_enable_mapper3_s1/D"
+        },
+        {
+          "to_clock": "fpga_companion_inst/mcu/n4_24:[F]",
+          "from_node": "fpga_companion_inst/spi_ext_s0/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.367,
+          "number": 200,
+          "to_node": "fpga_companion_inst/mcu/spi_data_in_ready_s2/RESET"
+        },
+        {
+          "to_clock": "ex_bus_reset_n:[R]",
+          "from_node": "config2_ff_0_s1/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.285,
+          "number": 201,
+          "to_node": "config_enable_sdcard_s1/D"
+        },
+        {
+          "to_clock": "ex_bus_reset_n:[R]",
+          "from_node": "config1_ff_5_s1/Q",
+          "from_clock": "clock_27m:[R]",
+          "slack_ns": -0.283,
+          "number": 202,
+          "to_node": "config_mapper_slot_ff_1_s1/D"
+        }
+      ]
+    }
+  },
+  "report_metadata": {
+    "Tool Version": "V1.9.12.04 (64-bit)",
+    "Report Title": "Timing Analysis Report",
+    "Created Time": "Thu Oct 29 01:29:46 2026",
+    "Legal Announcement": "Copyright (C)2014-2026 Gowin Semiconductor Corporation. All rights reserved.",
+    "Timing Constraint File": "D:\\Users\\HeroineFactory\\Documents\\GIT\\MSXNano-Z80X\\msxnano-24bit\\fpga\\tang20k.sdc",
+    "Device Version": "C",
+    "Physical Constraints File": "D:\\Users\\HeroineFactory\\Documents\\GIT\\MSXNano-Z80X\\msxnano-24bit\\fpga\\tang20k.cst",
+    "Device": "GW2AR-18",
+    "Part Number": "GW2AR-LV18QN88C8/I7",
+    "Design File": "D:\\Users\\HeroineFactory\\Documents\\GIT\\MSXNano-Z80X\\msxnano-24bit\\fpga\\impl\\gwsynthesis\\MSXNanoTang20K_Z80X24.vg"
+  },
+  "limits": [
+    "Existing 2026-10-29 Gowin V1.9.12.04 report inspected; no new place-and-route run.",
+    "Per-clock TNS table says zero, but detailed path tables and summary show violations; do not treat TNS/Fmax alone as timing closure.",
+    "Current source hashes do not independently prove which source/configuration generated the existing netlist or which image was loaded on hardware.",
+    "Reported path tables are limited (setup 400, other types 25), not full endpoint inventories.",
+    "No constraint exceptions added and no RTL changes made to hide timing violations."
+  ],
+  "timing_closed": false
+}

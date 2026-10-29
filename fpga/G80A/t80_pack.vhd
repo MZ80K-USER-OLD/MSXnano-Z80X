@@ -58,6 +58,9 @@ use IEEE.numeric_std.all;
 
 package T80_Pack is
 
+    function IsIndex24(Opcode : std_logic_vector(7 downto 0)) return boolean;
+    function Index24Pair(Opcode : std_logic_vector(7 downto 0)) return std_logic_vector;
+
     -- Phase2: 24bit address generator.
     --
     -- All functions compute (Bank & Low16) + signed(Disp), modulo 2^24, and
@@ -199,6 +202,7 @@ package T80_Pack is
         XY_State    : in  std_logic_vector(1 downto 0);
         LeaXY       : in  std_logic_vector(1 downto 0);
         Mode24      : in  std_logic_vector(1 downto 0);
+        IStatus     : in  std_logic_vector(1 downto 0);
         MCycles     : out std_logic_vector(3 downto 0);
         TStates     : out std_logic_vector(2 downto 0);
         Prefix      : out std_logic_vector(1 downto 0); -- None,BC,ED,DD/FD
@@ -294,6 +298,21 @@ package T80_Pack is
 end;
 
 package body T80_Pack is
+
+    function IsIndex24(Opcode : std_logic_vector(7 downto 0)) return boolean is
+    begin
+        return Opcode = x"08" or Opcode = x"10" or Opcode = x"18" or
+               Opcode = x"20" or Opcode = x"28" or Opcode = x"30";
+    end;
+
+    function Index24Pair(Opcode : std_logic_vector(7 downto 0)) return std_logic_vector is
+    begin
+        case Opcode is
+            when x"08" | x"20" => return "00";
+            when x"10" | x"28" => return "01";
+            when others => return "10";
+        end case;
+    end;
 
     function Addr24_AddDisp16(Bank : std_logic_vector(7 downto 0); Low16 : std_logic_vector(15 downto 0); Disp16 : std_logic_vector(15 downto 0)) return std_logic_vector is
         variable Base  : unsigned(23 downto 0);

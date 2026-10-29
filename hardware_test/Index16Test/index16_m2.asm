@@ -1,0 +1,2 @@
+DEFINE M2TEST
+INCLUDE "index16_test.asm"

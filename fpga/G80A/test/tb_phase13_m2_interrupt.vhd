@@ -1,6 +1,8 @@
+-- Historical fixture: requires the retired ED9B IVR writer.
+-- Do not run on current RTL; see verification_data/v161_rst_l/README.md.
 --
 -- Phase13 self-checking testbench: M2 interrupt entry (maskable IRQ ->
--- IVR24, NMI -> NVR24) + RETI.L (ED 4E) / RETN.L (ED 8C)
+-- IVR24, NMI -> NVR24) + RETI.L (ED F3) / RETN.L (ED 8C)
 -- (MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md section13 "Interrupt")
 --
 -- Exercises the NEW Phase13 mechanism: in M2, both maskable IRQ and NMI
@@ -139,7 +141,7 @@ architecture sim of tb_phase13_m2_interrupt is
         16#0028# => x"00", 16#0029# => x"00", 16#002A# => x"76",
         -- IVR24 handler
         16#3000# => x"21", 16#3001# => x"00", 16#3002# => x"03", 16#3003# => x"34",
-        16#3004# => x"ED", 16#3005# => x"4E",
+        16#3004# => x"ED", 16#3005# => x"F3",
         -- NVR24 handler
         16#4000# => x"21", 16#4001# => x"01", 16#4002# => x"03", 16#4003# => x"34",
         16#4004# => x"ED", 16#4005# => x"8C",

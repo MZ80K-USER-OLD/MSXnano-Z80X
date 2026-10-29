@@ -1,0 +1,39 @@
+{
+  "legacy_guards": {
+    "P1314Test": {
+      "output": [
+        "makefile:16: *** Incompatible with current V16.1 RTL. See README.md. Legacy-only build requires LEGACY_OPCODES=1.  Stop."
+      ],
+      "exit_code": 2,
+      "makefile_sha256": "46B20DB08C9A332D881FD65E19F37B0D72EA53F5B5F8973CB18CA2FE66AA3225"
+    },
+    "LD24Test": {
+      "output": [
+        "makefile:16: *** Incompatible with current V16.1 RTL. See README.md. Legacy-only build requires LEGACY_OPCODES=1.  Stop."
+      ],
+      "exit_code": 2,
+      "makefile_sha256": "63CD93F092CCE29CA089259E198807734C8B2D246887882F1E42770A72E18F28"
+    }
+  },
+  "p12": {
+    "asm_sha256": "41828898ADDC99188654DD4E4A51E1D4660D3863F7AF070064D61DED4A410ECF",
+    "com_bytes": 919,
+    "build_output": [
+      "Assembling MSX edition..",
+      "z88dk-z80asm -DMSXBIOS -Oobj -oBINZ80.bin -b -d -l -m p12_test.asm",
+      "z88dk-appmake +glue -b obj\\BINZ80 --filler 0x00",
+      "Creating bank space BANK",
+      "Creating obj\\BINZ80__.bin (org 0x0100)",
+      "cmd /c copy /b obj\\BINZ80__.bin  bin\\p12test.com",
+      "        1 file(s) copied.",
+      "done"
+    ],
+    "whole_com_simulated": false,
+    "com_sha256": "AC9E06D977FCB6E266A3DBDD5998C86DA5B7BC664FE0DDCFC207F08F186E5205",
+    "hardware_tested": true,
+    "hardware_result": "PASS=08 FAIL=00",
+    "hardware_report_date": "2026-10-24",
+    "hardware_evidence": "User-reported result of the rebuilt V16.1 P12TEST.COM; FPGA bitstream hash not supplied."
+  },
+  "completed_utc": "2026-10-24T11:31:48.3811770Z"
+}

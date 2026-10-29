@@ -1,0 +1,290 @@
+{
+  "changed_inputs": [],
+  "complete": true,
+  "started_utc": "2026-10-29T12:36:36.1751835Z",
+  "results": [
+    {
+      "exit_code": 0,
+      "name": "im0",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "4C88BD12F619CC56376268E0F1A040EFAB7672AC0CF06ED0923317D25D8BEE3A"
+    },
+    {
+      "exit_code": 0,
+      "name": "interrupt",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "D3C801317D626FA2A9075C20953BFD851D0EADD2E1146E220F5A2B99E2FE312A"
+    },
+    {
+      "exit_code": 0,
+      "name": "syscall",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "240B7EDCD66A8DAB5C6E19AC9CDEE62CD1529CEA61E819E3BBDAE4EFF3E7FEDF"
+    },
+    {
+      "exit_code": 0,
+      "name": "rst",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "C181ED7B5A518E9369937EB9548B6BCBEC643690E1F3A34F3186A8CA348F330D"
+    },
+    {
+      "exit_code": 0,
+      "name": "rst-long",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "C56CAF62742BFC58973484C67C1A705E151DFB6E33E144C3E0DD4E59593552F6"
+    },
+    {
+      "exit_code": 0,
+      "name": "index16",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "B68C3F6AFCCBA1EEFBC702B724A0D138FD43FAE829D157890B547F9406709D46"
+    },
+    {
+      "exit_code": 0,
+      "name": "index24",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "EFB05A86EABE494437275F80005FE1041FA30B836E2922E5FA56E0CDC6F13C3B"
+    },
+    {
+      "exit_code": 0,
+      "name": "v161-com",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "E3DF0FF8D6083BA5A3AEBE6550131562511DAD5640032F0E414594CF754C8092"
+    },
+    {
+      "exit_code": 0,
+      "name": "irq-com",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "54B97E20ACD2BE3A1317C8450DF70378BADAAD139B8B730F1FB65011AD348BDA"
+    },
+    {
+      "exit_code": 0,
+      "name": "irq-no-interrupt",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "64F50D1B95406141DF772FBF9DA531AE6D3D24E944B1BA76508510E2C7DA15DA"
+    },
+    {
+      "exit_code": 0,
+      "name": "halt-com",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "5A46DB3724FCC03946DD6875F5AAC291341E82DB39D46E51728B2877F7B26441"
+    },
+    {
+      "exit_code": 0,
+      "name": "halt-no-interrupt",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "716EC7636BADA7EF14DD9DE78E7538F24B679D71A574AEA01B4503E9424F6EC7"
+    },
+    {
+      "exit_code": 0,
+      "name": "index16-com",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "0E5180CC9ADA6AF3FDD05918819F3D8B20F0572DFF6114681E395A929D464DCE"
+    },
+    {
+      "exit_code": 0,
+      "name": "index24-com",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "0E5180CC9ADA6AF3FDD05918819F3D8B20F0572DFF6114681E395A929D464DCE"
+    },
+    {
+      "exit_code": 0,
+      "name": "index16-m2-com",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "0E5180CC9ADA6AF3FDD05918819F3D8B20F0572DFF6114681E395A929D464DCE"
+    },
+    {
+      "exit_code": 0,
+      "name": "index24-m2-com",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "0E5180CC9ADA6AF3FDD05918819F3D8B20F0572DFF6114681E395A929D464DCE"
+    },
+    {
+      "exit_code": 0,
+      "name": "request-timing",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "E31A931F926963A7ADFCE61BCC86EE43AE49F5CE79D6F0236BC727BEC4D69977"
+    },
+    {
+      "exit_code": 0,
+      "name": "internal-wait",
+      "expected_failure": false,
+      "passed": true,
+      "log_sha256": "71275938C5A8A15CCE305714FD3368EB8C9C609E41E7B7DE4826E8AFD66834CF"
+    },
+    {
+      "exit_code": 1,
+      "name": "internal-wait-negative",
+      "expected_failure": true,
+      "passed": true,
+      "log_sha256": "7847DB331FFB4A370F6C00A8D6F0111733B259893A780214CD463C0F89C828C2"
+    },
+    {
+      "exit_code": 0,
+      "name": "tb_phase9_push24_pop24",
+      "passed": true,
+      "log_sha256": "D50BC8D8FBF3265B608293F259D830727809839D0AB29612BEF4609A0172CD35"
+    },
+    {
+      "exit_code": 0,
+      "name": "tb_phase10_m2_basic",
+      "passed": true,
+      "log_sha256": "1BE77A6C1C3F3EC46B2081526C1804737D086BA910E3CDE0047061389D3C25CA"
+    },
+    {
+      "exit_code": 0,
+      "name": "tb_phase11_call_ret_l",
+      "passed": true,
+      "log_sha256": "8D41523E297A446ED77DC448381C552CE8658EE9B89C48E09669A92328D00FA3"
+    },
+    {
+      "exit_code": 0,
+      "name": "tb_phase12_mode_control",
+      "passed": true,
+      "log_sha256": "A135CF0C163C46DBAD81392BC23F1AAA7C31589BE120F84D96C1BB5823F933DC"
+    },
+    {
+      "exit_code": 0,
+      "name": "tb_hw_push24_bank_boundary_timing",
+      "passed": true,
+      "log_sha256": "CB73364418F46BB73556B8D0E4E348AFF0E891FDD08F3E2BF09E76A4E7256F44"
+    },
+    {
+      "exit_code": 0,
+      "name": "tb_hw_ld24_mem_indirect",
+      "passed": true,
+      "log_sha256": "26CCE593DE096068CAD732903EFD0D293602663528D2B6BAAF0382BBADAD2EB9"
+    }
+  ],
+  "completed_utc": "2026-10-29T13:23:30.2436939Z",
+  "updated_models": {
+    "fpga\\G80A\\test\\tb_hw_ld24_mem_indirect.vhd": {
+      "before": "A6E398BC2B66B368696C7DFCB18A211B213181A0D0F41E8346E93FD06E807897",
+      "reason": "Old integration model aligned with current RTL before GHDL focused analysis; snapshot also matches.",
+      "tested": "40F3C05F146B60D8F50443F9FE04DA3FDA897AE97BAB64DBD8F457462F00D6F5"
+    },
+    "fpga\\G80A\\test\\tb_hw_push24_bank_boundary_timing.vhd": {
+      "before": "E1C99CD8D08BBE7FC584F72E9C3524B5D20444E3C2E93A30EE8A6806EC64FA6F",
+      "reason": "Old integration model aligned with current RTL before GHDL focused analysis; snapshot also matches.",
+      "tested": "DFFDE43E80CEF09715625C59907BD5D5CAB9D0886C451269E3791BBD56B544CF"
+    }
+  },
+  "verified_utc": "2026-10-29T13:23:37.1852942Z",
+  "evidence": {
+    "index16_com": {
+      "passed": null,
+      "summary_sha256": "9C5B09473093E8748514D169377BD0E139E97BEB5AAD778D8EBE5164D5A8F4B1",
+      "result_count": 2,
+      "completed_utc": "2026-10-29T13:22:49.1483583Z"
+    },
+    "v161_syscall": {
+      "passed": 208,
+      "summary_sha256": "E99820F84A2C4667FD722FDC2A4E16861F885B085FC48AF27D3C4A004883F108",
+      "result_count": 208,
+      "completed_utc": "2026-10-29T12:53:25.0127681Z"
+    },
+    "v161_halt_com_no_irq": {
+      "passed": null,
+      "summary_sha256": "F18B81BEB2240B1DCFA41D122EE2B13A7D37337E63E051C577038FD81C6B1D77",
+      "result_count": 3,
+      "completed_utc": "2026-10-29T13:22:39.1490678Z"
+    },
+    "index16_m2_com": {
+      "passed": null,
+      "summary_sha256": "DD69BFE6ED702162DB87505ADAE3AC6AFD97C434A5C4FB22C634AD50FF753F76",
+      "result_count": 2,
+      "completed_utc": "2026-10-29T13:23:10.0206928Z"
+    },
+    "v161_irq_com": {
+      "passed": null,
+      "summary_sha256": "84982F381DE48C504DEC3A8FA6C3E417D4F24FC97B18C3D64DA1382855D78018",
+      "result_count": 8,
+      "completed_utc": "2026-10-29T13:20:47.3369146Z"
+    },
+    "v161_halt_com": {
+      "passed": null,
+      "summary_sha256": "A4D2D09B2ED9E0CF56759B61267EF25ADF31963CEEF74A22DFC6150BFA7B8563",
+      "result_count": 8,
+      "completed_utc": "2026-10-29T13:22:15.0498807Z"
+    },
+    "v15_index24": {
+      "passed": 528,
+      "summary_sha256": "7FD47A9AEF44612A7ADF006EDDD3C67C9213B99D715A7C067EA137BE8662EC55",
+      "result_count": 528,
+      "completed_utc": "2026-10-29T13:17:58.0660157Z"
+    },
+    "index24_com": {
+      "passed": null,
+      "summary_sha256": "4EE152A8254C54DC91DF98F6DA12D822551B2F349F9E2C7A17058D19F259AD21",
+      "result_count": 2,
+      "completed_utc": "2026-10-29T13:22:59.541369Z"
+    },
+    "index24_m2_com": {
+      "passed": null,
+      "summary_sha256": "7F2BB7129BB61B3216F06F6D67E2AA13BB3D269F06E9D5B4F2EF8D7DBF364BE8",
+      "result_count": 2,
+      "completed_utc": "2026-10-29T13:23:20.9494984Z"
+    },
+    "v161_im0": {
+      "passed": 270,
+      "summary_sha256": "A17165C5AE82A66AFB064B07390DF3B6D0D4F1959CE692F1869FDABF7085446C",
+      "result_count": 270,
+      "completed_utc": "2026-10-29T12:38:51.8649468Z"
+    },
+    "v161_irq_com_no_irq": {
+      "passed": null,
+      "summary_sha256": "850F9792E6379C96A0096706CAABE3D95E49CF6EEA9D9B6ED9CFAC527417D927",
+      "result_count": 1,
+      "completed_utc": "2026-10-29T13:21:43.8897373Z"
+    },
+    "v161_com": {
+      "passed": null,
+      "summary_sha256": "01068DCC37DCFF018B4F317B8459BAE55FF94B8A9F597B441144E9261D84BF12",
+      "result_count": 8,
+      "completed_utc": "2026-10-29T13:18:41.8983951Z"
+    },
+    "v161_rst": {
+      "passed": 96,
+      "summary_sha256": "52F25244F03069B5A29B4D3AF5886E6B3E1123AB1197EAC441EF8E3ACEED43CF",
+      "result_count": 96,
+      "completed_utc": "2026-10-29T12:55:24.1818229Z"
+    },
+    "v15_index16": {
+      "passed": 432,
+      "summary_sha256": "8F3BF0E462E07224F2FCC9B801D3C1372B1D9FCBFCE657333518F8A0C164194A",
+      "result_count": 432,
+      "completed_utc": "2026-10-29T13:07:27.1690868Z"
+    },
+    "v161_interrupt": {
+      "passed": 512,
+      "summary_sha256": "610ABF81703D3AAB9CD73393B4E00571FF4BEEE2D9C34C2F17ED7E0B2ADA5FEA",
+      "result_count": 512,
+      "completed_utc": "2026-10-29T12:49:13.0382758Z"
+    },
+    "v161_rst_l": {
+      "passed": 160,
+      "summary_sha256": "F909DECAADD74107E9ACFB938D4948E0D912B5FA1E35B5ED02F845C504A565C0",
+      "result_count": 160,
+      "completed_utc": "2026-10-29T12:58:36.4562105Z"
+    }
+  },
+  "matrix_cases": 2206.0,
+  "input_guard_note": "Initial runner detected two intentionally updated integration models. Their final hashes match the verified snapshot and precede focused GHDL analysis; all other initial inputs unchanged. Original runner summary retained."
+}

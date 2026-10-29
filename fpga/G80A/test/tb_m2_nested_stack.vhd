@@ -1,3 +1,5 @@
+-- Historical fixture: requires the retired ED9B IVR writer.
+-- Do not run on current RTL; see verification_data/v161_rst_l/README.md.
 --
 -- Nested-MSP24-stack regression testbench (triggered by a real-hardware
 -- investigation of P1314T.COM's Test5 - see Project/P1314Test/README.md
@@ -134,7 +136,7 @@ architecture sim of tb_m2_nested_stack is
         16#1004# => x"3C",                                   -- INC A
         16#1005# => x"32", 16#1006# => x"00", 16#1007# => x"03", -- LD (0300h),A
         16#1008# => x"F1",                                   -- POP AF
-        16#1009# => x"ED", 16#100A# => x"4E",                -- RETI.L
+        16#1009# => x"ED", 16#100A# => x"F3",                -- RETI.L
 
         others => x"00");
 

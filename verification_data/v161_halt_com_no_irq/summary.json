@@ -1,0 +1,53 @@
+{
+  "hardware_tested": false,
+  "com_sha256": "A8A47D8720703C97D5CD03CB03BC2880B864990E66C64CE5C9C39093AD63EF32",
+  "complete": true,
+  "source_sha256": {
+    "fpga\\G80A\\t80_mcode.vhd": "222B2DC83AF3326262434656156FD2A39C02B442187AA75FFE819822B9A79925",
+    "fpga\\G80A\\t80_pack.vhd": "D743F4B12921C1991B5FB0D625AF0FB609E49FA66EFC61D665C5751CC425F646",
+    "hardware_test\\V161HALTTest\\h161_test.asm": "A7D2A5D7AB5E01DC60A6C3307AAFB1C1FBF82E343BCEA96E5248EB052500E8F6",
+    "fpga\\G80A\\test\\tb_ld24mi_com.vhd": "2C0986D1D1B4326F03BD47B673B90E57CE0A571FC9C4676F059666DADBEB1485",
+    "fpga\\G80A\\test\\run_v161_halt_com.ps1": "1E0F87918CB43250BC877B98ECE3CA7769590CD3D0142F9419C98549EF37DD81",
+    "fpga\\G80A\\t80_alu.vhd": "AB549FD5E5A4C0845C1CB6BED1C2926E9AF3785A9B2D7A3EA727B231DE41D3A1",
+    "fpga\\G80A\\t80_reg.vhd": "D9C0A8B4F2945DD1E8A4E6A31B450358DA66E75EA4DE08825FB8DFFA8F6DCF1D",
+    "fpga\\G80A\\t80.vhd": "284114E0AFDF69FB8BD69420938E27FFAB7B2D096AEC5BAE555FECD58D3A8B5D"
+  },
+  "results": [
+    {
+      "exit_code": 1,
+      "inject_fault": false,
+      "passed": true,
+      "blocked_mode": 0,
+      "cpu_mode": 0,
+      "suppress_irq": true,
+      "log_sha256": "FB6AE7FA5B48D64F0AD580D2713C366FAAD1C355F281216B47E1C6516EF0C0DD",
+      "log": "cpu-0-wait-false-fault-false-blocked-0.log",
+      "wait_enabled": false
+    },
+    {
+      "exit_code": 1,
+      "inject_fault": false,
+      "passed": true,
+      "blocked_mode": 1,
+      "cpu_mode": 0,
+      "suppress_irq": true,
+      "log_sha256": "D764622706AC58B2635969AF0ADEAC7899AD2BB3352330AFEBE5605F0BA6B5DD",
+      "log": "cpu-0-wait-false-fault-false-blocked-1.log",
+      "wait_enabled": false
+    },
+    {
+      "exit_code": 1,
+      "inject_fault": false,
+      "passed": true,
+      "blocked_mode": 2,
+      "cpu_mode": 0,
+      "suppress_irq": true,
+      "log_sha256": "769B1246ACAF3F0290A6235E64389FCBEE36DB1429C5D15EFA470CF0BAE89A0E",
+      "log": "cpu-0-wait-false-fault-false-blocked-2.log",
+      "wait_enabled": false
+    }
+  ],
+  "completed_utc": "2026-10-29T13:22:39.1490678Z",
+  "engine": "GHDL 6.0.0 (6.0.0.r0.ge589c698c.dirty) [Dunoon edition]",
+  "started_utc": "2026-10-29T13:22:15.6937156Z"
+}

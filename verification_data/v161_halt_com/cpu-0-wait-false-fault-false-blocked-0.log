@@ -1,0 +1,26 @@
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+test\tb_ld24mi_com.vhd:306:33:@38070ns:(report note): V16.1 HALT / VDP IM2: M0 M1 M2
+test\tb_ld24mi_com.vhd:306:33:@69370ns:(report note): HALT arming M00
+test\tb_ld24mi_com.vhd:306:33:@685310ns:(report note): HALT M00: PASS
+test\tb_ld24mi_com.vhd:306:33:@717790ns:(report note): HALT arming M01
+test\tb_ld24mi_com.vhd:306:33:@1333910ns:(report note): HALT M01: PASS
+test\tb_ld24mi_com.vhd:306:33:@1366390ns:(report note): HALT arming M02
+test\tb_ld24mi_com.vhd:306:33:@1990570ns:(report note): HALT M02: PASS
+test\tb_ld24mi_com.vhd:306:33:@2036750ns:(report note): PASS=03 FAIL=00
+test\tb_ld24mi_com.vhd:367:33:@2040170ns:(report note): HALT M0 IRQ=2 return=2 frame-bytes=4 vector-bytes=4
+test\tb_ld24mi_com.vhd:367:33:@2040170ns:(report note): HALT M1 IRQ=2 return=2 frame-bytes=4 vector-bytes=4
+test\tb_ld24mi_com.vhd:367:33:@2040170ns:(report note): HALT M2 IRQ=2 return=2 frame-bytes=8 vector-bytes=4
+test\tb_ld24mi_com.vhd:507:9:@2040170ns:(report note): COM: output, M0 BDOS, measurement DI and interrupt checks passed
+simulation stopped @2040170ns

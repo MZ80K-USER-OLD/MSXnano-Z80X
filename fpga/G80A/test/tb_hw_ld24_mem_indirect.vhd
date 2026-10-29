@@ -121,6 +121,7 @@ architecture sim of tb_hw_ld24_mem_indirect is
 
     type wait_state_t is (WS_IDLE, WS_ARMED, WS_WAITING_DONE);
     signal wait_state : wait_state_t := WS_IDLE;
+    signal wait_armed_falls : natural range 0 to 3 := 0;
 
     signal cpu_sdram_done_pulse : std_logic;
 
@@ -442,12 +443,12 @@ begin
     cpu_sdram_active <= '1' when (cpu_sdram_bank_in_range = '1' and MREQ_n = '0' and
                                    (RD_n = '0' or WR_n = '0') and RFSH_n = '1')
                         else '0';
-    cpu_sdram_req   <= cpu_sdram_active;
+    cpu_sdram_req   <= cpu_sdram_active when wait_state = WS_WAITING_DONE else '0';
     cpu_sdram_write <= cpu_sdram_req and cpu_sdram_write_r;
     cpu_sdram_addr  <= cpu_sdram_addr_r;
 
     ------------------------------------------------------------------
-    -- fpga/top.v: cpu_sdram_busy-based WAIT_n generator (v8-fixed,
+    -- fpga/top.v: WAIT_n generator with v9 internal-cycle release,
     -- current version) - identical to tb_hw_push24_bank_boundary_
     -- timing.vhd, see that file's declaration comment for the full
     -- v1-v8 rationale.
@@ -460,6 +461,7 @@ begin
             if RESET_n = '0' then
                 cpu_sdram_wait_n <= '1';
                 wait_state <= WS_IDLE;
+                wait_armed_falls <= 0;
                 update_addr_prev <= '0';
                 update_addr_prev2 <= '0';
                 cpu_sdram_addr_r <= (others => '0');
@@ -474,15 +476,22 @@ begin
                            mmu_physical_bank /= x"00" and
                            unsigned(mmu_physical_bank) <= CPU_SDRAM_BANK_MAX then
                             cpu_sdram_wait_n <= '0';
+                            wait_armed_falls <= 0;
                             wait_state <= WS_ARMED;
                         end if;
 
                     when WS_ARMED =>
+                        if clk_falling_3m6_54 = '1' and wait_armed_falls /= 3 then
+                            wait_armed_falls <= wait_armed_falls + 1;
+                        end if;
                         if cpu_sdram_active = '1' then
                             cpu_sdram_addr_r <= std_logic_vector(CPU_SDRAM_BASE +
                                 (unsigned(mmu_physical_bank) & unsigned(A)));
                             cpu_sdram_write_r <= not WR_n;
                             wait_state <= WS_WAITING_DONE;
+                        elsif wait_armed_falls = 3 and MREQ_n = '1' then
+                            cpu_sdram_wait_n <= '1';
+                            wait_state <= WS_IDLE;
                         end if;
 
                     when WS_WAITING_DONE =>
@@ -612,7 +621,7 @@ begin
     process (CLK54)
     begin
         if rising_edge(CLK54) then
-            if cpu_sdram_req = '1' then
+            if cpu_sdram_active = '1' then
                 cpu_din <= cpu_sdram_dout;
             else
                 cpu_din <= mem00(to_integer(unsigned(A)));
@@ -627,7 +636,7 @@ begin
     process (CLK54)
     begin
         if rising_edge(CLK54) then
-            if cpu_sdram_req = '0' and MREQ_n = '0' and WR_n = '0' then
+            if A_Bank = x"00" and MREQ_n = '0' and WR_n = '0' then
                 mem00(to_integer(unsigned(A))) <= DO;
             end if;
         end if;

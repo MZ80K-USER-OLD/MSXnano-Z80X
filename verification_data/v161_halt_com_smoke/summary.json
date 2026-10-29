@@ -1,0 +1,31 @@
+{
+  "started_utc": "2026-10-28T12:32:43.3507316Z",
+  "engine": "GHDL 6.0.0 (6.0.0.r0.ge589c698c.dirty) [Dunoon edition]",
+  "com_sha256": "A8A47D8720703C97D5CD03CB03BC2880B864990E66C64CE5C9C39093AD63EF32",
+  "hardware_tested": false,
+  "complete": true,
+  "results": [
+    {
+      "exit_code": 0,
+      "cpu_mode": 0,
+      "inject_fault": false,
+      "wait_enabled": false,
+      "passed": true,
+      "blocked_mode": 0,
+      "suppress_irq": false,
+      "log": "cpu-0-wait-false-fault-false-blocked-0.log",
+      "log_sha256": "30C4A35A0BA9E15D03A26685894A06DBC5B6871F3829A6FDBB28CBD684ADEB7F"
+    }
+  ],
+  "completed_utc": "2026-10-28T12:32:47.4573185Z",
+  "source_sha256": {
+    "fpga\\G80A\\t80_alu.vhd": "AB549FD5E5A4C0845C1CB6BED1C2926E9AF3785A9B2D7A3EA727B231DE41D3A1",
+    "fpga\\G80A\\t80_reg.vhd": "D9C0A8B4F2945DD1E8A4E6A31B450358DA66E75EA4DE08825FB8DFFA8F6DCF1D",
+    "fpga\\G80A\\test\\run_v161_halt_com.ps1": "1E0F87918CB43250BC877B98ECE3CA7769590CD3D0142F9419C98549EF37DD81",
+    "fpga\\G80A\\t80_pack.vhd": "D743F4B12921C1991B5FB0D625AF0FB609E49FA66EFC61D665C5751CC425F646",
+    "fpga\\G80A\\t80.vhd": "284114E0AFDF69FB8BD69420938E27FFAB7B2D096AEC5BAE555FECD58D3A8B5D",
+    "hardware_test\\V161HALTTest\\h161_test.asm": "A7D2A5D7AB5E01DC60A6C3307AAFB1C1FBF82E343BCEA96E5248EB052500E8F6",
+    "fpga\\G80A\\t80_mcode.vhd": "222B2DC83AF3326262434656156FD2A39C02B442187AA75FFE819822B9A79925",
+    "fpga\\G80A\\test\\tb_ld24mi_com.vhd": "2C0986D1D1B4326F03BD47B673B90E57CE0A571FC9C4676F059666DADBEB1485"
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "complete": true,
+  "source_sha256": {
+    "hardware_test\\V161IRQTest\\bin\\i161test.com": "CB0FDF9AF41FA971A0E0B5BC2E9D4589AA79B3B5F077D304B931A95609DE31E2",
+    "hardware_test\\V161IRQTest\\makefile": "55E2417940C18259BC8B345B56550ED4154CF66A4C4C022C97D6011388048513",
+    "fpga\\G80A\\test\\tb_ld24mi_com.vhd": "2C0986D1D1B4326F03BD47B673B90E57CE0A571FC9C4676F059666DADBEB1485",
+    "fpga\\G80A\\test\\run_v161_irq_com.ps1": "9E0024195CD23DF177C663C419B7B1014B8411D0C9BF8D1985881E933E7AFAF0",
+    "fpga\\G80A\\t80_reg.vhd": "D9C0A8B4F2945DD1E8A4E6A31B450358DA66E75EA4DE08825FB8DFFA8F6DCF1D",
+    "fpga\\G80A\\t80_mcode.vhd": "222B2DC83AF3326262434656156FD2A39C02B442187AA75FFE819822B9A79925",
+    "fpga\\G80A\\t80.vhd": "284114E0AFDF69FB8BD69420938E27FFAB7B2D096AEC5BAE555FECD58D3A8B5D",
+    "fpga\\G80A\\t80_pack.vhd": "D743F4B12921C1991B5FB0D625AF0FB609E49FA66EFC61D665C5751CC425F646",
+    "fpga\\G80A\\t80_alu.vhd": "AB549FD5E5A4C0845C1CB6BED1C2926E9AF3785A9B2D7A3EA727B231DE41D3A1",
+    "hardware_test\\V161IRQTest\\i161_test.asm": "DCE2CBC24AEDCF3913A5D2F19AEC79632495D3452ADEEE3CC758249EEF651D54"
+  },
+  "engine": "GHDL 6.0.0 (6.0.0.r0.ge589c698c.dirty) [Dunoon edition]",
+  "results": [
+    {
+      "log_sha256": "212F88DDDBB8EA8A491A8643F725C06C39FE579195B61F4A6FDB50D80CE3F816",
+      "exit_code": 0,
+      "cpu_mode": 0,
+      "log": "cpu-0-wait-false-fault-false.log",
+      "passed": true,
+      "wait_enabled": false,
+      "suppress_irq": false,
+      "expected": "PASS=04 FAIL=00",
+      "inject_fault": false
+    },
+    {
+      "log_sha256": "508BA3B2EBFC20E72524CBD767187004A3F1260586C7A1A0B7CD955BC135E431",
+      "exit_code": 0,
+      "cpu_mode": 0,
+      "log": "cpu-0-wait-false-fault-true.log",
+      "passed": true,
+      "wait_enabled": false,
+      "suppress_irq": false,
+      "expected": "PASS=00 FAIL=04",
+      "inject_fault": true
+    },
+    {
+      "log_sha256": "16AC1C3347F44F27B100F2E35FA020B8896B135B9B888B148CD0267F077C9F7D",
+      "exit_code": 0,
+      "cpu_mode": 0,
+      "log": "cpu-0-wait-true-fault-false.log",
+      "passed": true,
+      "wait_enabled": true,
+      "suppress_irq": false,
+      "expected": "PASS=04 FAIL=00",
+      "inject_fault": false
+    },
+    {
+      "log_sha256": "5ADFC69765D6F510F8A3B6C9C1850693432F32B3D6EA5E9A5D7CE9D24F2E2949",
+      "exit_code": 0,
+      "cpu_mode": 0,
+      "log": "cpu-0-wait-true-fault-true.log",
+      "passed": true,
+      "wait_enabled": true,
+      "suppress_irq": false,
+      "expected": "PASS=00 FAIL=04",
+      "inject_fault": true
+    },
+    {
+      "log_sha256": "35BEBB78ABB17CEDD169A58FC1503D69ECF419C26425257AD6FCEADCD0B08FA0",
+      "exit_code": 0,
+      "cpu_mode": 1,
+      "log": "cpu-1-wait-false-fault-false.log",
+      "passed": true,
+      "wait_enabled": false,
+      "suppress_irq": false,
+      "expected": "PASS=04 FAIL=00",
+      "inject_fault": false
+    },
+    {
+      "log_sha256": "F9214E46A0674C98C675DB3F9E2E0DCF41C39EC71BF889FF6989BDFBDA33DC6A",
+      "exit_code": 0,
+      "cpu_mode": 1,
+      "log": "cpu-1-wait-false-fault-true.log",
+      "passed": true,
+      "wait_enabled": false,
+      "suppress_irq": false,
+      "expected": "PASS=00 FAIL=04",
+      "inject_fault": true
+    },
+    {
+      "log_sha256": "16AC1C3347F44F27B100F2E35FA020B8896B135B9B888B148CD0267F077C9F7D",
+      "exit_code": 0,
+      "cpu_mode": 1,
+      "log": "cpu-1-wait-true-fault-false.log",
+      "passed": true,
+      "wait_enabled": true,
+      "suppress_irq": false,
+      "expected": "PASS=04 FAIL=00",
+      "inject_fault": false
+    },
+    {
+      "log_sha256": "5ADFC69765D6F510F8A3B6C9C1850693432F32B3D6EA5E9A5D7CE9D24F2E2949",
+      "exit_code": 0,
+      "cpu_mode": 1,
+      "log": "cpu-1-wait-true-fault-true.log",
+      "passed": true,
+      "wait_enabled": true,
+      "suppress_irq": false,
+      "expected": "PASS=00 FAIL=04",
+      "inject_fault": true
+    }
+  ],
+  "simulation_wait_ticks": 4096,
+  "completed_utc": "2026-10-29T13:20:47.3369146Z",
+  "memory_banks": [
+    "00",
+    "01",
+    "02"
+  ],
+  "hardware_tested": false,
+  "started_utc": "2026-10-29T13:18:42.7971163Z",
+  "simulation_com_sha256": "39EC8351B78F354E52A1A81C4C4FE304D99CEC9CA84E0A143FB4CECCEA95EF76"
+}

@@ -1,0 +1,109 @@
+{
+  "results": [
+    {
+      "inject_fault": false,
+      "log_sha256": "B496FC580D7D96EC33449BD98328655E8497F94283756FEA2CB65B327CCB6F65",
+      "expected": "PASS=1A FAIL=00",
+      "wait_enabled": false,
+      "log": "cpu-0-wait-false-fault-false.log",
+      "cpu_mode": 0,
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "inject_fault": true,
+      "log_sha256": "23D36E7B0A7951E7EECD47B89FF934D48A282B14761614D79F73BBF49C616170",
+      "expected": "PASS=02 FAIL=18",
+      "wait_enabled": false,
+      "log": "cpu-0-wait-false-fault-true.log",
+      "cpu_mode": 0,
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "inject_fault": false,
+      "log_sha256": "ABA806AB1960BE8905EE158B689841E72D6FC81724DB82FA55C9C7200F16E119",
+      "expected": "PASS=1A FAIL=00",
+      "wait_enabled": true,
+      "log": "cpu-0-wait-true-fault-false.log",
+      "cpu_mode": 0,
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "inject_fault": true,
+      "log_sha256": "5625C06906FA8192B0431222CC602C043FB9E4C062932A3C4132E3B42BA8E810",
+      "expected": "PASS=02 FAIL=18",
+      "wait_enabled": true,
+      "log": "cpu-0-wait-true-fault-true.log",
+      "cpu_mode": 0,
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "inject_fault": false,
+      "log_sha256": "3234EC8D23159D29768112B9A7D5801CEB73E625BF2A75173132D872538B9E2B",
+      "expected": "PASS=1A FAIL=00",
+      "wait_enabled": false,
+      "log": "cpu-1-wait-false-fault-false.log",
+      "cpu_mode": 1,
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "inject_fault": true,
+      "log_sha256": "D3920C70E0A7AF8E291F0F93039D648FE3AD66BC93663A72CA59108C310273F7",
+      "expected": "PASS=02 FAIL=18",
+      "wait_enabled": false,
+      "log": "cpu-1-wait-false-fault-true.log",
+      "cpu_mode": 1,
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "inject_fault": false,
+      "log_sha256": "ABA806AB1960BE8905EE158B689841E72D6FC81724DB82FA55C9C7200F16E119",
+      "expected": "PASS=1A FAIL=00",
+      "wait_enabled": true,
+      "log": "cpu-1-wait-true-fault-false.log",
+      "cpu_mode": 1,
+      "passed": true,
+      "exit_code": 0
+    },
+    {
+      "inject_fault": true,
+      "log_sha256": "5625C06906FA8192B0431222CC602C043FB9E4C062932A3C4132E3B42BA8E810",
+      "expected": "PASS=02 FAIL=18",
+      "wait_enabled": true,
+      "log": "cpu-1-wait-true-fault-true.log",
+      "cpu_mode": 1,
+      "passed": true,
+      "exit_code": 0
+    }
+  ],
+  "started_utc": "2026-10-29T13:17:59.1513275Z",
+  "completed_utc": "2026-10-29T13:18:41.8983951Z",
+  "hardware_result": "PASS=1A FAIL=00",
+  "memory_banks": [
+    "00",
+    "01",
+    "02"
+  ],
+  "source_sha256": {
+    "fpga\\G80A\\t80_pack.vhd": "D743F4B12921C1991B5FB0D625AF0FB609E49FA66EFC61D665C5751CC425F646",
+    "hardware_test\\V161Test\\bin\\v161test.com": "6C0DC732113E8A55B1068494F62BB7EEBF03442776DB3E2C90BDF6525F4321D6",
+    "fpga\\G80A\\t80.vhd": "284114E0AFDF69FB8BD69420938E27FFAB7B2D096AEC5BAE555FECD58D3A8B5D",
+    "fpga\\G80A\\t80_mcode.vhd": "222B2DC83AF3326262434656156FD2A39C02B442187AA75FFE819822B9A79925",
+    "hardware_test\\V161Test\\v161_test.asm": "4F7710A3C43B01FC48CEF2F8284C84DB21D2D0EAB236D4E422A4839AB98E5ADA",
+    "fpga\\G80A\\test\\tb_ld24mi_com.vhd": "2C0986D1D1B4326F03BD47B673B90E57CE0A571FC9C4676F059666DADBEB1485",
+    "hardware_test\\V161Test\\makefile": "AC972E51F4D91AE1BA12598C6ED382EA12F0D1CEC33FC1CE4066679ED9AF493C",
+    "fpga\\G80A\\t80_alu.vhd": "AB549FD5E5A4C0845C1CB6BED1C2926E9AF3785A9B2D7A3EA727B231DE41D3A1",
+    "fpga\\G80A\\test\\run_v161_com.ps1": "0B4A666313AD856E97E399C3582EB7DF99EF729ABFBF2ADD998287AEBA110B84",
+    "fpga\\G80A\\t80_reg.vhd": "D9C0A8B4F2945DD1E8A4E6A31B450358DA66E75EA4DE08825FB8DFFA8F6DCF1D"
+  },
+  "complete": true,
+  "hardware_report_date": "2026-10-25",
+  "hardware_evidence": "User-reported V161TEST result: all 26 checks passed. FPGA bitstream hash not supplied; IRQ/NMI outside this COM's scope.",
+  "hardware_tested": true,
+  "engine": "GHDL 6.0.0 (6.0.0.r0.ge589c698c.dirty) [Dunoon edition]"
+}

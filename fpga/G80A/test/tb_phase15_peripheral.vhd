@@ -1,3 +1,5 @@
+-- Historical fixture: requires retired ED9B IVR and EDFF RST.L.
+-- Do not run on current RTL; see verification_data/v161_rst_l/README.md.
 --
 -- Phase15 self-checking testbench: "peripheral CPU operation" audit
 -- (MSX_T80_24bit化_実装手順_V4_2026-10-11.md section17 "Phase 15 - 周辺
@@ -171,7 +173,7 @@ architecture sim of tb_phase15_peripheral is
         16#0038# => x"ED", 16#0039# => x"C9",
         16#3000# => x"21", 16#3001# => x"00", 16#3002# => x"03",
         16#3003# => x"34",
-        16#3004# => x"ED", 16#3005# => x"4E",
+        16#3004# => x"ED", 16#3005# => x"F3",
         others => x"00");
 
     -- Records A_Bank at the moment of each write, same technique as

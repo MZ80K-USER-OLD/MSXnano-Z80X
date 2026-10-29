@@ -1,0 +1,17 @@
+t80_mcode.vhd:281:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:319:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:320:17:warning: declaration of "IR" hides port "IR" [-Whide]
+                IR : std_logic_vector(7 downto 0)
+                ^
+PASS: cpu-0-wait-false-fault-false-blocked-0.log
+PASS: cpu-0-wait-false-fault-true-blocked-0.log
+PASS: cpu-0-wait-true-fault-false-blocked-0.log
+PASS: cpu-0-wait-true-fault-true-blocked-0.log
+PASS: cpu-1-wait-false-fault-false-blocked-0.log
+PASS: cpu-1-wait-false-fault-true-blocked-0.log
+PASS: cpu-1-wait-true-fault-false-blocked-0.log
+PASS: cpu-1-wait-true-fault-true-blocked-0.log

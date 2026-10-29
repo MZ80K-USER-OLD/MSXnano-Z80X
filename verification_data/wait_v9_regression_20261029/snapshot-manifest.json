@@ -1,0 +1,1084 @@
+{
+  "verified_archive_entries": 268,
+  "archive_sha256": "D4458A3E4E74019E0F3397B39DE0E4D92B9BF50BD7EBDF657B783D47D4DAFD10",
+  "saved_utc": "2026-10-29T12:43:30.0048909Z",
+  "worktree_dirty": true,
+  "timing_closed": false,
+  "hardware_image_identity_confirmed": false,
+  "files": {
+    "fpga\\src\\megaram.v": {
+      "sha256": "31354F10645C3F85FF6C1A59A7A4315AA471790D716BF90B4FA1474B8954A7BE",
+      "length": 7481
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\source_product_description_info_frame.sv": {
+      "sha256": "1B35D31AAFDA97CAAC8AFD6335F6E62BC290EC65A8A0570F206AC7D9395C2951",
+      "length": 2403
+    },
+    "fpga\\src\\usb\\sys_ctrl.v": {
+      "sha256": "326D52E56B4A1196CD3B9CDC028643310067763E367DC42AD6177F4E79B3BD72",
+      "length": 10867
+    },
+    "fpga\\G80A_Std\\T80s.vhd": {
+      "sha256": "5280028718D0880B4DC68D01445150FE8B3574D953EDCF6F9DB3241A5CB3AABD",
+      "length": 5415
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\memory_controller.v": {
+      "sha256": "8971D9B3BDA75AF62253542140C7CB1A07652DD5C340A90421CF507A0B07EEEF",
+      "length": 3665
+    },
+    "hardware_test\\Ld24MemIndirectTest\\ld24_mem_indirect_test.asm": {
+      "sha256": "E517AECD85BD2958929D705589AABABBF8D26AC1756A65CE19EEFD5CF2BA2C79",
+      "length": 30562
+    },
+    "fpga\\G80A\\test\\tb_phase6_mmu_attr.vhd": {
+      "sha256": "55A005C8ED3723664FA23F5BA80314D47DC9C5B685C34D2F08D163513FEE7C54",
+      "length": 11109
+    },
+    "fpga\\src\\16k_logo.hex": {
+      "sha256": "396499975DA27B8F15BBFB4DA173BB37ACB0F54C16C0667204974E62ADAB02A4",
+      "length": 65536
+    },
+    "hardware_test\\Push24Test\\bin\\p24test.com": {
+      "sha256": "BA6BEA2756A09A56D9A0410C9BCAD3A2B573BADA839175B000E0860E2F3EC387",
+      "length": 1671
+    },
+    "fpga\\G80A\\test\\tb_phase2_addr24.vhd": {
+      "sha256": "D8D1D9B1DAAE79224B4612EC431E46A508194CC97700BFCC2BA98D72ED784B5D",
+      "length": 3629
+    },
+    "fpga\\G80A\\t80.vhd": {
+      "sha256": "284114E0AFDF69FB8BD69420938E27FFAB7B2D096AEC5BAE555FECD58D3A8B5D",
+      "length": 140076
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_hvcounter.vhd": {
+      "sha256": "382A351C67DEFC395037F97E33D7BA4D2EAB171BA1E1DA204719F820B1A82038",
+      "length": 16318
+    },
+    "fpga\\G80A_Std\\t80.vhd": {
+      "sha256": "57400E3EB9B85F89AD693D17832D3A94B03163B12FAC71FF5C0DB498C72F28D9",
+      "length": 40541
+    },
+    "hardware_test\\Index24Test\\index24_m2.asm": {
+      "sha256": "E753A000A98F21FBFD27D76DA2E9DA0F4C075D6E1E0DDA297C7A3EF958601F6D",
+      "length": 74
+    },
+    "fpga\\tn_vdp_v3_v9958\\res\\hexscreen.bin.hex": {
+      "sha256": "4550FE1608DF536B328A45EA5F040386A07CA7DC64301993938C13DDF057B09D",
+      "length": 65536
+    },
+    "fpga\\src\\gowin\\clk_108p.v": {
+      "sha256": "15F9CCEC0F6BA8B8FB085370C30ABF75BDA930BB926A4681AD0AD25DB6866E15",
+      "length": 1978
+    },
+    "fpga\\jtopl\\jtopl_pg.v": {
+      "sha256": "8F4A26682C7E5C8B64B7A155643A62182E48CEA7DC0A1803B92AFDC16F1ABF5F",
+      "length": 3582
+    },
+    "fpga\\denoise\\denoise_8.vhd": {
+      "sha256": "045115C8592A801CD173C10DFC7E0AC525CB705968178AD63E4BB7A9C648BECF",
+      "length": 644
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_interrupt.vhd": {
+      "sha256": "86E9B73A245CF561CA01027C50BAEAE6A27BAA8F21C5C90238DEAC6BFD48ABA4",
+      "length": 6389
+    },
+    "fpga\\G80A\\test\\tb_m2_nested_stack.vhd": {
+      "sha256": "0FF6857A587710B683E2D021C1C81D6C4476A3AF87C795EA55158209CCC1F12D",
+      "length": 17843
+    },
+    "fpga\\jtopl\\jt2413.v": {
+      "sha256": "378091AF7379B6E42C4A2A3411ED716B06CE67B733F0F3AD80B24AC14F7D73CD",
+      "length": 6683
+    },
+    "fpga\\src\\memory_bus_router24.v": {
+      "sha256": "8A536D21A6D39D0A6DC99C5E0AB790C2BB7EA4D426B062C8705EB49405652E0C",
+      "length": 864
+    },
+    "fpga\\jtopl\\jtopl_eg_comb.v": {
+      "sha256": "1C2B4D698B2C25B76B13E545623BB31C8A2B7752E821CD121E3958AA585E21DA",
+      "length": 3871
+    },
+    "fpga\\pulse_min_max\\pulse_max.v": {
+      "sha256": "41AF9E9EF4ABC843C50769CC3F6704FBC0AF6886DF4D1987D296AF4D700AF422",
+      "length": 2201
+    },
+    "fpga\\jtopl\\jtopl2.v": {
+      "sha256": "6A71A7E61C4D5AAE2EB733B0ADFF038F29DF349352D5177CF71C1F1BB572DA50",
+      "length": 1761
+    },
+    "hardware_test\\Index16Test\\makefile": {
+      "sha256": "1152818F248FB416981CB6D2A94821253104DA7DB9D263A3204A069A0CD904AD",
+      "length": 218
+    },
+    "fpga\\msx_debug\\uart_tx.v": {
+      "sha256": "962A86EEB196FB97DA33FBCFDE224933742C3F87B2E30BD1486484BABD9D19B1",
+      "length": 1572
+    },
+    "fpga\\jtopl\\jtopl_eg_final.v": {
+      "sha256": "558D4595BB321E586489439CA5204C3A0401B2F7B4573819C84948393A43E0AB",
+      "length": 2312
+    },
+    "fpga\\G80A\\test\\tb_phase10_m2_basic.vhd": {
+      "sha256": "2D9598ECDE290B5B01FA9D7E0F9A601B84D09D729FA45FF3D553D2D4C635F796",
+      "length": 14313
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\packet_assembler.sv": {
+      "sha256": "0B31287E145D59D9B053E354C6B7B145F546BB33B2E099165D0113BD00F79E63",
+      "length": 3305
+    },
+    "fpga\\tang20k.sdc": {
+      "sha256": "681D876BA6ADCF360890A3122C50E8E41021B22652C3D3D5B5EB30283A0CB0F4",
+      "length": 11237
+    },
+    "hardware_test\\V161IRQTest\\i161_test.asm": {
+      "sha256": "DCE2CBC24AEDCF3913A5D2F19AEC79632495D3452ADEEE3CC758249EEF651D54",
+      "length": 10090
+    },
+    "fpga\\G80A\\T80s.vhd": {
+      "sha256": "A21853D2ADA277822FB5EA77548270DDF4B6EC7E3BB0C15B28D403E8D089FCF6",
+      "length": 5611
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\pinfilter.v": {
+      "sha256": "0C9660C4A80CD3C71BB3AA4EEAC55AEA31F8AC7E2671984EE24877D6C7BDF93F",
+      "length": 525
+    },
+    "fpga\\jtopl\\jtopl_sh.v": {
+      "sha256": "A531C43FCD6FC73FE6BDA3B9D998F20E1A419C95CA1CA11E15CBD9F2237DBB33",
+      "length": 1218
+    },
+    "fpga\\src\\16k_msx2p_fm_logo.hex": {
+      "sha256": "F7A6445A854C6186A282DAF9E23FD1E64DDCEEB91BA9CD92EE30C6B2C222D11B",
+      "length": 65536
+    },
+    "fpga\\jtopl\\jtopl.v": {
+      "sha256": "9B4E58C0F06B4D6160AB774A075FA656635B0E7E53E2FC7895C9C12F63F97569",
+      "length": 8263
+    },
+    "fpga\\G80A\\test\\tb_phase3_m1_data.vhd": {
+      "sha256": "062E19C5AA53D043E3E3F99ECC1B4C2F7C4F1685393B0815E8AD39CDEB34C937",
+      "length": 10853
+    },
+    "fpga\\src\\usb\\mcu_spi.v": {
+      "sha256": "37F2ECABFA7E99F19D8FD0D8F92B31465EB89547E1F246B813D263006E484CDB",
+      "length": 3675
+    },
+    "hardware_test\\Push24Test\\README.md": {
+      "sha256": "715116A4094928CDFEAFE89337A8352F45C58A06D3CA78520B2146EF3BC1CB84",
+      "length": 34198
+    },
+    "hardware_test\\Ld24MemIndirectTest\\makefile": {
+      "sha256": "3522ADBB40CDCB836C27C5FAC6A0C66CA784364D453B7DCCF5BA00B2EC5C0D15",
+      "length": 782
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\packet_picker.sv": {
+      "sha256": "8768534EB8BABCA99821EF70086F49B2C3872F972EB7249FC458BF9EDA225F8F",
+      "length": 7950
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\tmds_channel.sv": {
+      "sha256": "CA606C6FACEBF0CC4A4A0310C9D4E1CA6196919D6565177957D83DCF574CD8F1",
+      "length": 5077
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_ntsc_pal.vhd": {
+      "sha256": "475CC6F376C2D59C9494C06870F04E7A7D08B4EC0E5F4553D1E34EBDDAC7B69D",
+      "length": 10117
+    },
+    "hardware_test\\V161Test\\v161_test.asm": {
+      "sha256": "4F7710A3C43B01FC48CEF2F8284C84DB21D2D0EAB236D4E422A4839AB98E5ADA",
+      "length": 5951
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\v9958.sdc": {
+      "sha256": "25A66CCEE255A275BDAA8BB531DCDD2B7ED9AF16E5704FB21D46E486AC926B3B",
+      "length": 1464
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp.vhd": {
+      "sha256": "04DE6A2DFB261201E524347909BBCE33407180B517B1935C317CE7BF7435A532",
+      "length": 93334
+    },
+    "fpga\\G80A_Std\\t80_reg.vhd": {
+      "sha256": "C7C11EC5E8EF2168CC24C15A76FDA450E3C314F8AC38F9AA91E7B33B4C92EB58",
+      "length": 4066
+    },
+    "fpga\\G80A\\test\\tb_phase11_call_ret_l.vhd": {
+      "sha256": "2D7533BC042F2D319F9CD93542A3C35F3206CAAA191F48BEE69C0FA87FCA8CEA",
+      "length": 21932
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24.log": {
+      "sha256": "D634380FD1A4F09D35145A33FFE2BDFB4DCC6636DF9BD42705101D0595B01639",
+      "length": 2212
+    },
+    "fpga\\G80A\\T80_RegX.vhd": {
+      "sha256": "4B3278DF698789316E129CAF863F33EC81E3D91EDCFDCED6C4802CD163D084FB",
+      "length": 4564
+    },
+    "hardware_test\\Index24Test\\bin\\index24.com": {
+      "sha256": "773B42F15EA4F7F29F89D7E293B5B46664597A3631B702D0F5F74EFD2EAFB739",
+      "length": 725
+    },
+    "fpga\\src\\ocm\\lpf.vhd": {
+      "sha256": "11567190A666A1CB6732ED10A068588F0892F93ABA15D28D956C898CD22B1977",
+      "length": 10284
+    },
+    "fpga\\G80A\\test\\tb_ld24_mem_indirect.vhd": {
+      "sha256": "173DB9901DA17B30EFDFE7A2F89F269CCECA8BFF0B0C2D259EF8A3993009130C",
+      "length": 22385
+    },
+    "fpga\\G80A\\test\\run_hw_m2_internal_cycle_wait.ps1": {
+      "sha256": "4F3E654855E6C232C55F1F5821CDCB2A118AC2B048B820EB8ACE483AE230F026",
+      "length": 1060
+    },
+    "hardware_test\\V161IRQTest\\README.md": {
+      "sha256": "0A5FA9263B2039ED09498AE03992B429B7BFE5E0CF40219C8A1EAB051AEB3739",
+      "length": 12666
+    },
+    "fpga\\tang20k.cst": {
+      "sha256": "86E419B8B4D9D72CA8A13863612145698CCBB00F53661782D45DE90298F2338A",
+      "length": 2701
+    },
+    "fpga\\src\\usb\\mcu_spi_new.v": {
+      "sha256": "1EB7DC4B8513616E2C5A9C72DD5FBE1D0CBAF9FAB1E008C2C5F62A6BE5B39A8B",
+      "length": 3547
+    },
+    "fpga\\src\\ocm\\scc_wave2.vhd": {
+      "sha256": "0EC10A846BD9EF90B5B84ED4E33D015C45A729D353DD45C0F8D74841ED1CBBEC",
+      "length": 21214
+    },
+    "fpga\\src\\uart_tx.v": {
+      "sha256": "962A86EEB196FB97DA33FBCFDE224933742C3F87B2E30BD1486484BABD9D19B1",
+      "length": 1572
+    },
+    "fpga\\tn_vdp_v3_v9958\\res\\hexfont.bin": {
+      "sha256": "532703BB22C32659B56F2EC2E7E5B8041386D6C8CE07932C98300BE1695646A2",
+      "length": 2048
+    },
+    "fpga\\src\\wondertang\\sdcmd_ctrl.sv": {
+      "sha256": "DC9314C4D5F4E69351939773A40134FCDF275B51DDEA3DAE9E0323EDDC4D450E",
+      "length": 4581
+    },
+    "fpga\\G80A\\test\\tb_phase9_push24_pop24.vhd": {
+      "sha256": "7CC7BA8484AD1FF07B7DC35EC915D0CCF846B75579596346B67AD43D6202CF87",
+      "length": 19932
+    },
+    "fpga\\tn_vdp_v3_v9958\\res\\bootscreen.bin.hex": {
+      "sha256": "DBF46B55CAD207CCF27942AFB4BBB2C132D9049F4861BF6C28650B877FDACB16",
+      "length": 65536
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_text12.vhd": {
+      "sha256": "86A2B13F1A12878F1682E84C7C8A3832BAF40FF4EEB8F139C38F2FE61BFC2ABF",
+      "length": 21901
+    },
+    "fpga\\jtopl\\jtopll_mmr.v": {
+      "sha256": "117B11B965DE4076D0EEE6ECB20A45A05F9B6EC3A59196A0E2323659A9E4907F",
+      "length": 7109
+    },
+    "fpga\\G80A\\test\\run_v161_im0.ps1": {
+      "sha256": "BAAF87206B0139C3A592CEC995157653854E43D289A2DC797E78395950095D2E",
+      "length": 2696
+    },
+    "fpga\\MSXNanoTang20K_Z80X24.gprj": {
+      "sha256": "3469E7034FA7D4C4BD804406F71B2EFC47792422C98FAAAB6D1CAF4CE4D380F5",
+      "length": 9992
+    },
+    "fpga\\jtopl\\jtopl_exprom.v": {
+      "sha256": "5B6081366368EB1D5E9076AA7B2894357D912E2ECB5EF6879D21B15309AA8B26",
+      "length": 11980
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\gowin\\clk_135p_tmp.v": {
+      "sha256": "8E5F05455A8E6D1DACCCCA0D8BAB2B31A20C36C07B49D274844B750B6D10FD90",
+      "length": 690
+    },
+    "fpga\\G80A\\test\\run_v15_index16.ps1": {
+      "sha256": "705BDF8B340841CC42E8DC734291227112395D4A4AE80D5CBE9B95925BC702EC",
+      "length": 8159
+    },
+    "fpga\\G80A\\test\\tb_hw_ld24_mem_indirect.vhd": {
+      "sha256": "40F3C05F146B60D8F50443F9FE04DA3FDA897AE97BAB64DBD8F457462F00D6F5",
+      "length": 42366
+    },
+    "hardware_test\\MMUTest\\README.md": {
+      "sha256": "21758520433642671A7A4F7932A4EC00A6DFC34767001BC7CED9DA73793B829F",
+      "length": 8341
+    },
+    "hardware_test\\P1314Test\\makefile": {
+      "sha256": "46B20DB08C9A332D881FD65E19F37B0D72EA53F5B5F8973CB18CA2FE66AA3225",
+      "length": 1010
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_package.vhd": {
+      "sha256": "308ACF3D97ACBF719A2A71BF4779AE23D57515271FC98F9EA21B32EA827A9186",
+      "length": 9523
+    },
+    "fpga\\top.v": {
+      "sha256": "E59D48039BE3E5B4D2445E2912B0473654BBD8D9DAAAEB44A13645DF210AB6AD",
+      "length": 79003
+    },
+    "fpga\\jtopl\\jtopl_sh_rst.v": {
+      "sha256": "E4DAFCC69747353F13E556E16D4078CB2358CA5835F2E6AE779E94C6208422F4",
+      "length": 1460
+    },
+    "fpga\\jtopl\\jtopll_reg.v": {
+      "sha256": "78915C11F8CCD2B08FB8FE67F9E409742398EEB0512773C0EFDD8E1B3545F56D",
+      "length": 6681
+    },
+    "fpga\\G80A_Std\\t80_pack.vhd": {
+      "sha256": "99DF0EB5C412877552E1A2D94A323C959F8BFF6C4CFF2B4E1991977EB9685B04",
+      "length": 8583
+    },
+    "fpga\\src\\msx_goauld_settings_menu\\assets\\16k_msx2p_fm_logo_menu_orig.bin": {
+      "sha256": "79B730D5217A0742C52D425EC079CBE9D61442C4AE71E8C407B5F81FACE61F0E",
+      "length": 16384
+    },
+    "fpga\\G80A\\t80_reg.vhd": {
+      "sha256": "D9C0A8B4F2945DD1E8A4E6A31B450358DA66E75EA4DE08825FB8DFFA8F6DCF1D",
+      "length": 4176
+    },
+    "hardware_test\\MMUTest\\mmu_test.asm": {
+      "sha256": "848C2CA466E9081B0DDE0FEF13CC0E3F9746506DEF83CC8E359AA1DB574F0A96",
+      "length": 11671
+    },
+    "fpga\\G80A\\mmu24.vhd": {
+      "sha256": "0679D7932F2BB85952E9A7ED7A8FAD439CDF1E1EF180F1D8D8F099D1BBF2A9BE",
+      "length": 9046
+    },
+    "fpga\\src\\msxnano_dock_joystick.vhd": {
+      "sha256": "BE78DB56FD605858E4361BC76634705F02CE9EF0984FCB7349597C73E12E03AC",
+      "length": 5572
+    },
+    "fpga\\src\\gowin\\clk_108p_tmp.v": {
+      "sha256": "1BB7B51DEFF7906549C97CD36130FB7A701062CC828CFA0FD9F8098429D41134",
+      "length": 690
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\gowin\\clk_108p_tmp.v": {
+      "sha256": "1BB7B51DEFF7906549C97CD36130FB7A701062CC828CFA0FD9F8098429D41134",
+      "length": 690
+    },
+    "fpga\\jtopl\\jtopl_csr.v": {
+      "sha256": "954C3D1B91C81950EEC90C51126D542338E4ADF5EEDCDD34DAD4AFBF54911E1D",
+      "length": 2457
+    },
+    "fpga\\MSXNanoTang20K_Std.gprj.user": {
+      "sha256": "E83E66146176BF43953083218D89EF2E7142348B762D8D3861EC7E64C188A5F4",
+      "length": 815
+    },
+    "fpga\\src\\gowin_clkdiv2\\gowin_clkdiv2_tmp.vhd": {
+      "sha256": "5851E4650E5714EEE15095ECFEA8741619D6AF202F6F6E2DEF06B75F8457A4CE",
+      "length": 730
+    },
+    "hardware_test\\V161Test\\README.md": {
+      "sha256": "224AA29B10612207C495895E4DE0222D4CA263B0E9DED1887AB3BC43A823D66F",
+      "length": 4900
+    },
+    "hardware_test\\Index16Test\\bin\\index16.com": {
+      "sha256": "9772F93864B98D4702B70A53C11DA9E045760C6BEB1E2A912C81233BE30FA517",
+      "length": 675
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24.fs": {
+      "sha256": "90DC27593A9ED53B1277269A1251F2FB3771ED9B9E3762760730DDC158DE8A91",
+      "length": 7264153
+    },
+    "fpga\\src\\bios_msx2p.hex": {
+      "sha256": "E3B71A72188FFF1F0949FBE8E199A6DCE9B994A3BCF10A8EABFAB33CFF24D262",
+      "length": 131072
+    },
+    "fpga\\G80A\\test\\tb_phase11_jrl.vhd": {
+      "sha256": "99F61D8F26B52D16468D16C846115B19E949919184FD312CAD731D2C28A00A5F",
+      "length": 11141
+    },
+    "fpga\\G80A\\test\\tb_hw_push24_bank_boundary_timing.vhd": {
+      "sha256": "DFFDE43E80CEF09715625C59907BD5D5CAB9D0886C451269E3791BBD56B544CF",
+      "length": 48972
+    },
+    "fpga\\jtopl\\jtopl_acc.v": {
+      "sha256": "455E03DB5664393FF1E48498A2A839C01783B969E0533F1A2ECA6715A96B5D43",
+      "length": 1866
+    },
+    "fpga\\src\\subrom_msx2p.v": {
+      "sha256": "6922FA7D4243BB0AFE07E7EA293433BD55E21DD352FF92D2A864F2F105CF8902",
+      "length": 457
+    },
+    "fpga\\tn_vdp_v3_v9958\\res\\hexscreen.bin": {
+      "sha256": "64086CFE26CE3416309E98E75D4F1A96FD01022506AD3D7EDA5263A8751F771E",
+      "length": 16384
+    },
+    "fpga\\tn_vdp_v3_v9958\\res\\bootscreen.bin": {
+      "sha256": "9CAE1D2339F3201C2E78A59C92F6F7ADE70DF1A39EAAE37F1BE68193E13DC5AE",
+      "length": 16384
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_doublebuf.vhd": {
+      "sha256": "5AF777C6F2A66ACC52CC914B95EA8D78E0A76A8D578163D7503CE65D3F96FB6B",
+      "length": 7918
+    },
+    "fpga\\src\\wondertang\\pinfilter.v": {
+      "sha256": "0C9660C4A80CD3C71BB3AA4EEAC55AEA31F8AC7E2671984EE24877D6C7BDF93F",
+      "length": 525
+    },
+    "fpga\\src\\16k_msx2p_subrom.hex": {
+      "sha256": "02CE31CA9FD5C07AFB5DF16971819DCED799E3814D8AEEFAF9DACBC95F8A5DA4",
+      "length": 65536
+    },
+    "fpga\\tn_vdp_v3_v9958\\tn_vdp_v3_v9958.gprj": {
+      "sha256": "3488D12B524B57C01B6D19A647B741FD66EA6019C2A37DC363941FB0140D0027",
+      "length": 3487
+    },
+    "fpga\\src\\impulse.v": {
+      "sha256": "53EC7564A99F5E8DF673D49CAD6080401937F22488751D0FC9A4C65EF27A90AC",
+      "length": 202
+    },
+    "fpga\\src\\usb\\ps2_hid_bridge.vhd": {
+      "sha256": "F33299FCBF34E1C05CAD865CDEBB0DCD773DD7F90146D0791F007C3B2848AA65",
+      "length": 11514
+    },
+    "fpga\\G80A\\t80_pack.vhd": {
+      "sha256": "D743F4B12921C1991B5FB0D625AF0FB609E49FA66EFC61D665C5751CC425F646",
+      "length": 16729
+    },
+    "fpga\\src\\gowin_clkdiv\\gowin_clkdiv_tmp.v": {
+      "sha256": "4FD42DEF2FC9ED21D10C5B700E2699F945973020058C8250CD1AB83204B19DB5",
+      "length": 619
+    },
+    "hardware_test\\Push24Test\\makefile": {
+      "sha256": "AFCD630D69529DC6557480A411F07E223478B9BD146F65B0A4CEDA4E252865B7",
+      "length": 774
+    },
+    "fpga\\src\\wondertang\\Nextor-2.1.1.WonderTANG.ROM.bin": {
+      "sha256": "D9812328619F10954506967BE4E992A4E9E6A638F724364767E72C83CB1DC343",
+      "length": 131072
+    },
+    "hardware_test\\LD24Test\\ld24_test.asm": {
+      "sha256": "35FD32E089F44E535BB98D0638530099858BDB66AE126B2637F2E74E6FCDAEFE",
+      "length": 14208
+    },
+    "hardware_test\\Push24Test\\push24_test.asm": {
+      "sha256": "2A97320AE2471833878AE4C197046E8E967EA0B18354F48BC0F71069EBE49E9A",
+      "length": 32113
+    },
+    "fpga\\src\\gowin_clkdiv2\\gowin_clkdiv2.vhd": {
+      "sha256": "DF6AFD23181C2CB27C96C2A8759D872F0BE1582796ABAFD2CA14C8FD1BEFE56C",
+      "length": 1229
+    },
+    "hardware_test\\Index16Test\\README.md": {
+      "sha256": "C48431BE1EC5A0770593EEC62F757C0440BCCE8972B6C9A6D3010148C4B999FE",
+      "length": 5325
+    },
+    "fpga\\G80A\\test\\tb_phase13_m2_interrupt.vhd": {
+      "sha256": "C4D3F536D5FF273A03B9256AA8E452327C459BE410EBFDA580924971A4D79B33",
+      "length": 16717
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\ram.vhd": {
+      "sha256": "7D8889160CDAA3E966909DED526FCDCD8065C03D40BA4D45A3B67E392F0179A3",
+      "length": 7118
+    },
+    "hardware_test\\MMUTest\\makefile": {
+      "sha256": "6628A3BE9A4E81967BFC474345B37D21E5F9B1665A6A97C93E947F7DA6304680",
+      "length": 771
+    },
+    "hardware_test\\V161Test\\bin\\v161test.com": {
+      "sha256": "6C0DC732113E8A55B1068494F62BB7EEBF03442776DB3E2C90BDF6525F4321D6",
+      "length": 783
+    },
+    "fpga\\PSG_YM2149\\YM2149.vhdl": {
+      "sha256": "C68A8E0BA08316EFE532671F3CDF827779246FA203452E8AAE000F7B68A6341E",
+      "length": 21597
+    },
+    "hardware_test\\V161HALTTest\\README.md": {
+      "sha256": "C4DE21329D264325A4255C891579E352CD35AB172C9C13CD480E088A0785F529",
+      "length": 6735
+    },
+    "fpga\\G80A\\test\\tb_memory_bus_router24.sv": {
+      "sha256": "33D1028DBB94EA5AFCA3C484198188F9BA41DB890FD21385BE18BD1D9A142646",
+      "length": 4990
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\v9958_top.v": {
+      "sha256": "5D1DEF63FA619A17696C9A675E9DC6572FD4872AEFEE4DF96178A4B6BA887AEB",
+      "length": 16399
+    },
+    "hardware_test\\Index16Test\\index16_m2.asm": {
+      "sha256": "B4065B1AD5BE584E6E5548177E97018C01B17F5D5CC8723713E608EE493B791A",
+      "length": 43
+    },
+    "fpga\\monostable\\monostable.vhd": {
+      "sha256": "ACA946963DBDB81C3678813FE4B61CF24307022A11E0CA077B3A48DE8FDF8072",
+      "length": 967
+    },
+    "fpga\\jtopl\\jtopl_pg_inc.v": {
+      "sha256": "A13CF713D4C5AB5949AF1A9925F673EEC774C8ACC8FF060C9E801916A3D802F9",
+      "length": 1174
+    },
+    "fpga\\src\\gowin_clkdiv\\gowin_clkdiv.v": {
+      "sha256": "64669F86C39F10A018A49981339BFE2526D7DCF126220DF35C71E17DBBB3BD8C",
+      "length": 626
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_graphic4567.vhd": {
+      "sha256": "FA3B04257A5DD9B1A2B9B88255B240B0D422E651E6E7D74D9CD8E146531F907C",
+      "length": 23341
+    },
+    "fpga\\impl\\MSXNanoTang20K_Z80X24_process_config.json": {
+      "sha256": "3735EBB75E03B363E3984238347BA093FE397F4D24AB7C6A32A9C15EF53B0B56",
+      "length": 3238
+    },
+    "fpga\\src\\usb\\usb_keyboard_msx.vhd": {
+      "sha256": "AB435C5F2144FE0F7E684D7C0ED873C472592437138A9220FDCD0F14F3A35C2E",
+      "length": 11764
+    },
+    "fpga\\G80A\\t80_alu.vhd": {
+      "sha256": "AB549FD5E5A4C0845C1CB6BED1C2926E9AF3785A9B2D7A3EA727B231DE41D3A1",
+      "length": 14631
+    },
+    "fpga\\jtopl\\jtopl_mmr.v": {
+      "sha256": "7FBD3290482FAB064D6BAE636F82224204CC06A443C900974044C96D63C05078",
+      "length": 10284
+    },
+    "fpga\\pulse_min_max\\pulse_min.v": {
+      "sha256": "A6D7DA258FE7B1D1BA13EE47806C9BAC6910A478CF5932AD2A93B2D188D45E4E",
+      "length": 2231
+    },
+    "fpga\\src\\bios_msx2p.v": {
+      "sha256": "8A6CB480E845AE30B047064E774B973E9B9D0A3DECA92ED437E3A7E24CEB31B4",
+      "length": 449
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\auxiliary_video_information_info_frame.sv": {
+      "sha256": "AD549402B46D6B824D8A2CFFE35B96943ADD581D4D5DC266A5EA33CD161B5D99",
+      "length": 4986
+    },
+    "fpga\\src\\msx2p_debug.v": {
+      "sha256": "73098DD5DB53912F8DA3A5B6C2BA3E13C7D9518970CDC1DB2127FE3AFD92BA9A",
+      "length": 33969
+    },
+    "fpga\\denoise\\denoise_low.vhd": {
+      "sha256": "47D3FE4F2486E32BF26FC14AE82991367A524A60D566F0B692B561004FDDFF3F",
+      "length": 692
+    },
+    "fpga\\G80A\\test\\tb_v161_im0.vhd": {
+      "sha256": "B64F21B6F736CE011D6E8681443B1306A635DA9E6CD39DA7B1D083D406D459B2",
+      "length": 6253
+    },
+    "fpga\\src\\msx_goauld_settings_menu\\assets\\16k_msx2p_fm_logo_menu.bin": {
+      "sha256": "BE7518D8EAC503C9AFCC30C9867F5DAB99A50D38A558B5FB79F96B7512CAE824",
+      "length": 16384
+    },
+    "fpga\\G80A_Std\\g80a.vhd": {
+      "sha256": "34B800CC3F6156BE6ACBAD4DC95DEE7F2864D5D1182885A88C94227F8D786128",
+      "length": 9317
+    },
+    "fpga\\src\\wondertang\\flash.v": {
+      "sha256": "A2EFD1CB4BE0BF3E6C7DE785FE0C0F229DC2F6D132A5A8E29C20DD8935C3CD2B",
+      "length": 4264
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\audio_info_frame.sv": {
+      "sha256": "67E2B1A5A91A5411E717E563D360879BE782B344B3CE511F91755B9C4B261457",
+      "length": 2448
+    },
+    "fpga\\jtopl\\jtopl_eg.v": {
+      "sha256": "C467563605AD21760E8F0D4616B07384A273BCBB47A1262B25EF3F54176EF69C",
+      "length": 6065
+    },
+    "hardware_test\\P12Test\\bin\\p12test.com": {
+      "sha256": "AC9E06D977FCB6E266A3DBDD5998C86DA5B7BC664FE0DDCFC207F08F186E5205",
+      "length": 919
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vencode.vhd": {
+      "sha256": "7575B61732E02E0F0ECF0DAC5BB8B1AF58D5D59B552D8A3C32C94AFD518E54F0",
+      "length": 15780
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_command.vhd": {
+      "sha256": "7CA8AC6526A8105A2C31EE92C087A23E2C47C9BB88F92CC6F95F6DEEE0215619",
+      "length": 37897
+    },
+    "fpga\\G80A\\test\\tb_cpu_sdram_request_timing.sv": {
+      "sha256": "A9FF39A06B0D04B276073B7CC831B3C74668D3BFF64AD526D0E45AB004971309",
+      "length": 6493
+    },
+    "fpga\\G80A\\g80a.vhd": {
+      "sha256": "BBCE073EA144588FF5EB88AD21192274680FCFCE2366AC49CBEDD40823DE629D",
+      "length": 10886
+    },
+    "fpga\\G80A\\test\\tb_phase5_mmu_mapping.vhd": {
+      "sha256": "220492C928DA26986356186EB6311C03CD53C6CEEA1B53BFA7E3E912A1E1AB9B",
+      "length": 14705
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_sprite.vhd": {
+      "sha256": "B7359B49EBB65A17C030B2106EA4428351FC57FDCFA7C3AF01F081075E8FCF13",
+      "length": 54405
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\v9958.cst": {
+      "sha256": "551FDCA0461F74DAF682ABE35207F58AB2D51E553F432F12526B5B20127F7C42",
+      "length": 2763
+    },
+    "fpga\\G80A\\test\\tb_phase12_mode_control.vhd": {
+      "sha256": "D7F942E3DE41E7B9F45BA7063FC29647698E98A45C67FFF946868E31188E8998",
+      "length": 16932
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24.rpt.txt": {
+      "sha256": "BF967D6BB07614163AE693B2C6930C823E3F4E2FB0E0E1400D9455A0D84CA93C",
+      "length": 52264
+    },
+    "fpga\\G80A_Std\\t80_alu.vhd": {
+      "sha256": "71F68B17D5071C3FED1726735E1603BD4A170F07B25879D9A5FD466180B846EF",
+      "length": 14268
+    },
+    "hardware_test\\P1314Test\\p1314_test.asm": {
+      "sha256": "79BF6AA1507AE09E6DFF309ECC7EF2B8D93E553ED9AF5B31AFB956F3C53D74AE",
+      "length": 34509
+    },
+    "fpga\\G80A\\test\\tb_phase4_mmu24.vhd": {
+      "sha256": "5C37E083DA62D7E09DCDF987F74960C56B89BCB90E583B7849AB5C9942DE81F3",
+      "length": 7235
+    },
+    "fpga\\G80A\\test\\run_v161_irq_com.ps1": {
+      "sha256": "9E0024195CD23DF177C663C419B7B1014B8411D0C9BF8D1985881E933E7AFAF0",
+      "length": 5415
+    },
+    "hardware_test\\Index16Test\\index16_test.asm": {
+      "sha256": "04EA7798FFC7FEE31FA84FDEF4EF87FEE16F7E20BDBF35D81AFB2A3569F48799",
+      "length": 6742
+    },
+    "fpga\\denoise\\denoise2.vhd": {
+      "sha256": "AFAC15EEFC8B8E4BE57F527AC6A22FF27609E0B92072D97B43D71472633F3163",
+      "length": 623
+    },
+    "fpga\\msx_debug\\msx2p_debug.v": {
+      "sha256": "6DAD39B27C3DF4BA9DC7D329CAB45969B92461C322A14802D469498539F123F9",
+      "length": 11787
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\v9958-2.cst": {
+      "sha256": "0AC4682A6F991833ED52EEB575ECA8DB936A26D31B1D78FDC938211993D8EA07",
+      "length": 3176
+    },
+    "fpga\\MSXNanoTang20K_Z80X24.gprj.user": {
+      "sha256": "43A38781E8D801D08CF5202C276018BFA1A16F6366EC4A0A91B0F6D8FC709F84",
+      "length": 5473
+    },
+    "fpga\\G80A\\test\\run_cpu_sdram_request_timing.ps1": {
+      "sha256": "0C9C612DBD992593573FBD0C26341F97F5FC7ED989B32220C70FB9C7956AB6F6",
+      "length": 2410
+    },
+    "fpga\\msx_debug\\print.v": {
+      "sha256": "517290A27132B68E6BA1A7D7F2C509D595F6DFE70A9DF5FEEF99B4AC7B0047AC",
+      "length": 4042
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_wait_control.vhd": {
+      "sha256": "D02C192EBCA6CFF5AA4D05B0259451F1E4583D6FE8A068B0D146D9AF851BDFF9",
+      "length": 10247
+    },
+    "fpga\\src\\usb\\fpga_companion.v": {
+      "sha256": "331E66DD8EB4C390E0CEAD8D9C140C24F348297BB59FB93ED5E19941377C24F1",
+      "length": 3797
+    },
+    "fpga\\src\\wondertang\\sd_reader.sv": {
+      "sha256": "532E256CA1AA905687BAF5D0BE917A1B076EB75DD2A9F2C38B00737836E4A9EF",
+      "length": 18053
+    },
+    "fpga\\jtopl\\jtopl_div.v": {
+      "sha256": "934F6C653BC38835B43DED25C4C25043BDFCCE8E0A591D5E94C1AB0346122FA4",
+      "length": 1217
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_spinforam.vhd": {
+      "sha256": "0392A09395EBCD28752C054C3F9178F1A0761F3219DD2473685B07C1C1543CD2",
+      "length": 5457
+    },
+    "fpga\\src\\psg_filter.v": {
+      "sha256": "1213BD934C05A522C79A3668963B4DFBAD6F01F43C54AE233272BD116C936F33",
+      "length": 1629
+    },
+    "fpga\\G80A\\test\\tb_phase8_alu24.vhd": {
+      "sha256": "A830C3A45835C0BA978741DD8767F31E44E2AD2936D6E8107F80F72B86680446",
+      "length": 17292
+    },
+    "fpga\\jtopl\\jtopl_single_acc.v": {
+      "sha256": "A5F48614EF61E453925A30200BADB1FC0B570BCF0DC94FFF45D2D6B11BE1BAAB",
+      "length": 2003
+    },
+    "hardware_test\\Index24Test\\index24_test.asm": {
+      "sha256": "590BA49990868D93D1A71C7D89D3520D3976DE0996BAFE88120B29B7C0D68187",
+      "length": 59
+    },
+    "fpga\\jtopl\\jtopl_slot_cnt.v": {
+      "sha256": "9EA07CCFB01B93DD9E1F88AAEC5A7BC3B57F89EFB073223E4FA9569229DF842F",
+      "length": 2035
+    },
+    "hardware_test\\P12Test\\p12_test.asm": {
+      "sha256": "41828898ADDC99188654DD4E4A51E1D4660D3863F7AF070064D61DED4A410ECF",
+      "length": 20015
+    },
+    "fpga\\jtopl\\jtopl_eg_cnt.v": {
+      "sha256": "929A5E6EF0570FF9AF7346F1ABB9F75E04BE29F8A1C85B4202A47E975EE98D25",
+      "length": 1246
+    },
+    "fpga\\jtopl\\jtopl_lfo.v": {
+      "sha256": "47D025A7BEB04E684A337005DD8C95E11E9F3D0CF19EA0BD171F5154A3A2D6DE",
+      "length": 2389
+    },
+    "hardware_test\\P1314Test\\README.md": {
+      "sha256": "EA9749D5920064E22F288D506D690C533F0DBB24F352F15B1E2B200E468002A8",
+      "length": 22563
+    },
+    "fpga\\jtopl\\jtopl_timers.v": {
+      "sha256": "AA500B2ABBB761B8BA62DF972DB4ABB9C583C685D855BEC76C3E7C430AD8F887",
+      "length": 3327
+    },
+    "fpga\\MSXnano_CPU_Wrapper24.v": {
+      "sha256": "F7BA2C4A81C4B237631BB04E1D846CB8E68B98B5DBFD41E286482EE1EE8DF97D",
+      "length": 3003
+    },
+    "hardware_test\\V161Test\\makefile": {
+      "sha256": "AC972E51F4D91AE1BA12598C6ED382EA12F0D1CEC33FC1CE4066679ED9AF493C",
+      "length": 140
+    },
+    "fpga\\jtopl\\jtopl_eg_pure.v": {
+      "sha256": "7B2165E04A31B13AECF7ECCB65A6CC1A624F5B42BBB694E6B62A4D72490E749E",
+      "length": 2861
+    },
+    "fpga\\G80A\\test\\run_v161_halt_com.ps1": {
+      "sha256": "1E0F87918CB43250BC877B98ECE3CA7769590CD3D0142F9419C98549EF37DD81",
+      "length": 5464
+    },
+    "fpga\\src\\wondertang\\crc16.v": {
+      "sha256": "CEFEFB84F5562940D04F43D35543BA8FB7015581654E722C85D8352303F8E114",
+      "length": 1699
+    },
+    "hardware_test\\P12Test\\README.md": {
+      "sha256": "BCA7407648AEF93465C6F84876AB04FD20C498F6419E55BEDE1A08D6127EED81",
+      "length": 10306
+    },
+    "fpga\\G80A\\test\\tb_lea_l.vhd": {
+      "sha256": "2237F5C9DFD2F6B6DA17FA4B96B40A2D66E2D4CC51127B4BF09A99795169E0DD",
+      "length": 15466
+    },
+    "fpga\\src\\logo.v": {
+      "sha256": "99BD194767CDE7A41067ECF79053AA3B6805DCE2B76E217B5BB49EA82C62217C",
+      "length": 441
+    },
+    "fpga\\G80A\\test\\run_index16_com.ps1": {
+      "sha256": "D648D7850C46BFA52672F96D30732FB04436459D7316302AB8FF0A39514D4324",
+      "length": 3066
+    },
+    "fpga\\msx_debug\\timing_debug.v": {
+      "sha256": "DB719A37BDEE907A2E95337EA66B043A0668949254AEBBE723523185962334F8",
+      "length": 5147
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_register.vhd": {
+      "sha256": "7D303E892C08AEF29F1B059B8C8E5A4E9AF882BBE38F8FE74CD98F9DCD2B0B72",
+      "length": 37337
+    },
+    "fpga\\src\\usb\\hid.v": {
+      "sha256": "250AE6142522E2CA9C0FFA84717B270E120DA040660E3915E0A2E16AA6908B82",
+      "length": 4766
+    },
+    "fpga\\G80A\\test\\tb_v15_index16.vhd": {
+      "sha256": "EC3AC343C1AF4D1E6670A8DB2E910BF8FF7C927B48D6092907225D5B6A0D5418",
+      "length": 13482
+    },
+    "fpga\\G80A\\test\\tb_rst_l.vhd": {
+      "sha256": "D29219D2018587BFD703CAB9CA6C585866E9A2B57EE06FB0372A4C05554F94BB",
+      "length": 16642
+    },
+    "fpga\\denoise\\denoise.vhd": {
+      "sha256": "70BA8789D84F6986285D3DE0783C248CB215F3655880A7DC56F59E926B9D544B",
+      "length": 744
+    },
+    "fpga\\src\\memory.v": {
+      "sha256": "F95A9C67E53A2BEA8AF9E023B1C7EA65DB108861966932FD52042D661AD2C044",
+      "length": 29707
+    },
+    "fpga\\G80A\\test\\tb_phase11_jpl.vhd": {
+      "sha256": "50B1AB3F780B5D9A54C8C5E9567A9AFAA6FEE0AB45B1E7BCF79253A68EFC87A7",
+      "length": 10224
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\serializer.sv": {
+      "sha256": "EBFDF389033F55F674EB361603F09396F6B5C3CD029068BAF7AA35735B15D98C",
+      "length": 13477
+    },
+    "hardware_test\\V161HALTTest\\bin\\h161test.com": {
+      "sha256": "A8A47D8720703C97D5CD03CB03BC2880B864990E66C64CE5C9C39093AD63EF32",
+      "length": 944
+    },
+    "hardware_test\\V161HALTTest\\makefile": {
+      "sha256": "3152FB4E03E0C7825F3C82D65BDAA82114A4274D69419AEB6540619111A95F08",
+      "length": 140
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\lpf.vhd": {
+      "sha256": "0CA16D2E8D8595C7C0D1634719C887D9910CAFD0FB089CD82BF79E7CA137BD0F",
+      "length": 10266
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\gowin\\clk_108p.v": {
+      "sha256": "15F9CCEC0F6BA8B8FB085370C30ABF75BDA930BB926A4681AD0AD25DB6866E15",
+      "length": 1978
+    },
+    "fpga\\G80A\\test\\run_v161_rst.ps1": {
+      "sha256": "F592A6A0CDA662B4212CC9AAE0ED69DDBFF3351FC2EDCFA6B90C0BACC13918BF",
+      "length": 4264
+    },
+    "hardware_test\\README.md": {
+      "sha256": "24C41F2A0B88FE3C6E42F042CB744EEEAA7DC8F3B3911599929CA03DCCA908A9",
+      "length": 8335
+    },
+    "hardware_test\\Ld24MemIndirectTest\\README.md": {
+      "sha256": "8DD650031F530D50B948B82F16EAA8EC64D5E4ADBB07B82A63E356870CDB21F4",
+      "length": 17100
+    },
+    "fpga\\src\\16k_msx2p_fm_logo_menu.hex": {
+      "sha256": "1B81CC3821BF339DDAFC405573529A2711A55949FBD172F0368C0568E7425C7A",
+      "length": 65536
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\clockdiv.v": {
+      "sha256": "7401608D3154621C097316DF46374BCCE7A9177445CF2D4FA4DD0223A6AC397E",
+      "length": 1971
+    },
+    "hardware_test\\V161IRQTest\\makefile": {
+      "sha256": "55E2417940C18259BC8B345B56550ED4154CF66A4C4C022C97D6011388048513",
+      "length": 140
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\audio_sample_packet.sv": {
+      "sha256": "364081E1A8CA5D90774AEFED565346C1591E30384A44B91B2A0D003765B343BE",
+      "length": 4721
+    },
+    "fpga\\src\\usb\\ps2_keyboard_msx.vhd": {
+      "sha256": "CC68A913D37BCA151D429EC741864E7805301CDCA72DC43E2A9C2FBAC884E57E",
+      "length": 16253
+    },
+    "fpga\\msx_debug\\msx1_debug.v": {
+      "sha256": "FAF65F8CD7FE63C9CF2E3E4F479D62A4D3F57C2427D76622A493F9FD878AEC8B",
+      "length": 3284
+    },
+    "fpga\\jtopl\\jtopl_pg_comb.v": {
+      "sha256": "2C864FE9EA3CE74FEE1711A3824FA03B3EF0E3A44A1E852BC4888D2017B1E54A",
+      "length": 2665
+    },
+    "fpga\\G80A\\test\\tb_phase15_peripheral.vhd": {
+      "sha256": "CB6D0FE6AD29C5EBCE0EE72D59480D983A785174A69F3D026B6CEEFD5E3BFC3C",
+      "length": 18097
+    },
+    "fpga\\G80A\\test\\tb_hw_m2_internal_cycle_wait.vhd": {
+      "sha256": "57F3C49ED31967E21A971C0ABB26716CE74D789AABED30F354787FB60D98B99A",
+      "length": 13206
+    },
+    "fpga\\jtopl\\jtopl_eg_ctrl.v": {
+      "sha256": "342502FB6CBCF32831645E548CF3E41B54C7E8B215CBD8713778EBCDE484D5A8",
+      "length": 2777
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\hdmi.sv": {
+      "sha256": "2A10B6E09129A7C7D0B134E68695C47AD1C0CDE6F5659F542128022819D6701F",
+      "length": 15908
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\sdram.v": {
+      "sha256": "6887D470885C2007E25B0CD8018D324897FC7B0223B95F3DEC2FDEFB8425075F",
+      "length": 11767
+    },
+    "fpga\\tn_vdp_v3_v9958\\res\\hexfont.bin.hex": {
+      "sha256": "158C241E7C31892EC8C474DCCDE991BA546F6DE450B09A7F2B64D93115DDCDCB",
+      "length": 8192
+    },
+    "hardware_test\\Ld24MemIndirectTest\\bin\\ld24mi.com": {
+      "sha256": "70A8CDF67C9214E2649740528DA4BD5EED75DD3660849790ADFA9469861BF386",
+      "length": 2373
+    },
+    "fpga\\src\\keyboard_bra.v": {
+      "sha256": "7D000611752B0ADE7BAAEEE45AFE6D3AF32C30D92F77C065B0E52994C308F4B2",
+      "length": 450
+    },
+    "fpga\\jtopl\\jtopl_reg_ch.v": {
+      "sha256": "7C89C72D275E87B8E31314EB9EB8D079FD961B61D472EC330AE94D4193F8AF73",
+      "length": 3594
+    },
+    "fpga\\tn_vdp_v3_v9958\\tn_vdp_v3_v9958.gprj.user": {
+      "sha256": "683FAA0A01F4A7E8D47820DE480A55E0B80FCF9FBDDBE780989FF66114115E91",
+      "length": 3320
+    },
+    "fpga\\G80A\\test\\tb_v161_interrupt.vhd": {
+      "sha256": "A937310BF04977BB6693E01210152B74A6DE20277048968013F5436D2899BB25",
+      "length": 16228
+    },
+    "fpga\\src\\ocm\\rtc.v": {
+      "sha256": "947733853747448DCAEBD7B0888CCB01EDA6ACB2CB6B95EBC8FC24B97837D181",
+      "length": 14276
+    },
+    "fpga\\jtopl\\jtopl_eg_step.v": {
+      "sha256": "FB1BF3D6CF8016DDEFBF0EC40FC48F120FD71177D140A88EC11B851F555A0FAD",
+      "length": 3271
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\SPI_MCP3202.v": {
+      "sha256": "6794E2F5AF37F7367CE609407475A1D556CB136F40DCD81A623D43931F777F87",
+      "length": 6602
+    },
+    "fpga\\jtopl\\jtopl_pg_sum.v": {
+      "sha256": "873044EC88C8085B97D124C32D755AAF2DD58BE813030D0F840A850185633A3F",
+      "length": 1804
+    },
+    "fpga\\src\\16k_fm_logo.hex": {
+      "sha256": "71FF112F1D459F6B36D4DCF7C7299CB035714CAEBDA1DC896ADF598557F10CF0",
+      "length": 65536
+    },
+    "fpga\\jtopl\\jtopl_op.v": {
+      "sha256": "59C05A422DEAC36EB7B1F99E815B955E99725F3EF2EB4E5FF1C11B8805B961B2",
+      "length": 7259
+    },
+    "fpga\\G80A\\test\\run_v161_interrupt.ps1": {
+      "sha256": "B573088764E6447067B183AA862D33C571C3A59857E398D5B78C2CF8AEFCC715",
+      "length": 4997
+    },
+    "hardware_test\\Index24Test\\makefile": {
+      "sha256": "B71F103D41005ACB69BFFE5F3A5028B40B91E21073F1FF0DD099EA20AD426988",
+      "length": 218
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_vga.vhd": {
+      "sha256": "27DC03F58DD555755782EAC322A354DAE3CF88D41937EE0EC3DD47E450CE55D3",
+      "length": 15150
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vram.v": {
+      "sha256": "C630799C0CDCB2A348C6964C123F35FD19003F814111296E0267378F879ABCAB",
+      "length": 532
+    },
+    "fpga\\G80A\\t80_mcode.vhd": {
+      "sha256": "222B2DC83AF3326262434656156FD2A39C02B442187AA75FFE819822B9A79925",
+      "length": 169525
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\gowin\\clk_81p_tmp.v": {
+      "sha256": "F666201C093A5A1FA72810903851F28DA7A59C1A6E4B10B7323E4BBDB57FE878",
+      "length": 689
+    },
+    "fpga\\src\\wondertang\\dpram.v": {
+      "sha256": "AE6863505D3C7746928037BB59EB96F857DEEC020C3880CBC9BE6129CB8EB009",
+      "length": 1043
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\gowin\\clk_135_tmp.v": {
+      "sha256": "B6E0AA3E24A90B241DE9A7AC563B5D6C3AD21010F566907058F3918541CD2917",
+      "length": 642
+    },
+    "fpga\\jtopl\\jtopl_logsin.v": {
+      "sha256": "3F134E5C456D7A6B8F9F31463921590ACA297280F9AD37ABC23BF50B070590B1",
+      "length": 9375
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_colordec.vhd": {
+      "sha256": "5130BB74E82453981EF16BF12DD148A0712F7B916CFD927877E61126643F9A1D",
+      "length": 14193
+    },
+    "fpga\\jtopl\\jtopl_noise.v": {
+      "sha256": "66CB3D06933B355783CAFB5BA570C39756423856388BECBF7CD1B8A4384DE33F",
+      "length": 1468
+    },
+    "fpga\\G80A\\test\\tb_phase7_ld24.vhd": {
+      "sha256": "8758FA48BFF17264C5F8C9D644F12A16DC2A12BE7754924A8C6556FF9F808D5D",
+      "length": 15638
+    },
+    "hardware_test\\LD24Test\\makefile": {
+      "sha256": "63CD93F092CCE29CA089259E198807734C8B2D246887882F1E42770A72E18F28",
+      "length": 1015
+    },
+    "fpga\\src\\logo_fm.v": {
+      "sha256": "A8088CF80C402E6DC8264EF9B38E8D6D1B736C0D6CFDE61DE26558C25143ACF9",
+      "length": 511
+    },
+    "fpga\\G80A\\test\\tb_ld24mi_com.vhd": {
+      "sha256": "2C0986D1D1B4326F03BD47B673B90E57CE0A571FC9C4676F059666DADBEB1485",
+      "length": 29098
+    },
+    "hardware_test\\P12Test\\makefile": {
+      "sha256": "A43F1F658789C7A37B25E520D07FEF50623D56C013079E2650B5F63DF6D983CA",
+      "length": 771
+    },
+    "fpga\\src\\ocm\\swioports.vhd": {
+      "sha256": "041F4B3B8BD9459BA55C9CF050B21026BC22E4C55421299C7F6F32312424DB2E",
+      "length": 81163
+    },
+    "hardware_test\\Index24Test\\bin\\i24m2.com": {
+      "sha256": "FC4A1CA971C6E8D6435AA871457CE1A6E572D120202315CD35CA6F55442A017E",
+      "length": 796
+    },
+    "fpga\\G80A_Std\\t80_mcode.vhd": {
+      "sha256": "FC7DFC9F461B261020EB9703003AE30338EC9A600EE98E250C24284C25D89DD5",
+      "length": 101370
+    },
+    "hardware_test\\V161HALTTest\\h161_test.asm": {
+      "sha256": "A7D2A5D7AB5E01DC60A6C3307AAFB1C1FBF82E343BCEA96E5248EB052500E8F6",
+      "length": 7185
+    },
+    "fpga\\G80A\\test\\run_v161_com.ps1": {
+      "sha256": "0B4A666313AD856E97E399C3582EB7DF99EF729ABFBF2ADD998287AEBA110B84",
+      "length": 4550
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_graphic123m.vhd": {
+      "sha256": "AB02775A85C15B55847AC9CC24B785760620A6126F03D4745C68AD8BA13A9C8D",
+      "length": 11608
+    },
+    "fpga\\src\\keyboard_bra.hex": {
+      "sha256": "8DD687C7CEB4EB101F8E176F3324130A54C0E70C9374A788911518728B58C001",
+      "length": 2048
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\hdmi\\audio_clock_regeneration_packet.sv": {
+      "sha256": "5B89873BD8BD37A1BAAF1A6027FF411A283B653AB73A9161FAA7F8B38E2D1D61",
+      "length": 3208
+    },
+    "hardware_test\\Index24Test\\README.md": {
+      "sha256": "05B3793EA4F1FCF6FC5810F924740BB941D3938683521F9ADB0AB24EFCD11305",
+      "length": 3872
+    },
+    "hardware_test\\LD24Test\\README.md": {
+      "sha256": "E0F29583703FD03C7F717720F31E592912670FBBF3407F7261EF1F1AAA1889F7",
+      "length": 7259
+    },
+    "fpga\\src\\usb\\ws2812.v": {
+      "sha256": "E42AECBEFA916AE78A09865786B39F89C7D3F1A0DE51350E633FC60E9EF32691",
+      "length": 3050
+    },
+    "hardware_test\\Index16Test\\bin\\i16m2.com": {
+      "sha256": "7B92FA9BD61BA5B44BB5DAA02ACD3A7DFB84A61A4EC2B638086C73B2538B0C11",
+      "length": 746
+    },
+    "fpga\\jtopl\\jtopl_reg.v": {
+      "sha256": "0628727FAD81C8D9D2CD9509AF991585B5D3DF7EEFB268FEEBD119C737E85241",
+      "length": 5753
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_ssg.vhd": {
+      "sha256": "C0DF994DE06266B3A56C546F1660C5BEFE8879B553C6C0AA18710DCDC423B5E8",
+      "length": 25210
+    },
+    "fpga\\denoise\\denoise_low8.vhd": {
+      "sha256": "3F94D583201EF590C614DEE492B9DE978AE53FD97DB36E57EE30372049AD3905",
+      "length": 659
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\gowin\\clk_135.v": {
+      "sha256": "7FF17AC40939EF4340167C064D44B20898B908388DFB85A9BA9213F113A43FBA",
+      "length": 1931
+    },
+    "fpga\\jtopl\\jtopl_pm.v": {
+      "sha256": "3336DB5E9434050054D98D5C2F9A441F9A473CA262B898A6FAB7422D15FC847A",
+      "length": 1376
+    },
+    "fpga\\jtopl\\jtopll_reg_ch.v": {
+      "sha256": "75FBFA352E068E2B125AE82DC400B9EE843270E49A4A38D42E5D202F67C3E6B0",
+      "length": 3783
+    },
+    "fpga\\src\\print.v": {
+      "sha256": "517290A27132B68E6BA1A7D7F2C509D595F6DFE70A9DF5FEEF99B4AC7B0047AC",
+      "length": 4042
+    },
+    "fpga\\MSXNanoTang20K_Std.gprj": {
+      "sha256": "75EED987DC5623081A81B3AE66E3A3DC865E87230449525D1AECC2D0ADC1B2B9",
+      "length": 9868
+    },
+    "fpga\\impl\\pnr\\MSXNanoTang20K_Z80X24_tr_content.html": {
+      "sha256": "2494E05B56AB9515947711F0DDBBA04911A68501B7C690C62204EED6B0AFC154",
+      "length": 2513703
+    },
+    "fpga\\MSXnano_CPU_Wrapper24_std.v": {
+      "sha256": "85830CF3339834A0D5E2BB05BFC0F6C414DB9F77D9D1D205B7A8CAD18EDE679E",
+      "length": 3522
+    },
+    "fpga\\jtopl\\jtopl_pg_rhy.v": {
+      "sha256": "F45BA6FDFC059B0A57F5DF21C9BEB756FA28D3F74F761157FB5D021C948725CE",
+      "length": 1533
+    },
+    "fpga\\tn_vdp_v3_v9958\\src\\vdp\\vdp_linebuf.vhd": {
+      "sha256": "5369211C38CA6C548330E86682D672871B6E93DAE0EDF65EB928C0D211321B23",
+      "length": 5858
+    },
+    "hardware_test\\V161IRQTest\\bin\\i161test.com": {
+      "sha256": "CB0FDF9AF41FA971A0E0B5BC2E9D4589AA79B3B5F077D304B931A95609DE31E2",
+      "length": 1235
+    },
+    "fpga\\G80A\\test\\tb_v161_rst.vhd": {
+      "sha256": "44377A5A39F5C676D04FE45A89C9E3E753F9D63502A70BE2B58007A6BA238AC2",
+      "length": 10757
+    }
+  },
+  "git_head": "4ba090252f07919463fe6def3abcf7e69c40ac3b",
+  "scope": "Local functional snapshot: FPGA source/constraints/test runners, hardware test source/docs, ten current COMs, existing FS and PnR evidence. Not a complete repository backup or proof of historical build inputs."
+}

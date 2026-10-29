@@ -1,0 +1,17 @@
+t80_mcode.vhd:281:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:319:17:warning: declaration of "F" hides port "F" [-Whide]
+                F : std_logic_vector(7 downto 0);
+                ^
+t80_mcode.vhd:320:17:warning: declaration of "IR" hides port "IR" [-Whide]
+                IR : std_logic_vector(7 downto 0)
+                ^
+test\tb_hw_m2_internal_cycle_wait.vhd:269:13:@2ms:(report failure): FAIL: M2 bank01 internal-cycle program did not finish; wait_state=ws_armed wait_n='0' A=010004 HALT_n='1' MC=3 TS=2 IR=10
+ghdl:error: report failed
+ghdl:error: simulation failed
+Exception: D:\users\HeroineFactory\Documents\GIT\MSXNano-Z80X\msxnano-24bit\fpga\G80A\test\run_hw_m2_internal_cycle_wait.ps1:16
+Line |
+  16 |          throw 'M2 internal-cycle WAIT regression failed.'
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | M2 internal-cycle WAIT regression failed.

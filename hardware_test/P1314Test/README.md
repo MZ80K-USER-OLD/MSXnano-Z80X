@@ -1,5 +1,12 @@
 # Z80X24 Phase13(M2割込み)+Phase14(RST.L) 実機検証テスト (P1314T.COM)
 
+> **現行RTLでは実行禁止（旧命令の履歴用）**。
+> 新RST.Lへの移設で旧ED C7/E7/FFとED9BのIVR設定を廃止した。
+> 以下のソース・既存COM・実機PASSは新RTLと非互換。
+> 通常の`make`は明示エラーで停止する。移設前のIM0対応RTL用に限り
+> `make LEGACY_OPCODES=1`で旧版を生成できるが、さらに古いED4E RETI.L版RTLとも非互換。
+> 最新の範囲と後続予定は[移行記録](../../verification_data/v161_rst_l/README.md)を参照。
+
 MSXnano-Z80X ([msxnano-24bit](../..) リポジトリ、24bit CPU拡張 "Z80X24") の
 **Phase14「RST拡張(RST.L)」** と **Phase13「割り込み(M2拡張)」** を、
 実機(Tang Nano)またはMSXエミュレータ上のMSX-DOS(2)から起動して確認するための、
@@ -11,6 +18,15 @@ Z80アセンブリ製テストプログラムです。
 本プログラムはそれを実機上で再現・補完します。
 
 ## 必要な環境
+
+### V16.1 IM0対応時の非互換変更
+
+RETI.LをED 4EからED F3へ変更し、ソースとCOMを再ビルドした。
+旧COMはIM0対応RTLで実行しない。ED F3へ変更したCOMもそれ以前のFPGAでは実行しない。
+以前の`PASS=07 FAIL=00`の実機報告は旧コード版の結果であり、
+新COMの実機再確認は未実施。
+この版はまだ旧IVR/NVR・ED付きRST.Lを使用し、
+V16.1のIBR/RST.L/JP.M2移設全体を検証するものではない。
 
 - Windows
 - Z88DK (`D:\Tool\z88dk` にインストールされている想定)
@@ -75,7 +91,7 @@ A>P1314T
 
 全テストがPASSすれば、Phase14のRST.L(代表して3vector)と、Phase13のM2割込み
 機構(実機の本物の非同期ハードウェア割込みを使った初めての実地検証)が、
-仕様書([MSX_T80_24bit化_CPU仕様書_V10](../../doc/jpn/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md))
+仕様書([MSX_T80_24bit化_CPU仕様書_V10](../../doc/jpn/OLD/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md))
 および[AVAILABLE_INSTRUCTIONS.md](../../AVAILABLE_INSTRUCTIONS.md)
 セクション11/12どおりに動作していることが実機で確認できます。
 

@@ -11,7 +11,11 @@ CP	:= cmd /c copy /b
 
 all: ld24test.com
 
-ld24test.com: $(SRCS)
+.PHONY: require-legacy
+require-legacy:
+	$(if $(filter 1,$(LEGACY_OPCODES)),@echo Building legacy-opcode COM only.,$(error Incompatible with current V16.1 RTL. See README.md. Legacy-only build requires LEGACY_OPCODES=1))
+
+ld24test.com: require-legacy $(SRCS)
 	@echo Assembling MSX edition..
 	z88dk-z80asm -DMSXBIOS -Oobj -oBINZ80.bin -b -d -l -m $(SRCS)
 	z88dk-appmake +glue -b obj$/BINZ80 --filler 0x00
