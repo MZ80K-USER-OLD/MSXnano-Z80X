@@ -177,7 +177,7 @@ begin
             IntCycle_n => open, IntE => open, Stop => open,
             bank_bc => bc_bank, bank_de => de_bank, bank_hl => hl_bank,
             bank_ix => ix_bank, bank_iy => iy_bank, bank_pc => open,
-            bank_msp => open, bank_int => open, bank_nvr => open, bank_rst => open);
+            bank_msp => open, bank_int => open, bank_rst => open);
 
     process (all)
     begin

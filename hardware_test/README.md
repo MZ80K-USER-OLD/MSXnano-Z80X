@@ -56,6 +56,24 @@ INDEX16に相当する報告の原表記は`INDEC16`。ここではINDEX16とし
 プレイ時間、音源の個別確認、全ステージや他ソフトの網羅確認は報告されていない。
 原因・対策は[WAIT制御の調査メモ](../doc/jpn/M2割込みフリーズ_WAIT制御の原因とeZ80開発への教訓_2026-10-29.md)を参照。
 
+## IX/IY実効アドレス共有化後の実機報告（2026-10-31）
+
+ユーザーから以下の5本のPASS報告あり。
+
+| COM | 実機結果 | 判定数（10進） |
+|---|---|---|
+| [INDEX16](Index16Test/README.md) | `PASS=18 FAIL=00` | 24 |
+| [INDEX24](Index24Test/README.md) | `PASS=18 FAIL=00` | 24 |
+| [I16M2](Index16Test/README.md#m2実機用-i16m2com) | `PASS=18 FAIL=00` | 24 |
+| [I24M2](Index24Test/README.md) | `PASS=18 FAIL=00` | 24 |
+| [INDEXEA](IndexEATest/README.md) | `PASS=69 FAIL=00` | 105 |
+
+計201判定、FAILなし。INDEX16の報告原表記は`PASS-18 FAIL=00`。
+INDEXEAに相当する報告の原表記は`INDEX.COM`であり、直前に提供した
+INDEXEA.COMの結果として扱う。実行COM・ビットストリームのハッシュと、
+DOS復帰の明示確認は未記録。
+この報告は各COMの検査範囲での実機成功を示し、全命令・全タイミングの保証ではない。
+
 ## テストプログラム一覧
 
 **V16.1移設の注意**: P12TESTはJP.M2=ED9Bの新COMへ再ビルドしたため旧FPGAでは実行しない。
@@ -67,6 +85,8 @@ P1314T/LD24TESTは旧命令専用で現RTLでは実行禁止、通常ビルド�
 
 | フォルダ | 対象Phase | 検証内容 | 実機検証状況 |
 |---|---|---|---|
+| [IndexEATest](IndexEATest/README.md) | IX/IY実効アドレス共有化 | 正負変位、バンクcarry/borrow、24bitラップ、LEA.L HL/DE、M0/M1/M2。`INDEXEA`期待`PASS=69 FAIL=00` | 2026-10-31、実機`PASS=69 FAIL=00`報告（原表記`INDEX.COM`）。GHDL COM実行・故障注入も通常/Fast × WAIT有無で確認 |
+| [M2SPTest](M2SPTest/README.md) | V16.1 演算/TEST/M2 stack | `TEST/TEST24`全形式、IX/IY 24bit演算・PUSH24/POP24、WTOCラップ検出、MSP24操作 | テストプログラム作成・GHDL COM実行4条件PASS。実機未実施 |
 | [V161IRQTest](V161IRQTest) | V16.1 IRQ | 実VDPのIM1/IM2 IRQ、IBR、4byte frame、RETI.Lのマスク継続/EI再武装、通常/境界MSP | 2026-10-29、WAIT修正後の実機で`PASS=04 FAIL=00`。NMI/RETI外部通知は対象外 |
 | [V161HALTTest](V161HALTTest) | V16.1 HALT | M0/M1/M2で各2回のEI/HALT、IM2 IRQ、フレーム・復帰先の検査 | 2026-10-29、WAIT修正後の実機で`PASS=03 FAIL=00` |
 | [V161Test](V161Test) | V16.1 | 新RST.L全8ベクタ、IBR、SYSCALL、3byte frame/RET.L、MSP境界、M0/M1 NOP | 2026-10-25、ユーザー報告で実機 `PASS=1A FAIL=00`（全26判定PASS）。Normal/Fast・WAIT・故障注入の実行シミュレーションも確認済み |

@@ -102,7 +102,6 @@ entity G80a is
         bank_pc      : out std_logic_vector(7 downto 0);
         bank_msp     : out std_logic_vector(7 downto 0);
         bank_int     : out std_logic_vector(7 downto 0);
-        bank_nvr     : out std_logic_vector(7 downto 0);
         bank_rst     : out std_logic_vector(7 downto 0);
         Data_Reverse: out std_logic
     );
@@ -201,7 +200,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             MC => MCycle,
             TS => TState,

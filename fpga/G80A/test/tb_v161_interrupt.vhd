@@ -158,7 +158,7 @@ begin
             IntCycle_n => int_cycle_n, IntE => int_e, Stop => open,
             bank_bc => open, bank_de => open, bank_hl => open,
             bank_ix => open, bank_iy => open, bank_pc => pc_bank,
-            bank_msp => msp_bank, bank_int => open, bank_nvr => open, bank_rst => ibr);
+            bank_msp => msp_bank, bank_int => open, bank_rst => ibr);
     process(all)
     begin
         live <= x"00";

@@ -150,7 +150,6 @@ package T80_Pack is
         bank_pc     : out std_logic_vector(7 downto 0);
         bank_msp    : out std_logic_vector(7 downto 0);
         bank_int    : out std_logic_vector(7 downto 0);
-        bank_nvr    : out std_logic_vector(7 downto 0);
         bank_rst    : out std_logic_vector(7 downto 0);
         MC          : out std_logic_vector(2 downto 0);
         TS          : out std_logic_vector(2 downto 0);

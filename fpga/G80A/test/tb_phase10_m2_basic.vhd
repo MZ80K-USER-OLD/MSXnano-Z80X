@@ -2,7 +2,7 @@
 -- Phase10 self-checking testbench: M2 basic operation (PC24 instruction
 -- fetch, SET_M2 PC_B reset-only-from-M0/M1, MSP24 as the M2 active stack
 -- pointer for plain PUSH qq/POP qq)
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 12 "Phase 10";
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 12 "Phase 10";
 --  MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md, sections 2 "MODE" and
 --  9 "Stack")
 --
@@ -36,9 +36,8 @@
 -- reset bank_pc_r to 0 here, matching that rule, but none of their OWN
 -- PC-modifying arithmetic has been made 24bit-aware - that is Phase11's
 -- "M2制御フロー" scope, including the new JP.L/CALL.L/RET.L opcodes), and
--- M2 interrupt vectoring via IVR24/NVR24 with its 4-byte MSP frame
--- (Phase13's scope - NMI/INT/RETI currently fall through to this same
--- 2-byte MSP mechanism, which does not match the eventual Phase13 spec).
+-- M2 interrupt vectoring via IBR with its 4-byte MSP frame is outside this
+-- Phase10 testbench; see tb_v161_interrupt.vhd for current coverage.
 --
 -- Run with GHDL:
 --   ghdl -a --std=08 ../t80_pack.vhd ../t80_mcode.vhd ../t80_alu.vhd ../t80_reg.vhd ../t80.vhd tb_phase10_m2_basic.vhd
@@ -84,7 +83,6 @@ architecture sim of tb_phase10_m2_basic is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -160,7 +158,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

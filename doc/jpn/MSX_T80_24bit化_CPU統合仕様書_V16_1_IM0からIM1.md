@@ -25,6 +25,7 @@ T80ベースのZ80互換CPUに24ビットのプログラムカウンタ、デー
 - `PC24={PC_B,PC}`。16bit PCとバンクの組み合わせで実装する。
 - `MSP24={MSP_B,MSP[15:0]}`。従来のSP16とは独立。
 - `IBR`（Interrupt Bank Register、8bit）はM2の割り込み・RST.L・SYSCALLで使用する。Z80互換RSTはIBRを参照しない。
+- NVR24は廃止。M2 NMIはNVRではなく`{IBR,0066h}`へ分岐する。
 - RESETでMODE=M0、各バンクレジスタ/IBR=00h、MSP24=000000h。その他のリセット値は既存T80/Z80仕様に従う。
 - バンクレジスタの読み書きは付録AのV15割り当てに従う。フラグは変更しない。
 
@@ -40,17 +41,19 @@ T80ベースのZ80互換CPUに24ビットのプログラムカウンタ、デー
 
 - **Wは独立した追加フラグではなく、F.bit5（Z80のYビット）を利用**する。M1/M2の通常の16bit `INC/DEC BC,DE,HL,IX,IY`だけがW/Yを更新する。SP/MSPは対象外。M0では更新しない。
 - INC時に演算前値がFFFFh、DEC時に0000hならY=1、それ以外はY=0。対象命令の通常のFフラグはY以外保持する。その他の命令は本機能としてのYを更新しない（通常のZ80命令によるFの更新は既存命令仕様に従う）。
-- `TEST BC/DE/HL/IX/IY`は16bit値、`TEST24 BC/DE/HL/IX/IY`は24bit値を比較し、**Zだけ更新**、その他のFビットを保持する。SP/MSPはTEST対象外。
+- `TEST BC/DE/HL/IX/IY`は16bit値、`TEST24 BC/DE/HL/IX/IY`は24bit値を比較し、値が0ならZ=1、それ以外ならZ=0とする。**Zだけ更新**し、その他のFビットを保持する。SP/MSPはTEST対象外。M1/M2で実行し、M0ではNOP。
 - `WTOC`（ED FE）は`F.C ← F.bit5`を実行し、その他のFビットを保持する。Yの内容は保持される。
 
 ## 6. 24bit演算
 
-- `ADD24 HL,BC/DE/HL/SP`＝ED 09/19/29/39、`SUB24 HL,BC/DE/HL/SP`＝ED F9/FB/FD/FF。
-- `INC24 HL`＝ED F1、`DEC24 HL`＝ED 2B。`CP24 HL,DE`＝ED 3DはV15命令表に存在するが、フラグ詳細は別途RTL仕様確認を要する。
-- **ADC24/SBC24は採用しない**。SUB24は入力Cを参照しない。
+- `ADD24 HL,BC/DE/HL/SP`＝ED 09/19/29/39。
+- `INC24 HL`＝ED 23、`DEC24 HL`＝ED 2B、`CP24 HL,DE`＝ED 3D。
+- `ADC24 HL,BC/DE/HL/SP`＝ED 07/17/27/37、`SBC24 HL,BC/DE/HL/SP`＝ED 0F/1F/2F/3F。SUB24専用命令はなく、減算はSBC24で行う。
 - ADD24/SUB24/INC24/DEC24のフラグはS,Z,P/V,N,Cを更新し、H,X,Yを保持する。Cは24bitのcarry/borrow（INC24/DEC24は24bit境界越え）を示す。P/Vは24bit符号付きoverflow。Nは減算系で1、加算系で0。
-- M2で24bit演算のSPオペランドを指定した場合はMSP24を参照する。ただし通常の`INC SP/DEC SP/LD SP,HL`はSP16を操作する。
-- DD/FDでのHL→IX/IY置換は従来仕様にあるが、**V15表に明示的な個別コードがない派生形は確定コードとして扱わない**。
+- M2では`INC SP`/`DEC SP`がMSP24を24bit増減し、`LD SP,HL`はHL24をMSP24へ転送する（DD/FD付き`LD SP,IX/IY`も同様）。M0/M1では従来どおりSP16を操作する。24bit演算のSPオペランドもM2ではMSP24を参照する。
+- DD/FD付きでHL targetをIX/IYへ置換する。例：`DD ED 23`=`INC24 IX`、`FD ED 09`=`ADD24 IY,BC`、`DD ED 2F`=`SBC24 IX,HL`。suffixの演算・source選択は対応するHL命令と同じ。`SUB24`専用opcodeは設けず、C=0の`SBC24`で実行する。
+- `PUSH24/POP24 IX/IY`は`DD/FD ED E5/E1`。LOW/HIGH/BANKの順序、MSP24の3byte増減、F/W保持はBC/DE/HL版と同じ。
+- `LD24 MSP,imm24`は`ED 34 bl bh bn`（little-endian）。M1/M2で3byteを取得し、F/W不変。M0ではED 34を1byte NOPとして扱う。
 
 ## 7. 転送・実効アドレス
 
@@ -153,19 +156,19 @@ M2割込みを使う場合は、IBR内に4byteフレーム対応のハンドラ�
 
 ## 付録A. V16拡張命令一覧（eZ80対応区分付き、全行）
 
-以下は別添CSVの全169行を転記したもの。
+以下は命令割当ての記録であり、RTL未実装の案も含む。各行の「仕様状態」は実装状態を表さない。現行RTLと異なる旧opcodeは下記のとおり修正し、未実装opcodeは状態欄で明示する。
 
 | 分類 | オペコード | 命令 | 対象モード | 仕様状態 | eZ80対応区分 |
 |---|---|---|---|---|---|
 | モード | ED 90 | SET_M0 | 全モード | 確定 | MSX独自拡張（eZ80同一割当なし） |
 | モード | ED 91 | SET_M1 | 全モード | 確定 | MSX独自拡張（eZ80同一割当なし） |
 | モード | ED 92 | SET_M2 | 全モード | 確定 | eZ80独自I/O領域を転用 |
-| バンク | ED E3 | LD BC_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
-| バンク | ED E6 | LD A,BC_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
-| バンク | ED E7 | LD DE_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
-| バンク | ED E9 | LD A,DE_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
-| バンク | ED EB | LD HL_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
-| バンク | ED EE | LD A,HL_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 04 | LD BC_B,A | 全モード | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 0C | LD A,BC_B | 全モード | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 14 | LD DE_B,A | 全モード | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 1C | LD A,DE_B | 全モード | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 24 | LD HL_B,A | 全モード | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
+| バンク | ED 2C | LD A,HL_B | 全モード | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
 | バンク | ED 05 | LD IX_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
 | バンク | ED 0D | LD A,IX_B | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
 | バンク | ED 15 | LD IY_B,A | 全モード | 仕様記載 | MSX独自拡張（eZ80同一割当なし） |
@@ -180,28 +183,29 @@ M2割込みを使う場合は、IBR内に4byteフレーム対応のハンドラ�
 | 16bit境界検出 | 2B | DEC HL | M0/M1/M2 | 既存Z80命令＋W追加 | MSX独自拡張（eZ80同一割当なし） |
 | 標準16bit演算 | 33 | INC SP | M0/M1/M2 | 既存Z80命令 | Z80/eZ80共通コード |
 | 標準16bit演算 | 3B | DEC SP | M0/M1/M2 | 既存Z80命令 | Z80/eZ80共通コード |
+| 標準16bit転送 | F9 | LD SP,HL | M0/M1/M2 | M2ではMSP24へHL24を転送、M0/M1ではSP16へHL16を転送 | Z80/eZ80共通コード |
+| 標準16bit転送 | DD F9 / FD F9 | LD SP,IX/IY | M0/M1/M2 | M2ではMSP24へIX24/IY24を転送、M0/M1ではSP16へIX16/IY16を転送 | Z80/eZ80共通コード |
 | 16bit境界検出 | DD 23 | INC IX | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
 | 16bit境界検出 | DD 2B | DEC IX | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
 | 16bit境界検出 | FD 23 | INC IY | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
 | 16bit境界検出 | FD 2B | DEC IY | M0/M1/M2 | 既存Z80命令＋W追加 | Z80/eZ80共通コード（Wフラグ拡張） |
-| TEST | ED D3 | TEST BC | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED D6 | TEST DE | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED D9 | TEST HL | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED DB | TEST IX | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED DD | TEST IY | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED DE | TEST24 BC | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED DF | TEST24 DE | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED F5 | TEST24 HL | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED F6 | TEST24 IX | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| TEST | ED F7 | TEST24 IY | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| W | ED FE | WTOC | M1/M2案 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| 24bit演算 | ED F1 | INC24 HL | M1/M2 | フラグ改訂・opcode既存案 | MSX独自拡張（eZ80同一割当なし） |
-| 24bit演算 | ED 2B | DEC24 HL | M1/M2 | フラグ改訂・opcode既存案 | MSX独自拡張（eZ80同一割当なし） |
-| 24bit演算 | ED 09 | ADD24 HL,BC | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
-| 24bit演算 | ED 19 | ADD24 HL,DE | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
-| 24bit演算 | ED 29 | ADD24 HL,HL | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
-| 24bit演算 | ED 39 | ADD24 HL,SP | M1/M2 | フラグ改訂・opcode既存案 | eZ80独自I/O領域を転用 |
-| 24bit演算 | ED 3D | CP24 HL,DE | M1/M2 | 既存V13案 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED D3 | TEST BC | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED D6 | TEST DE | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED D9 | TEST HL | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DB | TEST IX | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DD | TEST IY | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DE | TEST24 BC | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED DF | TEST24 DE | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED F5 | TEST24 HL | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED F6 | TEST24 IX | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| TEST | ED F7 | TEST24 IY | M1/M2 | RTL実装済み。値が0の場合のみZ=1、その他のF保持 | MSX独自拡張（eZ80同一割当なし） |
+| W | ED FE | WTOC | M1/M2 | RTL実装済み（GHDL検証済み） | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 23 / DD/FD ED 23 | INC24 HL/IX/IY | M1/M2 | RTL実装済み（Phase8/16 GHDL検証済み） | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 2B / DD/FD ED 2B | DEC24 HL/IX/IY | M1/M2 | RTL実装済み（Phase8/16 GHDL検証済み） | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 09/19/29/39 / DD/FD ED同opcode | ADD24 HL/IX/IY,BC/DE/HL(or IX/IY)/SP | M1/M2 | RTL実装済み（Phase8/16代表ケースGHDL検証済み） | eZ80独自I/O領域を転用 |
+| 24bit演算 | ED 07/17/27/37 / DD/FD ED同opcode | ADC24 HL/IX/IY,BC/DE/HL(or IX/IY)/SP | M1/M2 | RTL実装済み（Phase8/16代表ケースGHDL検証済み） | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 0F/1F/2F/3F / DD/FD ED同opcode | SBC24 HL/IX/IY,BC/DE/HL(or IX/IY)/SP | M1/M2 | RTL実装済み（Phase8/16代表ケースGHDL検証済み） | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 3D | CP24 HL,DE | M1/M2 | RTL実装済み（Phase8 GHDL検証済み） | MSX独自拡張（eZ80同一割当なし） |
 | index16 | DD 07 d | LD BC,(IX+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
 | index16 | DD 17 d | LD DE,(IX+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
 | index16 | DD 27 d | LD HL,(IX+d) | M1/M2 | V13案／照合待ち | eZ80同一割当 |
@@ -234,9 +238,12 @@ M2割込みを使う場合は、IBR内に4byteフレーム対応のハンドラ�
 | 24bit転送 | ED 0E | LD24 BC,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | 24bit転送 | ED 16 | LD24 HL,DE | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | 24bit転送 | ED 1E | LD24 DE,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
-| 24bit転送 | ED 9E bl bh bn | LD24 MSP,imm24 | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit転送 | ED 34 bl bh bn | LD24 MSP,imm24 | M1/M2 | RTL実装済み（GHDL検証済み、実機未検証） | MSX独自拡張（eZ80同一割当なし） |
 | 24bit転送 | ED 35 | LD24 MSP,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | 24bit転送 | ED 36 | LD24 HL,MSP | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
+| 割込ベクタ | ED 9A bl bh bn | LD24 IVR,imm24 | M1/M2 | 未実装 | MSX独自拡張（eZ80同一割当なし） |
+| 割込ベクタ | ED 9C | LD24 HL,IVR | M1/M2 | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
+| 予約 | ED 9E/9F | RESERVED | 全モード | NVR廃止により転送命令を削除。NOP扱い | MSX独自拡張（eZ80同一割当なし） |
 | 24bit転送 | DD ED 26 | LD24 HL,IX | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | 24bit転送 | DD ED 2E | LD24 IX,HL | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | 24bit転送 | FD ED 26 | LD24 HL,IY | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
@@ -247,10 +254,10 @@ M2割込みを使う場合は、IBR内に4byteフレーム対応のハンドラ�
 | スタック | ED C1 | POP24 BC | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | スタック | ED D1 | POP24 DE | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | スタック | ED E1 | POP24 HL | M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
-| スタック | DD ED E5 | PUSH24 IX | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
-| スタック | DD ED E1 | POP24 IX | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
-| スタック | FD ED E5 | PUSH24 IY | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
-| スタック | FD ED E1 | POP24 IY | M2 | V13記載／RTL未完 | MSX独自拡張（eZ80同一割当なし） |
+| スタック | DD ED E5 | PUSH24 IX | M2 | RTL実装済み（GHDL検証済み、実機未検証） | MSX独自拡張（eZ80同一割当なし） |
+| スタック | DD ED E1 | POP24 IX | M2 | RTL実装済み（GHDL検証済み、実機未検証） | MSX独自拡張（eZ80同一割当なし） |
+| スタック | FD ED E5 | PUSH24 IY | M2 | RTL実装済み（GHDL検証済み、実機未検証） | MSX独自拡張（eZ80同一割当なし） |
+| スタック | FD ED E1 | POP24 IY | M2 | RTL実装済み（GHDL検証済み、実機未検証） | MSX独自拡張（eZ80同一割当なし） |
 | 制御分岐 | ED 18 dl dh | JR.L | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | 制御分岐 | ED 20 dl dh | JR.L NZ | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
 | 制御分岐 | ED 28 dl dh | JR.L Z | M1/M2 | V13記載 | MSX独自拡張（eZ80同一割当なし） |
@@ -305,10 +312,8 @@ M2割込みを使う場合は、IBR内に4byteフレーム対応のハンドラ�
 | RST | EF | RST 28h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
 | RST | F7 | RST 30h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
 | RST | FF | RST 38h | 全モード | Z80互換維持 | Z80/eZ80共通コード（M2はMSPを使用） |
-| 24bit演算 | ED F9 | SUB24 HL,BC | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| 24bit演算 | ED FB | SUB24 HL,DE | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| 24bit演算 | ED FD | SUB24 HL,HL | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
-| 24bit演算 | ED FF | SUB24 HL,SP | M1/M2 | 今回割当 | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 07/17/27/37 | ADC24 HL,BC/DE/HL/SP | M1/M2 | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
+| 24bit演算 | ED 0F/1F/2F/3F | SBC24 HL,BC/DE/HL/SP | M1/M2 | RTL実装済み | MSX独自拡張（eZ80同一割当なし） |
 | RST.L | ED 85 | RST.L 00h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
 | RST.L | ED 8D | RST.L 08h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |
 | RST.L | ED 95 | RST.L 10h | M2 | 確定 | MSX独自拡張（eZ80同一割当なし） |

@@ -5,7 +5,7 @@
 ; Phase9「PUSH24/POP24」を、実機/エミュレータ上のMSX-DOS(2)から起動して
 ; 確認するためのテストプログラムです。
 ;
-;   doc/jpn/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション11 "Phase 9"
+;   doc/jpn/doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション11 "Phase 9"
 ;   doc/jpn/MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md セクション9 "Stack"
 ;   fpga/G80A/test/tb_phase9_push24_pop24.vhd (同じシナリオのGHDLシミュレーション版)
 ;

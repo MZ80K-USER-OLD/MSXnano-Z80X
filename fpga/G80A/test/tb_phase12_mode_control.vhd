@@ -1,7 +1,7 @@
 --
 -- Phase12 self-checking testbench: JP.M0/M1/M2 addr16/24, CALL.M0/M1/M2,
 -- RET.M
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 14 "Phase 12";
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 14 "Phase 12";
 --  MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md section 5 and the roadmap's
 --  "CALL.MxはMSPへ4byte保存する" note)
 --
@@ -111,7 +111,6 @@ architecture sim of tb_phase12_mode_control is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -181,7 +180,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

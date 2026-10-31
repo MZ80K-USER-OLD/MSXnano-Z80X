@@ -1,5 +1,5 @@
 --
--- LEA.L self-checking testbench (MSX_T80_24bit化_実装手順_V4_2026-10-11.md
+-- LEA.L self-checking testbench (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V4_2026-10-11.md
 -- section 21.2 "LEA.L追加、PEA.L不採用")
 --
 -- DD/FD ED 68 d  -> LEA.L HL,(IX/IY+d)
@@ -102,7 +102,6 @@ architecture sim of tb_lea_l is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -191,7 +190,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

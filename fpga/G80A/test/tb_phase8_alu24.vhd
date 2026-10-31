@@ -1,6 +1,6 @@
 --
 -- Phase8 self-checking testbench: dedicated 24bit ALU instructions
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 10 "Phase 8";
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 10 "Phase 8";
 --  MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md, section 6 "24bit ALU")
 --
 -- Instantiates the real T80 core (fpga/G80A/t80.vhd) and runs a small hand
@@ -29,9 +29,8 @@
 --   - ADC24/SBC24 correctly consume the existing carry flag as their
 --     carry-in/borrow-in (set up via SCF;CPL = C=1,H=1 beforehand)
 --
--- NOT covered by this testbench (deferred, same scope limitation as
--- Phase7's LD24 HL,IX/IY - see AVAILABLE_INSTRUCTIONS.md): DD/FD IX/IY
--- target replacement for any of these opcodes.
+-- This bench focuses on the bare-ED HL forms. Representative DD/FD
+-- IX/IY target replacement cases are covered by tb_v161_opcode_extensions.vhd.
 --
 -- Run with GHDL:
 --   ghdl -a --std=08 ../t80_pack.vhd ../t80_mcode.vhd ../t80_alu.vhd ../t80_reg.vhd ../t80.vhd tb_phase8_alu24.vhd
@@ -77,7 +76,6 @@ architecture sim of tb_phase8_alu24 is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -204,7 +202,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

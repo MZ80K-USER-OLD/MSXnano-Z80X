@@ -5,7 +5,7 @@
 ; Phase5「MMU実機検証」を、実機/エミュレータ上のMSX-DOS2から起動して確認する
 ; ためのテストプログラムです。
 ;
-;   doc/jpn/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション7 "Phase 5"
+;   doc/jpn/doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション7 "Phase 5"
 ;   fpga/G80A/test/tb_phase5_mmu_mapping.vhd (同じシナリオのGHDLシミュレーション版)
 ;
 ; 検証内容 (tb_phase5_mmu_mapping.vhd と同じシナリオ):

@@ -45,7 +45,6 @@ module MSXnano_CPU_Wrapper24 #(
     output wire [7:0]  bank_pc,
     output wire [7:0]  bank_msp,
     output wire [7:0]  bank_int,
-    output wire [7:0]  bank_nvr,
     output wire [7:0]  bank_rst,
     output wire        Data_Reverse
 );
@@ -66,7 +65,6 @@ module MSXnano_CPU_Wrapper24 #(
     assign bank_pc  = 8'h00;
     assign bank_msp = 8'h00;
     assign bank_int = 8'h00;
-    assign bank_nvr = 8'h00;
     assign bank_rst = 8'h00;
 
     G80a  #(

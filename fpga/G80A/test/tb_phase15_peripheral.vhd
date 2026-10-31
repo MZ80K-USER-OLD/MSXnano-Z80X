@@ -2,7 +2,7 @@
 -- Do not run on current RTL; see verification_data/v161_rst_l/README.md.
 --
 -- Phase15 self-checking testbench: "peripheral CPU operation" audit
--- (MSX_T80_24bit化_実装手順_V4_2026-10-11.md section17 "Phase 15 - 周辺
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V4_2026-10-11.md section17 "Phase 15 - 周辺
 --  CPU動作"; CPU仕様書V10 section13 "HALT/WAIT/BUSREQ/BUSACK、DI/EI、
 --  interrupt timingはZ80/T80を敷衍する").
 --
@@ -143,7 +143,6 @@ architecture sim of tb_phase15_peripheral is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -216,7 +215,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

@@ -397,7 +397,6 @@ wire [7:0] ex_bus_data;
     wire [7:0] cpu_bank_pc;
     wire [7:0] cpu_bank_msp;
     wire [7:0] cpu_bank_int;
-    wire [7:0] cpu_bank_nvr;
     wire [7:0] cpu_bank_rst;
     // Z80X24 base spec: straight-through logical->physical bank mapping
     // (no MMU translation table). See the cpu_sdram_* section below for
@@ -852,7 +851,6 @@ assign mmu_physical_bank = cpu_addr24[23:16];
         .bank_pc    (cpu_bank_pc),
         .bank_msp   (cpu_bank_msp),
         .bank_int   (cpu_bank_int),
-        .bank_nvr   (cpu_bank_nvr),
         .bank_rst   (cpu_bank_rst),
         .Data_Reverse (bus_data_reverse)
     );

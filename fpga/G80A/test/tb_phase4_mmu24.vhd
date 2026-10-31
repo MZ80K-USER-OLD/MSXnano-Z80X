@@ -1,7 +1,7 @@
 --
 -- Phase4 self-checking testbench: MMU_DATA (F0h/F1h) logical->physical
 -- bank translation
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 6 "Phase 4")
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 6 "Phase 4")
 --
 -- NOTE: MMU24 is an OPTIONAL add-on, not instantiated by the default
 -- top.v build (see mmu24.vhd's header comment and

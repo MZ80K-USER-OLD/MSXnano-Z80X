@@ -132,7 +132,7 @@ begin
             DI => DI, DO => DO, mode24 => mode24,
             bank_bc => open, bank_de => open, bank_hl => open, bank_ix => open,
             bank_iy => open, bank_pc => open, bank_msp => open, bank_int => open,
-            bank_nvr => open, bank_rst => open, Data_Reverse => Data_Reverse);
+            bank_rst => open, Data_Reverse => Data_Reverse);
 
     DI <= cpu_din;
     WAIT_n <= cpu_sdram_wait_n;

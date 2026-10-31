@@ -1,7 +1,7 @@
 --
 -- MMU24 : Phase4 "MMU_DATA" logical->physical bank translation, plus
 -- Phase6 "MMU_ATTR.W" write-protection attribute
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, sections 6 "Phase 4" and
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, sections 6 "Phase 4" and
 -- 8 "Phase 6")
 --
 -- OPTIONAL ADD-ON, NOT INSTANTIATED BY DEFAULT: this module is kept in the

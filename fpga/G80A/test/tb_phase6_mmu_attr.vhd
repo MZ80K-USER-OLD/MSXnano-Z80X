@@ -1,6 +1,6 @@
 --
 -- Phase6 self-checking testbench: MMU_ATTR.W write-protection attribute
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 8 "Phase 6")
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 8 "Phase 6")
 --
 -- NOTE: MMU24 is an OPTIONAL add-on, not instantiated by the default
 -- top.v build (see mmu24.vhd's header comment and

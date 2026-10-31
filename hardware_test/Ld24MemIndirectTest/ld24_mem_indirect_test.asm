@@ -7,8 +7,8 @@
 ; MSX-DOS(2)から起動して確認するためのテストプログラムです。
 ;
 ;   doc/jpn/24bitメモリロード追加命令案.md
-;   doc/jpn/MSX_T80_24bit化_実装手順_V4_不足転送命令追加案_2026-10-19.md
-;   doc/jpn/MSX_T80_24bit化_命令一覧_V13_予約維持_2026-10-19.csv
+;   doc/jpn/OLD/MSX_T80_24bit化_実装手順_V4_不足転送命令追加案_2026-10-19.md
+;   doc/jpn/OLD/MSX_T80_24bit化_命令一覧_V13_予約維持_2026-10-19.csv
 ;   AVAILABLE_INSTRUCTIONS.md セクション18
 ;   fpga/G80A/test/tb_ld24_mem_indirect.vhd (同じシナリオのGHDLシミュレーション版。
 ;     アドレス/期待値を共有するが、DOS・割込み・表示処理の実行環境は異なる)

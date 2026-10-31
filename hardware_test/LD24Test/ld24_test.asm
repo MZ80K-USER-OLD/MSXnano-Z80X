@@ -6,7 +6,7 @@
 ; (HL24 hub / MSP24 / IVR24 / NVR24) を、実機/エミュレータ上の
 ; MSX-DOS(2)から起動して確認するためのテストプログラムです。
 ;
-;   doc/jpn/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション9 "Phase 7"
+;   doc/jpn/doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション9 "Phase 7"
 ;   doc/jpn/MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md セクション7
 ;     "HL24 hub / MSP / vector"
 ;   fpga/G80A/test/tb_phase7_ld24.vhd (同じシナリオのGHDLシミュレーション版)

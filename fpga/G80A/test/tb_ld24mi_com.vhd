@@ -14,6 +14,8 @@ entity tb_ld24mi_com is
         Index16_Test : boolean := false;
         Index24_Test : boolean := false;
         M2_Test : boolean := false;
+        M2_SP_Test : boolean := false;
+        Index_EA_Test : boolean := false;
         V161_Control_Test : boolean := false;
         V161_IRQ_Test : boolean := false;
         HALT_IRQ_Test : boolean := false;
@@ -121,8 +123,7 @@ begin
             IntCycle_n => int_cycle_n, IntE => int_enabled, Stop => open,
             bank_bc => open, bank_de => open, bank_hl => open,
             bank_ix => open, bank_iy => open, bank_pc => open,
-            bank_msp => open, bank_int => open, bank_nvr => open,
-            bank_rst => open);
+            bank_msp => open, bank_int => open, bank_rst => open);
 
     process (all)
     begin
@@ -137,6 +138,9 @@ begin
                 end if;
             when x"02" =>
                 live <= mem02(to_integer(unsigned(a)));
+                if Inject_Fault and Index_EA_Test and a = x"0010" then
+                    live <= x"00";
+                end if;
                 if Inject_Fault and V161_Control_Test and a = x"8101" then
                     live <= x"A5";
                 end if;
@@ -183,10 +187,13 @@ begin
     begin
         if rising_edge(clk) and reset_n = '1' then
             ticks := ticks + 1;
-            if M2_Test then
+            if Index_EA_Test and mode24 /= "00" then
+                assert int_enabled = '0' report "INDEXEA enabled interrupts in extended mode" severity failure;
+            end if;
+            if M2_Test or M2_SP_Test then
                 assert mode24 /= "01" report "M2 test entered M1 instead" severity failure;
             end if;
-            if M2_Test or V161_Control_Test or V161_IRQ_Test then
+            if M2_Test or M2_SP_Test or Index_EA_Test or V161_Control_Test or V161_IRQ_Test then
                 if mode24 = "10" and previous_mode /= "10" then
                     m2_entries := m2_entries + 1;
                 end if;
@@ -295,7 +302,8 @@ begin
                     when x"00" => mem00(address) <= dout;
                     when x"01" => mem01(address) <= dout;
                     when x"02" => mem02(address) <= dout;
-                    when others => assert false report "Unexpected physical write bank" severity failure;
+                    when others => assert false report "Unexpected physical write bank " &
+                        to_hstring(bank) & " address " & to_hstring(a) severity failure;
                 end case;
             end if;
             if io_cycle = '1' and writing = '1' and ts = "011" and not last_io then
@@ -336,6 +344,17 @@ begin
                                             assert output_line.all = "PASS=1A FAIL=00"
                                                 report "Wrong V16.1 summary" severity failure;
                                         end if;
+                                    elsif Index_EA_Test then
+                                        if Inject_Fault then
+                                            assert output_line.all = "PASS=65 FAIL=04 FIRST CASE=60 OFFSET=00"
+                                                report "Wrong indexed address fault summary" severity failure;
+                                        else
+                                            assert output_line.all = "PASS=69 FAIL=00"
+                                                report "Wrong indexed address/LEA summary" severity failure;
+                                        end if;
+                                    elsif M2_SP_Test then
+                                        assert output_line.all = "PASS=58 FAIL=00"
+                                            report "Wrong M2 TEST/MSP summary" severity failure;
                                     elsif Index16_Test or Index24_Test then
                                         if Inject_Fault then
                                             assert output_line.all = "PASS=00 FAIL=18"
@@ -376,7 +395,11 @@ begin
                             assert halt_trace_cases = 3 and not halt_resume_pending
                                 report "Missing HALT ordered trace coverage" severity failure;
                         end if;
-                        if M2_Test or V161_Control_Test then
+                        if Index_EA_Test then
+                            assert m2_entries = 38 report "Missing indexed address M2 coverage" severity failure;
+                        elsif M2_SP_Test then
+                            assert m2_entries = 1 report "M2SP test must enter M2 exactly once" severity failure;
+                        elsif M2_Test or V161_Control_Test then
                             assert m2_entries = 24 report "Missing M2 case coverage" severity failure;
                         end if;
                         if V161_IRQ_Test then
@@ -409,12 +432,17 @@ begin
                         end if;
                         assert expanded_slot = x"00"
                             report "Expanded-slot register changed during COM" severity failure;
-                        if Inject_Fault and not (Index16_Test or Index24_Test or V161_Control_Test or V161_IRQ_Test or HALT_IRQ_Test) then
+                        if Inject_Fault and not (Index16_Test or Index24_Test or Index_EA_Test or V161_Control_Test or V161_IRQ_Test or HALT_IRQ_Test) then
                             assert fault_lines = 4 report "Fault values were not reported correctly" severity failure;
                         end if;
-                        assert bdos_calls > 20 and
-                               (irq_count > 0 or (V161_IRQ_Test and Suppress_VDP_IRQ))
-                            report "BDOS/interrupt coverage missing" severity failure;
+                        if M2_SP_Test or Index_EA_Test then
+                            assert bdos_calls > 0
+                                report "M2SP test did not call BDOS" severity failure;
+                        else
+                            assert bdos_calls > 20 and
+                                   (irq_count > 0 or (V161_IRQ_Test and Suppress_VDP_IRQ))
+                                report "BDOS/interrupt coverage missing" severity failure;
+                        end if;
                         finished <= true;
                     when x"99" =>
                         if V161_IRQ_Test or HALT_IRQ_Test then

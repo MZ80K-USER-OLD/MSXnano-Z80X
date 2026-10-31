@@ -8,13 +8,12 @@
 > [V16.1移行記録](../../verification_data/v161_rst_l/README.md)を参照。
 
 MSXnano-Z80X ([msxnano-24bit](../..) リポジトリ、24bit CPU拡張 "Z80X24") の
-**Phase7「LD24系命令」**のうち、本増分で実装したレジスタ間24bit転送命令
-(HL24 hub / MSP24 / IVR24 / NVR24) を、実機(Tang Nano)またはMSXエミュレータ上の
-MSX-DOS(2)から起動して確認するための、Z80アセンブリ製テストプログラムです。
+**Phase7「LD24系命令」**の旧仕様に基づくレジスタ間24bit転送命令
+(HL24 hub / MSP24 / IVR24 / NVR24)を検証した履歴用テストプログラムです。
 
-同じシナリオを検証するGHDLシミュレーション版テストベンチが
-`msxnano-24bit/fpga/G80A/test/tb_phase7_ld24.vhd` にあります。本プログラムは
-それを実機上で再現します。
+対応するGHDLテストベンチも旧命令仕様の履歴として
+`fpga/G80A/test/tb_phase7_ld24.vhd` に保持しています。どちらも現行RTLの
+検証には使用しません。
 
 ## 必要な環境
 

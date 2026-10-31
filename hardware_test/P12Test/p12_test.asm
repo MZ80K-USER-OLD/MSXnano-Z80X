@@ -5,7 +5,7 @@
 ; Phase12「モード間制御」(JP.M0/M1/M2, CALL.M0/M1/M2, RET.M) を、実機/
 ; エミュレータ上のMSX-DOS(2)から起動して確認するためのテストプログラムです。
 ;
-;   doc/jpn/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション14 "Phase 12"
+;   doc/jpn/doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md セクション14 "Phase 12"
 ;   AVAILABLE_INSTRUCTIONS.md セクション10 "モード間制御"
 ;   fpga/G80A/test/tb_phase12_mode_control.vhd (同じ対象命令のGHDLシミュレーション版)
 ;

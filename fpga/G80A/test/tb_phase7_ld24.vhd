@@ -2,7 +2,7 @@
 -- Do not run on current RTL; see verification_data/v161_rst_l/README.md.
 --
 -- Phase7 self-checking testbench: LD24 register-transfer instructions
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 9 "Phase 7";
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 9 "Phase 7";
 --  MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md, section 7 "HL24 hub / MSP /
 --  vector")
 --
@@ -73,7 +73,6 @@ architecture sim of tb_phase7_ld24 is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -213,7 +212,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

@@ -90,7 +90,7 @@ begin
             IntCycle_n => int_cycle_n, IntE => int_e, Stop => open,
             bank_bc => open, bank_de => open, bank_hl => open,
             bank_ix => open, bank_iy => open, bank_pc => open,
-            bank_msp => open, bank_int => open, bank_nvr => open, bank_rst => open);
+            bank_msp => open, bank_int => open, bank_rst => open);
     process(clk)
         variable expected_im : natural;
         variable target : natural;

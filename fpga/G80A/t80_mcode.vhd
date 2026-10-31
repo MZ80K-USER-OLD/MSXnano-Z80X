@@ -1811,7 +1811,7 @@ begin
                                 |            "00011001"|"00011010"|"00011011"|"00011100"|"00011101"|"00011110"|"00011111"
                                 |            "00100001"|"00100010"|"00100011"|"00100100"|"00100101"|"00100110"|"00100111"
                                 |            "00101001"|"00101010"|"00101011"|"00101100"|"00101101"|"00101110"|"00101111"
-                                |            "00110001"|"00110010"|"00110011"|"00110100"|"00110101"|"00110110"|"00110111"
+                                |            "00110001"|"00110010"|"00110011"            |"00110101"|"00110110"|"00110111"
                                 |            "00111001"|"00111010"|"00111011"|"00111100"|"00111101"|"00111110"|"00111111"
 
 
@@ -1825,13 +1825,38 @@ begin
                                 |                                            "10111100"|            "10111110"
                                 |"11000111"
                                 |"11001011"|"11001110"|"11001111"
-                                |"11010011"|"11010110"|"11010111"
-                                |"11011011"|"11011101"|"11011110"|"11011111"
+                                |                    "11010111"
                                 |"11100011"|"11100110"|"11100111"
                                 |"11101001"|"11101011"|"11101101"|"11101110"|"11101111"
-                                |"11110001"|"11110101"|"11110110"|"11110111"
-                                |"11111001"|"11111011"|"11111101"|"11111110"|"11111111" =>
+                                |"11110001"
+                                |"11111001"|"11111011"|"11111101"            |"11111111" =>
                                 null; -- NOP, undocumented
+                        when "11010011"|"11010110"|"11011011"|"11011101"|
+                             "11011110"|"11011111"|"11110101"|"11110110"|"11110111" =>
+                                null; -- TEST/TEST24 register-zero tests
+                        when "11111110" =>
+                                null; -- WTOC (ED FE), flag transfer is committed in t80.vhd
+                        when "00110100" =>
+                                -- LD24 MSP,imm24 (ED 34). Fetch low/high/bank
+                                -- bytes in order; the final T_Res commits the
+                                -- latched value in t80.vhd. M0 treats it as a
+                                -- one-byte NOP, matching the M1/M2-only spec.
+                                if Mode24 /= "00" then
+                                        MCycles <= "0100";
+                                        case to_integer(unsigned(MCycle)) is
+                                        when 2 =>
+                                                Inc_PC <= '1';
+                                                LDZ <= '1';
+                                        when 3 =>
+                                                Inc_PC <= '1';
+                                                LDW <= '1';
+                                        when 4 =>
+                                                Inc_PC <= '1';
+                                                LDB <= '1';
+                                                TStates <= "100";
+                                        when others => null;
+                                        end case;
+                                end if;
                         when "11000110" =>
                                 if Mode24 = "10" then
                                         MCycles <= "0111";
@@ -1862,7 +1887,7 @@ begin
                         -- exactly (3 sequential reads via a NEW aXfer
                         -- address source instead of aMSP - see
                         -- doc/jpn/24bitメモリロード追加命令案.md and
-                        -- doc/jpn/MSX_T80_24bit化_実装手順_V4_不足転送
+                        -- doc/jpn/OLD/MSX_T80_24bit化_実装手順_V4_不足転送
                         -- 命令追加案_2026-10-19.md). HL24 itself is
                         -- NEVER written (only the temporary TmpAddr/
                         -- TmpBank "xfer pointer" advances - see t80.vhd's
@@ -2506,7 +2531,7 @@ begin
                                 end case;
                         when "11000101"|"11010101"|"11100101" =>
                                 -- Phase9: PUSH24 BC/DE/HL (ED C5/D5/E5)
-                                -- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 11
+                                -- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 11
                                 --  "Phase 9"; CPU仕様書V8 section 9 "Stack"). Writes
                                 -- BANK/HIGH/LOW (in that order, decrementing MSP24
                                 -- before each byte) via the new aMSP address source.
@@ -2516,10 +2541,9 @@ begin
                                 -- direct-IR-match pattern) rather than here, since
                                 -- MSP/bank_msp_r are plain signals outside both the
                                 -- register file and the existing IncDec_16/Set_BusB_To
-                                -- encodings. DD/FD (IX/IY) variants are deferred (same
-                                -- scope limitation as Phase7's LD24 HL,IX/IY - see
-                                -- AVAILABLE_INSTRUCTIONS.md) due to the existing
-                                -- DD/FD+ED dual-prefix XY_State reset limitation.
+                                -- encodings. For DD/FD variants, t80.vhd uses the
+                                -- latched LeaXY prefix to override the source pair
+                                -- and BANK byte with IX/IY.
                                 MCycles <= "0100";
                                 case to_integer(unsigned(MCycle)) is
                                 when 1 =>
@@ -2549,8 +2573,8 @@ begin
                                 -- the existing generic Read_To_Reg/Set_BusA_To
                                 -- mechanism (identical to plain POP qq); the BANK
                                 -- byte capture and all three MSP24 increments are
-                                -- handled directly in t80.vhd. DD/FD (IX/IY)
-                                -- variants deferred, see the PUSH24 comment above.
+                                -- handled directly in t80.vhd. For DD/FD variants,
+                                -- that file redirects the pair and BANK byte via LeaXY.
                                 MCycles <= "0100";
                                 case to_integer(unsigned(MCycle)) is
                                 when 1 =>
@@ -2983,12 +3007,7 @@ begin
                                 when others => null;
                                 end case;
                         when "11011001" =>
-                                -- R800 MULUB. ED C9 (previously grouped
-                                -- here alongside D9) is now Phase11's
-                                -- RET.L below; this opcode (D9) remains the
-                                -- unreachable R800 placeholder since Mode
-                                -- is always 0=Z80 in this project.
-                                null;
+                                null; -- TEST HL (M1/M2 flag commit in t80.vhd)
                         end case;
 
                 end case;

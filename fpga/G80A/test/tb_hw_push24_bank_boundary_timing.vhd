@@ -107,7 +107,7 @@ architecture sim of tb_hw_push24_bank_boundary_timing is
     signal DI, DO       : std_logic_vector(7 downto 0);
     signal mode24       : std_logic_vector(1 downto 0);
     signal bank_bc, bank_de, bank_hl, bank_ix, bank_iy, bank_pc,
-           bank_msp, bank_int, bank_nvr, bank_rst : std_logic_vector(7 downto 0);
+           bank_msp, bank_int, bank_rst : std_logic_vector(7 downto 0);
     signal Data_Reverse : std_logic;
 
     ------------------------------------------------------------------
@@ -548,7 +548,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             Data_Reverse => Data_Reverse);
 

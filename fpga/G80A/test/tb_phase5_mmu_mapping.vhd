@@ -1,6 +1,6 @@
 --
 -- Phase5 self-checking testbench: MMU real-mapping scenarios
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 7 "Phase 5")
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 7 "Phase 5")
 --
 -- NOTE: MMU24 is an OPTIONAL add-on, not instantiated by the default
 -- top.v build (see mmu24.vhd's header comment and
@@ -74,7 +74,6 @@ architecture sim of tb_phase5_mmu_mapping is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -203,7 +202,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

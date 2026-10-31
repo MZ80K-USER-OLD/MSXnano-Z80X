@@ -7,8 +7,8 @@
 ; またはMSXエミュレータ上のMSX-DOS(2)から起動して確認するためのテスト
 ; プログラムです。
 ;
-;   doc/jpn/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md section12 "RST.L"
-;   doc/jpn/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md section13 "Interrupt"
+;   doc/jpn/OLD/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md section12 "RST.L"
+;   doc/jpn/OLD/MSX_T80_24bit化_CPU仕様書_V10_2026-10-11.md section13 "Interrupt"
 ;   AVAILABLE_INSTRUCTIONS.md セクション11 "RST拡張(RST.L)"
 ;   AVAILABLE_INSTRUCTIONS.md セクション12 "割り込み(M2拡張)"
 ;   fpga/G80A/test/tb_rst_l.vhd (RST.LのGHDLシミュレーション版)

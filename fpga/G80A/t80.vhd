@@ -100,12 +100,6 @@ entity T80 is
         BUSAK_n     : out std_logic;
         A           : out std_logic_vector(15 downto 0);
 		update_addr	: out std_logic;
-        -- Phase3: 24bit logical address bank byte for the current data bus
-        -- cycle (paired with A to form A_Bank & A). Valid (non-zero capable)
-        -- only for register-indirect data accesses (HL/BC/DE/(IX+d)/(IY+d))
-        -- while mode24 /= M0. PC fetch, SP/stack and 16bit direct (nn)
-        -- addressing stay at 00h in Phase3 (PC remains 16bit; see Phase 3
-        -- "最小M1" in MSX_T80_24bit化_実装手順_V2_2026-10-05.md).
         A_Bank      : out std_logic_vector(7 downto 0);
         DInst       : in std_logic_vector(7 downto 0);
         DI          : in std_logic_vector(7 downto 0);
@@ -119,7 +113,6 @@ entity T80 is
         bank_pc     : out std_logic_vector(7 downto 0);
         bank_msp    : out std_logic_vector(7 downto 0);
         bank_int    : out std_logic_vector(7 downto 0);
-        bank_nvr    : out std_logic_vector(7 downto 0);
         bank_rst    : out std_logic_vector(7 downto 0);
         MC          : out std_logic_vector(2 downto 0);
         TS          : out std_logic_vector(2 downto 0);
@@ -161,7 +154,6 @@ architecture rtl of T80 is
     signal SP, PC           : unsigned(15 downto 0);
     signal MSP              : unsigned(15 downto 0);
     signal IVR              : unsigned(15 downto 0);    -- Phase7: IVR24 low word (bank byte = bank_int_r)
-    signal NVR              : unsigned(15 downto 0);    -- Phase7: NVR24 low word (bank byte = bank_nvr_r)
     signal RegDIH           : std_logic_vector(7 downto 0);
     signal RegDIL           : std_logic_vector(7 downto 0);
     signal RegBusA          : std_logic_vector(15 downto 0);
@@ -205,17 +197,14 @@ architecture rtl of T80 is
     signal bank_ix_r        : std_logic_vector(7 downto 0);
     signal bank_iy_r        : std_logic_vector(7 downto 0);
     signal bank_pc_r        : std_logic_vector(7 downto 0);
-    signal bank_msp_r       : std_logic_vector(7 downto 0);   -- MSP24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 MSP)
-    signal bank_int_r       : std_logic_vector(7 downto 0);   -- IVR24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 IVR)
-    signal bank_nvr_r       : std_logic_vector(7 downto 0);   -- NVR24 bank byte (no direct opcode per V8/V7 spec; set via Phase7 LD24 NVR)
+    signal bank_msp_r       : std_logic_vector(7 downto 0);
+    signal bank_int_r       : std_logic_vector(7 downto 0);
     signal bank_rst_r       : std_logic_vector(7 downto 0);   -- IBR: ED3A write / EDEF read; bank_rst debug port retained.
 
     -- Phase8: dedicated 24bit ALU (fully combinational, see the process
     -- near RegAddrA_r/RegAddrB_r below and Alu24_AddSub in t80_pack.vhd).
-    -- alu24_active/alu24_writeback already fold in the XY_State="00" guard
-    -- (DD/FD IX/IY target variants are deferred, same scope limitation as
-    -- Phase7's LD24 HL,IX/IY - see AVAILABLE_INSTRUCTIONS.md), so T_Res
-    -- commit logic only needs to check these two signals.
+    -- LeaXY selects IX/IY for DD/FD-prefixed ED operations; an unprefixed
+    -- ED operation keeps HL as its destination.
     signal alu24_active     : std_logic;
     signal alu24_writeback  : std_logic;
     signal alu24_sub        : std_logic;
@@ -241,6 +230,9 @@ architecture rtl of T80 is
     -- dispatch (ED 68/69, t80_mcode.vhd) a memory of "was this ED
     -- immediately preceded by DD/FD", with zero effect on anything else.
     signal LeaXY            : std_logic_vector(1 downto 0);
+    signal index_addr_xy    : std_logic_vector(1 downto 0);
+    signal index_addr_bank  : std_logic_vector(7 downto 0);
+    signal index_addr24     : std_logic_vector(23 downto 0);
     signal Pre_XY_F_M       : std_logic_vector(3 downto 0);
     signal NextIs_XY_Fetch  : std_logic;
     -- Phase11: distinguishes "MCycle reached 111 because
@@ -349,6 +341,12 @@ architecture rtl of T80 is
     signal XYbit_undoc      : std_logic;
 
 begin
+
+    -- Select the bank before adding the signed displacement, sharing one
+    -- address adder between IX/IY memory operands and LEA.L.
+    index_addr_xy <= XY_State when XY_State /= "00" else LeaXY;
+    index_addr_bank <= bank_iy_r when index_addr_xy(1) = '1' else bank_ix_r;
+    index_addr24 <= Addr24_AddDisp8(index_addr_bank, RegBusC, DI_Reg);
 
     mcode : T80_MCode
         generic map(
@@ -472,18 +470,6 @@ begin
         ALU_Q;
 
     process (RESET_n, CLK_n)
-        -- LUT reduction: every Addr24_Inc/Addr24_Dec/Addr24_AddDisp16 call
-        -- site below previously called the SAME function TWICE with
-        -- IDENTICAL arguments (once sliced to (23 downto 16) for the bank
-        -- byte, once to (15 downto 0) for the 16bit word) - two separate
-        -- non-blocking assignments to two different target signals, which
-        -- synthesis does not always recognize as one shared computation.
-        -- This single process-local variable lets each occurrence compute
-        -- the 24bit result ONCE and split it, halving the number of 24bit
-        -- adders these sites need (12 occurrences total: PC24 fetch
-        -- auto-increment x2, JR.L displacement add, and MSP24 adjustment
-        -- for the generic SP/IncDec_16 path, PUSH24/POP24, CALL.L/RET.L,
-        -- CALL.M0/M1/CALL.M2/RET.M).
         variable addr24_tmp : std_logic_vector(23 downto 0);
         variable next_mode24 : std_logic_vector(1 downto 0);
     begin
@@ -510,7 +496,6 @@ begin
             bank_pc_r <= (others => '0');
             bank_msp_r <= (others => '0');
             bank_int_r <= (others => '0');
-            bank_nvr_r <= (others => '0');
             bank_rst_r <= (others => '0');
 
             ACC <= (others => '1');
@@ -520,15 +505,13 @@ begin
             I <= (others => '0');
             R <= (others => '0');
             SP <= (others => '1');
-            -- Phase7: MSP24/IVR24/NVR24 reset to 000000h per
-            -- MSX_T80_24bit化_CPU仕様書_V8 section 2 ("RESETは...
-            -- MSP24/IVR24/NVR24=000000h"). This differs from the plain Z80
+            -- MSP24/IVR24 reset to 000000h per
+            -- MSX_T80_24bit化_CPU仕様書_V8 section 2. This differs from the plain Z80
             -- SP register above, which keeps the standard all-1s Z80 reset
             -- convention (MSP24 is a new Z80X24 register with its own
             -- spec'd reset value, not a Z80-compatible stack pointer).
             MSP <= (others => '0');
             IVR <= (others => '0');
-            NVR <= (others => '0');
             Alternate <= '0';
 
             Read_To_Reg_r <= "00000";
@@ -662,6 +645,9 @@ begin
 
                 if T_Res = '1' then
 					update_addr <= '1';
+                        if ISet = "10" and IR = x"FE" and mode24_r /= "00" then
+                            F(Flag_C) <= F(Flag_Y);
+                        end if;
                     -- Phase3 default: PC fetch, SP/stack and direct (nn)
                     -- addressing stay 16bit (bank byte 00h). Only the
                     -- register-indirect cases below override this for
@@ -1049,16 +1035,7 @@ begin
                             end if;
                             A(7 downto 0) <= DI_Reg;
                         when aSP =>
-                            -- Phase10: M2 active stack pointer = MSP24
-                            -- (CPU仕様書V8 section 2/9: "M2 Active stack =
-                            -- MSP24"). This single case covers every
-                            -- existing Z80 instruction that already goes
-                            -- through aSP - PUSH/POP qq, EX (SP),HL/IX/IY,
-                            -- CALL/RET/RET cc/RST p, and (incidentally,
-                            -- still non-functional pending Phase13's M2
-                            -- interrupt frame) NMI/INT/RETI - with zero
-                            -- t80_mcode.vhd changes. Only the low 16bit
-                            -- word is used as the Z80-style stack address;
+                            -- Only the low 16bit word is used as the stack address;
                             -- the physical bank comes from bank_msp_r (see
                             -- the SP/MSP adjustment mechanism below for the
                             -- matching Addr24_Dec/Addr24_Inc carry/borrow
@@ -1117,8 +1094,6 @@ begin
                             -- adjustment" case statement below, reusing
                             -- the Addr24_Inc helper). Unlike aXY, this is
                             -- read unconditionally regardless of XY_State,
-                            -- since none of these opcodes can ever be
-                            -- active while a DD/FD prefix is pending.
                             -- Mirrors aBC/aDE/aXY's existing M0 bank-
                             -- bypass convention (Phase3): in M0 the bank
                             -- byte is simply not applied to the address.
@@ -1235,23 +1210,15 @@ begin
                 -- unrelated instructions - see the matching t80_mcode.vhd
                 -- guard on the same MCycle=110/111 special-casing.
                 if TState = 3 and MCycle = "0110" and XY_State /= "00" then
-                    TmpAddr <= std_logic_vector(signed(RegBusC) + signed(DI_Reg));
+                    TmpAddr <= index_addr24(15 downto 0);
                     -- Phase2: 24bit address generator for (IX/IY+d).
                     -- M0 keeps plain 16bit wrap (bank unchanged); M1/M2 add
                     -- the signed displacement across the full 24bit IX24/IY24
                     -- value, carrying/borrowing into the bank byte.
                     if mode24_r = "00" then
-                        if XY_State(1) = '0' then
-                            TmpBank <= bank_ix_r;
-                        else
-                            TmpBank <= bank_iy_r;
-                        end if;
+                        TmpBank <= index_addr_bank;
                     else
-                        if XY_State(1) = '0' then
-                            TmpBank <= Addr24_AddDisp8(bank_ix_r, RegBusC, DI_Reg)(23 downto 16);
-                        else
-                            TmpBank <= Addr24_AddDisp8(bank_iy_r, RegBusC, DI_Reg)(23 downto 16);
-                        end if;
+                        TmpBank <= index_addr24(23 downto 16);
                     end if;
                 end if;
 
@@ -1269,7 +1236,7 @@ begin
 
                 -- New (V4 21.2): LEA.L HL,(IX/IY+d) (DD/FD ED 68 d) / LEA.L
                 -- DE,(IX/IY+d) (DD/FD ED 69 d) effective-address computation.
-                -- Reuses the exact same TmpAddr low-16bit expression as
+                -- Reuses the same shared 24bit address adder as
                 -- (IX/IY+d) above, keyed on LeaXY instead of XY_State (see
                 -- LeaXY's declaration comment). Unlike (IX/IY+d), which
                 -- leaves TmpBank at bank_ix_r/bank_iy_r's raw value in M0
@@ -1282,33 +1249,16 @@ begin
                 -- a bank byte into HL_B/DE_B even in full Z80-compat mode.
                 if ISet = "10" and TState = 3 and MCycle = "0010" and
                    (IR = x"68" or IR = x"69") and LeaXY /= "00" then
-                    TmpAddr <= std_logic_vector(signed(RegBusC) + signed(DI_Reg));
+                    TmpAddr <= index_addr24(15 downto 0);
                     if mode24_r = "00" then
                         TmpBank <= (others => '0');
                     else
-                        if LeaXY(1) = '0' then
-                            TmpBank <= Addr24_AddDisp8(bank_ix_r, RegBusC, DI_Reg)(23 downto 16);
-                        else
-                            TmpBank <= Addr24_AddDisp8(bank_iy_r, RegBusC, DI_Reg)(23 downto 16);
-                        end if;
+                        TmpBank <= index_addr24(23 downto 16);
                     end if;
                 end if;
 
                 if (TState = 2 and Wait_n = '1') or (TState = 4 and MCycle = "0001") then
                     if IncDec_16(2 downto 0) = "111" then
-                        -- Phase10: M2 active stack pointer = MSP24. This
-                        -- is the matching half of the aSP->MSP24 address
-                        -- redirect above: every existing Z80 instruction
-                        -- that increments/decrements "SP" via this shared
-                        -- mechanism (PUSH/POP qq, EX (SP),HL/IX/IY, CALL/
-                        -- RET/RET cc/RST p, and incidentally NMI/INT/RETI
-                        -- pending Phase13) adjusts MSP24 instead when in
-                        -- M2, using the same Addr24_Dec/Addr24_Inc 24bit
-                        -- carry/borrow already used by Phase9's PUSH24/
-                        -- POP24 - so a deep M2 stack can correctly span
-                        -- multiple 64KB banks. Only bank_msp_r/MSP are
-                        -- touched here (never SP), keeping M0/M1's SP
-                        -- register completely untouched by M2 execution.
                         if mode24_r = "10" then
                             if IncDec_16(3) = '1' then
                                 addr24_tmp := Addr24_Dec(bank_msp_r, std_logic_vector(MSP));
@@ -1329,19 +1279,6 @@ begin
                     end if;
                 end if;
 
-                -- Phase9: PUSH24/POP24 (ED C1/C5/D1/D5/E1/E5) MSP24 pointer
-                -- adjustment (MSX_T80_24bit化_実装手順_V2 section 11
-                -- "Phase 9"; CPU仕様書V8 section 9 "Stack"). Kept entirely
-                -- separate from the SP/IncDec_16 mechanism just above (MSP
-                -- is a plain signal outside the register file, with its
-                -- own dedicated 24bit pointer including bank_msp_r - not
-                -- one of the 4 register-pairs IncDec_16 already encodes),
-                -- so this cannot regress any existing 16bit inc/dec/PUSH/
-                -- POP behaviour. Uses Addr24_Dec/Addr24_Inc (t80_pack.vhd,
-                -- already anticipated for this exact purpose since Phase2)
-                -- so the bank byte correctly carries/borrows together with
-                -- the low 16bit word.
-                --
                 -- PUSH24 decrements BEFORE each of its 3 writes (BANK at
                 -- MSP-1, HIGH at MSP-2, LOW at final MSP-3); POP24
                 -- increments AFTER each of its 3 reads (LOW at MSP, HIGH at
@@ -1549,7 +1486,18 @@ begin
                 end if;
 
                 if LDSPHL = '1' then
-                    SP <= unsigned(RegBusC);
+                    if mode24_r = "10" then
+                        MSP <= unsigned(RegBusC);
+                        if XY_State = "00" then
+                            bank_msp_r <= bank_hl_r;
+                        elsif XY_State(1) = '0' then
+                            bank_msp_r <= bank_ix_r;
+                        else
+                            bank_msp_r <= bank_iy_r;
+                        end if;
+                    else
+                        SP <= unsigned(RegBusC);
+                    end if;
                 end if;
                 if ExchangeAF = '1' then
                     Ap <= ACC;
@@ -1649,7 +1597,14 @@ begin
                     case IR is
                     when x"C5" => DO <= bank_bc_r;
                     when x"D5" => DO <= bank_de_r;
-                    when x"E5" => DO <= bank_hl_r;
+                    when x"E5" =>
+                        if LeaXY = "00" then
+                            DO <= bank_hl_r;
+                        elsif LeaXY(1) = '0' then
+                            DO <= bank_ix_r;
+                        else
+                            DO <= bank_iy_r;
+                        end if;
                     when others => null;
                     end case;
                 end if;
@@ -1815,10 +1770,10 @@ begin
                         when x"0D" => ACC <= bank_ix_r;    -- LD A,IX_B
                         when x"1D" => ACC <= bank_iy_r;    -- LD A,IY_B
                         when x"EF" => ACC <= bank_rst_r;   -- LD A,IBR
-                        -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 transfer
+                        -- Phase7: HL24 hub / MSP24 / IVR24 transfer
                         -- (MSX_T80_24bit化_実装手順_V2 section 9 "Phase 7").
                         -- full 24bit, source and F unchanged. The 16bit
-                        -- low-word copy (BC/DE/HL/MSP/IVR/NVR) is committed
+                        -- low-word copy (BC/DE/HL/MSP/IVR) is committed
                         -- via RegWEH/RegWEL/RegDIH/RegDIL below (reading
                         -- the pre-edge RegBusB, routed in one cycle ahead
                         -- via the RegAddrB_r override further below); this
@@ -1831,8 +1786,11 @@ begin
                         when x"35" => MSP <= unsigned(RegBusB); bank_msp_r <= bank_hl_r; -- LD24 MSP,HL
                         when x"36" => bank_hl_r <= bank_msp_r;  -- LD24 HL,MSP
                         when x"9C" => bank_hl_r <= bank_int_r;  -- LD24 HL,IVR
-                        when x"9E" => NVR <= unsigned(RegBusB); bank_nvr_r <= bank_hl_r; -- LD24 NVR,HL
-                        when x"9F" => bank_hl_r <= bank_nvr_r;  -- LD24 HL,NVR
+                        when x"34" =>
+                            if MCycle = "0100" and mode24_r /= "00" then
+                                MSP <= unsigned(TmpAddr);
+                                bank_msp_r <= TmpBank;
+                            end if;
                         -- New (V4 21.2): LEA.L HL/DE,(IX/IY+d) bank-byte
                         -- writeback, paired with the RegWEH/RegWEL/
                         -- RegDIH/RegDIL low-16bit commit above. Must
@@ -1867,8 +1825,15 @@ begin
                     -- new 24bit ALU group, so they default to preserved too.
                     if alu24_active = '1' then
                         if alu24_writeback = '1' then
-                            bank_hl_r <= alu24_result24(23 downto 16);
+                            if LeaXY = "00" then
+                                bank_hl_r <= alu24_result24(23 downto 16);
+                            elsif LeaXY(1) = '0' then
+                                bank_ix_r <= alu24_result24(23 downto 16);
+                            else
+                                bank_iy_r <= alu24_result24(23 downto 16);
+                            end if;
                         end if;
+
                         F(Flag_S) <= alu24_result24(23);
                         if alu24_result24 = x"000000" then
                             F(Flag_Z) <= '1';
@@ -1878,6 +1843,48 @@ begin
                         F(Flag_N) <= alu24_sub;
                         F(Flag_P) <= alu24_overflow;
                         F(Flag_C) <= alu24_carry;
+                    end if;
+
+                    if ISet = "10" and mode24_r /= "00" and XY_State = "00" then
+                        case IR is
+                        when x"D3" | x"D6" | x"D9" | x"DB" | x"DD" =>
+                            if RegBusC = x"0000" then
+                                F(Flag_Z) <= '1';
+                            else
+                                F(Flag_Z) <= '0';
+                            end if;
+                        when x"DE" =>
+                            if bank_bc_r = x"00" and RegBusC = x"0000" then
+                                F(Flag_Z) <= '1';
+                            else
+                                F(Flag_Z) <= '0';
+                            end if;
+                        when x"DF" =>
+                            if bank_de_r = x"00" and RegBusC = x"0000" then
+                                F(Flag_Z) <= '1';
+                            else
+                                F(Flag_Z) <= '0';
+                            end if;
+                        when x"F5" =>
+                            if bank_hl_r = x"00" and RegBusC = x"0000" then
+                                F(Flag_Z) <= '1';
+                            else
+                                F(Flag_Z) <= '0';
+                            end if;
+                        when x"F6" =>
+                            if bank_ix_r = x"00" and RegBusC = x"0000" then
+                                F(Flag_Z) <= '1';
+                            else
+                                F(Flag_Z) <= '0';
+                            end if;
+                        when x"F7" =>
+                            if bank_iy_r = x"00" and RegBusC = x"0000" then
+                                F(Flag_Z) <= '1';
+                            else
+                                F(Flag_Z) <= '0';
+                            end if;
+                        when others => null;
+                        end case;
                     end if;
 
                     -- Phase9: POP24 BC/DE/HL (ED C1/D1/E1) BANK-byte read
@@ -1895,7 +1902,14 @@ begin
                         case IR is
                         when x"C1" => bank_bc_r <= DI_Reg;
                         when x"D1" => bank_de_r <= DI_Reg;
-                        when x"E1" => bank_hl_r <= DI_Reg;
+                        when x"E1" =>
+                            if LeaXY = "00" then
+                                bank_hl_r <= DI_Reg;
+                            elsif LeaXY(1) = '0' then
+                                bank_ix_r <= DI_Reg;
+                            else
+                                bank_iy_r <= DI_Reg;
+                            end if;
                         -- 2026-10-19 (不足転送命令追加案): ED00 (LD24 BC,
                         -- (HL)) / ED01 (LD24 DE,(HL)) BANK-byte read
                         -- capture (3rd of 3 bytes, at HL24+2), identical
@@ -1922,6 +1936,23 @@ begin
                 if Read_To_Acc = '1' then
                     Read_To_Reg_r(3 downto 0) <= "0111";
                     Read_To_Reg_r(4) <= '1';
+                end if;
+            end if;
+
+            if TState = 3 and MCycle = "0001" and ISet = "00" and
+               mode24_r /= "00" and IncDec_16(2) = '1' and
+               (IR = x"03" or IR = x"0B" or IR = x"13" or IR = x"1B" or
+                IR = x"23" or IR = x"2B") then
+                if IR(3) = '0' then
+                    if RegBusA = x"FFFF" then
+                        F(Flag_Y) <= '1';
+                    else
+                        F(Flag_Y) <= '0';
+                    end if;
+                elsif RegBusA = x"0000" then
+                    F(Flag_Y) <= '1';
+                else
+                    F(Flag_Y) <= '0';
                 end if;
             end if;
 
@@ -1972,18 +2003,17 @@ begin
 -- Phase8: dedicated 24bit ALU (INC24/DEC24/ADD24/ADC24/SBC24/CP24)
 --
 -- Fully combinational; purely a "preview" of what the T_Res (TState=4)
--- commit below should write, computed from RegBusC (destination HL's
+-- commit below should write, computed from RegBusC (destination's
 -- current low word, read via the register file's purely-combinational 3rd
 -- port, settled one cycle ahead by the RegAddrC override below - see that
 -- override's comment for why RegBusA_r cannot be used here) and RegBusB
 -- (source register's low word, same one-cycle-ahead mechanism already
 -- used by Phase7). See Alu24_AddSub in t80_pack.vhd for the actual
--- add/subtract/carry/overflow arithmetic. HL target only; DD/FD IX/IY
--- target replacement (per CPU仕様書V8 section 6) is deferred, same scope
--- limitation as Phase7's LD24 HL,IX/IY (AVAILABLE_INSTRUCTIONS.md).
+-- add/subtract/carry/overflow arithmetic. LeaXY selects IX/IY for the
+-- DD/FD-prefixed forms.
 ---------------------------------------------------------------------------
     process (IR, ISet, XY_State, bank_hl_r, bank_bc_r, bank_de_r, bank_msp_r,
-            MSP, RegBusC, RegBusB, F)
+            bank_ix_r, bank_iy_r, LeaXY, MSP, RegBusC, RegBusB, F)
         variable dest24  : std_logic_vector(23 downto 0);
         variable src24   : std_logic_vector(23 downto 0);
         variable sub_v   : std_logic;
@@ -1996,7 +2026,13 @@ begin
         wb_v     := '0';
         sub_v    := '0';
         cin_v    := '0';
-        dest24   := bank_hl_r & RegBusC;
+        if LeaXY = "00" then
+            dest24 := bank_hl_r & RegBusC;
+        elsif LeaXY(1) = '0' then
+            dest24 := bank_ix_r & RegBusC;
+        else
+            dest24 := bank_iy_r & RegBusC;
+        end if;
         src24    := (others => '0');
 
         if ISet = "10" and XY_State = "00" then
@@ -2020,7 +2056,14 @@ begin
                 case IR(5 downto 4) is
                 when "00" => src24 := bank_bc_r & RegBusB;
                 when "01" => src24 := bank_de_r & RegBusB;
-                when "10" => src24 := bank_hl_r & RegBusB;
+                when "10" =>
+                    if LeaXY = "00" then
+                        src24 := bank_hl_r & RegBusB;
+                    elsif LeaXY(1) = '0' then
+                        src24 := bank_ix_r & RegBusB;
+                    else
+                        src24 := bank_iy_r & RegBusB;
+                    end if;
                 when others => src24 := bank_msp_r & std_logic_vector(MSP);
                 end case;
             when x"07" | x"17" | x"27" | x"37" =>   -- ADC24 HL,BC/DE/HL/SP
@@ -2029,7 +2072,14 @@ begin
                 case IR(5 downto 4) is
                 when "00" => src24 := bank_bc_r & RegBusB;
                 when "01" => src24 := bank_de_r & RegBusB;
-                when "10" => src24 := bank_hl_r & RegBusB;
+                when "10" =>
+                    if LeaXY = "00" then
+                        src24 := bank_hl_r & RegBusB;
+                    elsif LeaXY(1) = '0' then
+                        src24 := bank_ix_r & RegBusB;
+                    else
+                        src24 := bank_iy_r & RegBusB;
+                    end if;
                 when others => src24 := bank_msp_r & std_logic_vector(MSP);
                 end case;
             when x"0F" | x"1F" | x"2F" | x"3F" =>   -- SBC24 HL,BC/DE/HL/SP
@@ -2041,7 +2091,14 @@ begin
                 case IR(5 downto 4) is
                 when "00" => src24 := bank_bc_r & RegBusB;
                 when "01" => src24 := bank_de_r & RegBusB;
-                when "10" => src24 := bank_hl_r & RegBusB;
+                when "10" =>
+                    if LeaXY = "00" then
+                        src24 := bank_hl_r & RegBusB;
+                    elsif LeaXY(1) = '0' then
+                        src24 := bank_ix_r & RegBusB;
+                    else
+                        src24 := bank_iy_r & RegBusB;
+                    end if;
                 when others => src24 := bank_msp_r & std_logic_vector(MSP);
                 end case;
             when x"3D" =>                          -- CP24 HL,DE (no writeback)
@@ -2087,8 +2144,8 @@ begin
                     RegAddrB_r <= XY_State(1) & "11";
                 end if;
 
-                -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 register-pair
-                -- transfer (ED06/0E/16/1E/35/36/9B/9C/9E/9F). t80_mcode.vhd
+                -- Phase7: HL24 hub / MSP24 / IVR24 register-pair
+                -- transfer (ED06/0E/16/1E/35/36/9B/9C). t80_mcode.vhd
                 -- leaves these opcodes classified as NOP (Set_BusA_To/
                 -- Set_BusB_To stay "0000"), so the pipelined register-file
                 -- addresses are overridden directly here instead - the same
@@ -2100,7 +2157,7 @@ begin
                 -- case block above).
                 if ISet = "10" then
                     case IR is
-                    when x"06" | x"16" | x"36" | x"9C" | x"9F" =>
+                    when x"06" | x"16" | x"36" | x"9C" =>
                         RegAddrA_r <= Alternate & "10";    -- dest HL
                     when x"0E" =>
                         RegAddrA_r <= Alternate & "00";    -- dest BC
@@ -2130,7 +2187,7 @@ begin
                     when others => null;
                     end case;
                     case IR is
-                    when x"0E" | x"1E" | x"35" | x"9E" =>
+                    when x"0E" | x"1E" | x"35" =>
                         RegAddrB_r <= Alternate & "10";    -- src HL
                     when x"06" =>
                         RegAddrB_r <= Alternate & "00";    -- src BC
@@ -2139,19 +2196,18 @@ begin
                     when others => null;
                     end case;
 
-                    -- Phase8: dedicated 24bit ALU (ED23/2B/09/19/29/39/
-                    -- 07/17/27/37/0F/1F/2F/3F/3D). HL target only (see the
-                    -- Phase8 combinational process above); guarded by
-                    -- XY_State="00" so a stray DD/FD-prefixed instance of
-                    -- these opcode bytes (IX/IY target, deferred) falls
-                    -- through to the default NOP classification instead of
-                    -- picking up a wrong register address.
+                    -- Phase8: dedicated 24bit ALU. DD/FD+ED selects IX/IY
+                    -- through LeaXY; a bare ED operation still targets HL.
                     if XY_State = "00" then
                         case IR is
                         when x"23" | x"2B" | x"09" | x"19" | x"29" | x"39" |
                              x"07" | x"17" | x"27" | x"37" | x"0F" | x"1F" |
                              x"2F" | x"3F" | x"3D" =>
-                            RegAddrA_r <= Alternate & "10";    -- dest HL
+                            if LeaXY = "00" then
+                                RegAddrA_r <= Alternate & "10"; -- dest HL
+                            else
+                                RegAddrA_r <= LeaXY(1) & "11";   -- dest IX/IY
+                            end if;
                         when others => null;
                         end case;
                         case IR is
@@ -2160,9 +2216,21 @@ begin
                         when x"19" | x"17" | x"1F" | x"3D" =>
                             RegAddrB_r <= Alternate & "01";    -- src DE
                         when x"29" | x"27" | x"2F" =>
-                            RegAddrB_r <= Alternate & "10";    -- src HL
+                            if LeaXY = "00" then
+                                RegAddrB_r <= Alternate & "10"; -- src HL
+                            else
+                                RegAddrB_r <= LeaXY(1) & "11";   -- src IX/IY
+                            end if;
                         when others => null;    -- SP(MSP24): no register-file read needed
                         end case;
+                    end if;
+
+                    if LeaXY /= "00" then
+                        if IR = x"E5" and (MCycle = "0010" or MCycle = "0011") then
+                            RegAddrB_r <= LeaXY(1) & "11";   -- PUSH24 IX/IY source
+                        elsif IR = x"E1" and Read_To_Reg = '1' then
+                            RegAddrA_r <= LeaXY(1) & "11";   -- POP24 IX/IY destination
+                        end if;
                     end if;
                 end if;
 
@@ -2187,7 +2255,7 @@ begin
                     RegAddrC <= LeaXY(1) & "11";
                 end if;
 
-                -- Phase8: dedicated 24bit ALU dest (HL) read. RegBusA_r is
+                -- Phase8: dedicated 24bit ALU destination read. RegBusA_r is
                 -- NOT usable here: it is delayed by a full TWO cycles from
                 -- when RegAddrA_r is set (one cycle for RegAddrA_r itself
                 -- to reach RegAddrA/RegBusA, another for "RegBusA_r <=
@@ -2196,11 +2264,10 @@ begin
                 -- TState 2->3 edge of the opcode-fetch MCycle) and T_Res
                 -- (TState=4) committing - RegBusA_r would still hold stale
                 -- data from the *previous* instruction at that point. The
-                -- purely-combinational 3rd port (RegAddrC/RegBusC, used
-                -- elsewhere only for JumpXY/LDSPHL/(IX/IY+d) which are all
-                -- inactive during these opcodes) has no such extra delay:
+                -- purely-combinational 3rd port (RegAddrC/RegBusC) has no
+                -- such extra delay:
                 -- once RegAddrC is set here (one cycle ahead, same as
-                -- RegAddrA_r/RegAddrB_r), RegBusC reflects HL's current
+                -- RegAddrA_r/RegAddrB_r), RegBusC reflects the destination's current
                 -- value immediately, in time for the Phase8 combinational
                 -- ALU process to read it at T_Res.
                 if ISet = "10" and XY_State = "00" then
@@ -2208,7 +2275,20 @@ begin
                     when x"23" | x"2B" | x"09" | x"19" | x"29" | x"39" |
                          x"07" | x"17" | x"27" | x"37" | x"0F" | x"1F" |
                          x"2F" | x"3F" | x"3D" =>
-                        RegAddrC <= Alternate & "10";    -- dest/compare HL
+                        if LeaXY = "00" then
+                            RegAddrC <= Alternate & "10"; -- dest/compare HL
+                        else
+                            RegAddrC <= LeaXY(1) & "11";   -- dest/compare IX/IY
+                        end if;
+                    when x"D3" | x"D6" | x"D9" | x"DB" | x"DD" |
+                         x"DE" | x"DF" | x"F5" | x"F6" | x"F7" =>
+                        case IR is
+                        when x"D3" | x"DE" => RegAddrC <= Alternate & "00"; -- BC
+                        when x"D6" | x"DF" => RegAddrC <= Alternate & "01"; -- DE
+                        when x"D9" | x"F5" => RegAddrC <= Alternate & "10"; -- HL
+                        when x"DB" | x"F6" => RegAddrC <= "011"; -- IX
+                        when others => RegAddrC <= "111"; -- IY
+                        end case;
                     -- 2026-10-19 (不足転送命令追加案): ED00/01/03/08 (LD24
                     -- BC/DE,(HL) / LD24 (HL),BC/DE) need RegBusC to show
                     -- HL's current 16bit value throughout M1/M2 (for the
@@ -2295,16 +2375,14 @@ begin
             end case;
         end if;
 
-        -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 register-pair writeback
-        -- (ED06/0E/16/1E/36/9C/9F write BC/DE/HL; ED9A/9D immediate-load and
-        -- the DD/FD ED26/2E IX/IY hub variants are not part of this
-        -- increment, see AVAILABLE_INSTRUCTIONS.md). Committed at T_Res
+        -- Phase7: HL24 hub / MSP24 / IVR24 register-pair writeback
+        -- (ED06/0E/16/1E/36/9C write BC/DE/HL). Committed at T_Res
         -- (TState=4) of the ED-prefixed opcode-fetch MCycle; the
         -- destination address is set up one cycle ahead via RegAddrA_r
         -- above.
         if ISet = "10" and MCycle = "0001" and TState = 4 then
             case IR is
-            when x"06" | x"0E" | x"16" | x"1E" | x"36" | x"9C" | x"9F" =>
+            when x"06" | x"0E" | x"16" | x"1E" | x"36" | x"9C" =>
                 RegWEH <= '1';
                 RegWEL <= '1';
             when others => null;
@@ -2314,7 +2392,7 @@ begin
         -- Phase8: dedicated 24bit ALU writeback (low 16bit word). Paired
         -- with the bank_hl_r write and flags at T_Res in the big clocked
         -- process above; alu24_active/alu24_writeback already fold in the
-        -- ISet="10"/XY_State="00"/HL-target-only guard (see the Phase8
+        -- ISet="10"/XY_State="00" guard (see the Phase8
         -- combinational process), so only MCycle/TState need checking here.
         if MCycle = "0001" and TState = 4 and alu24_active = '1' and alu24_writeback = '1' then
             RegWEH <= '1';
@@ -2337,7 +2415,7 @@ begin
     end process;
 
     process (Save_Mux, RegBusB, RegBusA_r, ID16,
-            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR, MSP, IVR, NVR,
+            ExchangeDH, IncDec_16, MCycle, TState, Wait_n, ISet, IR, MSP, IVR,
             alu24_active, alu24_writeback, alu24_result24, T_Res, TmpAddr)
     begin
         RegDIH <= Save_Mux;
@@ -2357,7 +2435,7 @@ begin
             RegDIL <= std_logic_vector(ID16(7 downto 0));
         end if;
 
-        -- Phase7: HL24 hub / MSP24 / IVR24 / NVR24 register-pair writeback
+        -- Phase7: HL24 hub / MSP24 / IVR24 register-pair writeback
         -- data source, paired with the RegWEH/RegWEL commit above.
         if ISet = "10" and MCycle = "0001" and TState = 4 then
             case IR is
@@ -2370,9 +2448,6 @@ begin
             when x"9C" =>
                 RegDIH <= std_logic_vector(IVR(15 downto 8));
                 RegDIL <= std_logic_vector(IVR(7 downto 0));
-            when x"9F" =>
-                RegDIH <= std_logic_vector(NVR(15 downto 8));
-                RegDIL <= std_logic_vector(NVR(7 downto 0));
             when others => null;
             end case;
         end if;
@@ -2517,7 +2592,6 @@ begin
     bank_pc <= bank_pc_r;
     bank_msp <= bank_msp_r;
     bank_int <= bank_int_r;
-    bank_nvr <= bank_nvr_r;
     bank_rst <= bank_rst_r;
     DI_Reg <= DI;
     HALT_n <= not Halt_FF;

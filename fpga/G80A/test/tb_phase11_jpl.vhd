@@ -1,6 +1,6 @@
 --
 -- Phase11 self-checking testbench: JP.L addr24 / JP.L cc,addr24
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 13 "Phase 11";
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 13 "Phase 11";
 --  MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md, section 5. Note: JP.L
 --  itself is listed in AVAILABLE_INSTRUCTIONS.md section 9 "24bit制御"
 --  alongside JR.L/CALL.L/RET.L, but unlike those it needs no stack frame,
@@ -86,7 +86,6 @@ architecture sim of tb_phase11_jpl is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -144,7 +143,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

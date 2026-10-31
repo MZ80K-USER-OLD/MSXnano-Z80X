@@ -1,6 +1,6 @@
 --
 -- Phase2 self-checking testbench: 24bit address generator
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 4 "Phase 2")
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 4 "Phase 2")
 --
 -- Exercises Addr24_Inc/Addr24_Dec/Addr24_AddDisp8/Addr24_AddDisp16 from
 -- T80_Pack (fpga/G80A/t80_pack.vhd) in isolation, covering:

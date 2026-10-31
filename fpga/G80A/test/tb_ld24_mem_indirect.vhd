@@ -1,8 +1,8 @@
 --
 -- LD24 memory-indirect self-checking testbench: ED00/01/03/08
 -- (doc/jpn/24bitメモリロード追加命令案.md;
---  doc/jpn/MSX_T80_24bit化_実装手順_V4_不足転送命令追加案_2026-10-19.md;
---  doc/jpn/MSX_T80_24bit化_命令一覧_V11_拡張案_2026-10-19.csv)
+--  doc/jpn/OLD/MSX_T80_24bit化_実装手順_V4_不足転送命令追加案_2026-10-19.md;
+--  doc/jpn/OLD/MSX_T80_24bit化_命令一覧_V11_拡張案_2026-10-19.csv)
 --
 -- Instantiates the real T80 core (fpga/G80A/t80.vhd) and verifies the 4
 -- newly implemented ED-prefixed opcodes:
@@ -87,7 +87,6 @@ architecture sim of tb_ld24_mem_indirect is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -224,7 +223,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

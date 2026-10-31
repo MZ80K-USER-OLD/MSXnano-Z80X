@@ -1,6 +1,6 @@
 --
 -- Phase3 self-checking testbench: minimal M1 (24bit data address generation)
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 5 "Phase 3")
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 5 "Phase 3")
 --
 -- Instantiates the real T80 core (fpga/G80A/t80.vhd) and runs a small hand
 -- assembled program through a flat 64KB combinational memory model to
@@ -61,7 +61,6 @@ architecture sim of tb_phase3_m1_data is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -151,7 +150,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,

@@ -12,10 +12,12 @@
 > 2026-10-25に実機 `PASS=1A FAIL=00`（ユーザー報告）。
 > 新M2 IRQ/RETI.L用は[I161TEST](hardware_test/V161IRQTest/README.md)を使用し、
 > 実機結果はまだ未取得です。NMI・RETI外部通知は同COMの対象外です。
+> TEST/TEST24、IX/IY 24bit演算・PUSH24/POP24、WTOCラップ検出、M2のMSP24スタック命令は[M2SPTEST](hardware_test/M2SPTest/README.md)で実機確認できます。
+> 現時点ではCOMシミュレーションPASS、実機結果は未取得です。
 
 > 参考: [README.md](README.md) からリンクされています。
-> 本一覧は [MSX_T80_24bit化_CPU仕様書_V8](doc/jpn/MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md) と
-> [MSX_T80_24bit化_命令一覧_V7](doc/jpn/MSX_T80_24bit化_命令一覧_V7_2026-10-05.csv)（いずれもopcode確定・TBDなし）を正としています。旧V5仕様に基づく暫定opcodeの記載は廃止しました。
+> 現行仕様は [MSX_T80_24bit化_CPU統合仕様書_V16.1](doc/jpn/MSX_T80_24bit化_CPU統合仕様書_V16_1_IM0からIM1.md) と
+> [MSX_T80_24bit化_拡張命令一覧_V16.1](doc/jpn/MSX_T80_24bit化_拡張命令一覧_V16_1_IM0からIM1.csv) を参照してください。旧V5仕様に基づく暫定opcodeの記載は廃止しました。
 > 実装状態は、以下の基準で整理しています。
 > - 実装済み: 現在のプロジェクト内（[t80.vhd](fpga/G80A/t80.vhd)）で対応が確認できている命令
 > - 未実装: V8/V7で確定しているが、現時点で未対応の命令
@@ -58,7 +60,7 @@
 | `ED 3A` | `LD IBR, A` | RST.L・M2 IRQ/NMI・SYSCALL共通のバンク設定 | 実装済み |
 | `ED EF` | `LD A, IBR` | IBR読み出し | 実装済み。旧ED 3EはNOP |
 
-> `MSP24`/`IVR24`/`NVR24`は単純な8bit bankレジスタではなく、最初からフル24bitレジスタとして定義されており、上記のような単独`_B`直接LD命令は存在しません（下記「3. 24bit転送」「4. 割込ベクタ」参照）。`PC_B`も直接LDする命令は無く、`SET_M2`/`CALL.M2`等のモード遷移命令が自動的に設定します。
+> `MSP24`/`IVR24`は単純な8bit bankレジスタではなく、フル24bitレジスタとして定義されています（下記「3. 24bit転送」「4. 割込ベクタ」参照）。NVR24はV16.1で廃止しました。`PC_B`も直接LDする命令は無く、`SET_M2`/`CALL.M2`等のモード遷移命令が自動的に設定します。
 
 ---
 
@@ -74,27 +76,25 @@
 | `DD ED 2E` | `LD24 IX, HL` | full 24bit、F不変 | 未実装（同上） |
 | `FD ED 26` | `LD24 HL, IY` | full 24bit、F不変 | 未実装（同上） |
 | `FD ED 2E` | `LD24 IY, HL` | full 24bit、F不変 | 未実装（同上） |
-| `ED 34 bl bh bn` | `LD24 MSP, imm24` | F不変 | 未実装（3byte即値フェッチのMCycleシーケンス拡張が必要、次増分予定） |
+| `ED 34 bl bh bn` | `LD24 MSP, imm24` | F/W不変 | 実装済み（M1/M2、M0では1byte NOP。GHDL検証済み、実機未検証） |
 | `ED 35` | `LD24 MSP, HL` | full 24bit、source/F不変 | 実装済み（GHDL検証済み、実機未検証） |
 | `ED 36` | `LD24 HL, MSP` | full 24bit、source/F不変 | 実装済み（GHDL検証済み、実機未検証） |
 
-> Phase7（[MSX_T80_24bit化_実装手順_V2](doc/jpn/MSX_T80_24bit化_実装手順_V2_2026-10-05.md)セクション9）のうち、上記テーブルで「実装済み」の6命令（HL24⇔BC24/DE24、HL24⇔MSP24）は、単一ED prefixで完結するレジスタ間24bitコピー命令として実装済みです。[t80.vhd](fpga/G80A/t80.vhd)内の既存のパイプライン化されたレジスタアドレス生成機構（`RegAddrA_r`/`RegAddrB_r`）への条件追加のみで実装しており、t80_mcode.vhdやレジスタファイルの共有多分岐ロジックへの変更は一切ありません。GHDLテストベンチ（[tb_phase7_ld24.vhd](fpga/G80A/test/tb_phase7_ld24.vhd)）で、宛先の24bit値・ソース不変・F不変を検証済みです。
-> IX/IY hub転送（DD/FD ED26/2E）と即値ロード（ED34/9A/9D）は、二重プレフィクスのデコードや複数byteオペランドフェッチのための追加のMCycleシーケンス機構が必要なため、本増分では未実装のまま次の増分へ持ち越しています。
+> Phase7（[MSX_T80_24bit化_実装手順_V2](doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md)セクション9）のうち、上記テーブルで「実装済み」の6命令（HL24⇔BC24/DE24、HL24⇔MSP24）は、単一ED prefixで完結するレジスタ間24bitコピー命令として実装済みです。[t80.vhd](fpga/G80A/t80.vhd)内の既存のパイプライン化されたレジスタアドレス生成機構（`RegAddrA_r`/`RegAddrB_r`）への条件追加のみで実装しており、t80_mcode.vhdやレジスタファイルの共有多分岐ロジックへの変更は一切ありません。GHDLテストベンチ（[tb_phase7_ld24.vhd](fpga/G80A/test/tb_phase7_ld24.vhd)）で、宛先の24bit値・ソース不変・F不変を検証済みです。
+> IX/IY hub転送（DD/FD ED26/2E）とIVR即値ロード（ED9A/9D）は未実装です。MSP即値ロード（ED34）は実装済みです。
 
 ---
 
-## 4. 割込ベクタ（IVR24 / NVR24）
+## 4. 割込ベクタ（IVR24）
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
 | `ED 9A bl bh bn` | `LD24 IVR, imm24` | F不変 | 未実装（3byte即値フェッチのMCycleシーケンス拡張が必要、次増分予定） |
 | 旧`ED 9B` | `LD24 IVR, HL` | 廃止 | 現在はJP.M2。旧バイナリを実行しない |
 | `ED 9C` | `LD24 HL, IVR` | full 24bit、source/F不変 | 実装済み（GHDL検証済み、実機未検証） |
-| 旧`ED 9D bl bh bn` | `LD24 NVR, imm24` | 旧予約 | 現在はRST.L 18H。即値を付けない |
-| `ED 9E` | `LD24 NVR, HL` | full 24bit、source/F不変 | 実装済み（GHDL検証済み、実機未検証） |
-| `ED 9F` | `LD24 HL, NVR` | full 24bit、source/F不変 | 実装済み（GHDL検証済み、実機未検証） |
+| `ED 9E/9F` | RESERVED | NVR廃止により転送命令を削除 | NOP扱い |
 
-> `IVR`/`NVR`の16bit低位ワードは、Phase7実装に伴い新規追加した[t80.vhd](fpga/G80A/t80.vhd)内部レジスタです（バンクバイト`bank_int_r`/`bank_nvr_r`自体はPhase1から存在）。Reset値は[MSX_T80_24bit化_CPU仕様書_V8](doc/jpn/MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md)セクション2の規定どおり`000000h`です。あわせて、従来実装で`MSP`の低位16bitが（Z80標準SPレジスタの慣習を引き継いで）`FFFFh`にリセットされていた不整合を、同セクションの規定（`MSP24=000000h`）に合わせて`0000h`へ修正しました。
+> `IVR`の16bit低位ワードは、Phase7実装に伴い追加した[t80.vhd](fpga/G80A/t80.vhd)内部レジスタです。NVR24および`bank_nvr_r`は削除しました。MSP24/IVR24のリセット値は`000000h`です。
 
 ---
 
@@ -104,18 +104,40 @@
 
 | オペコード | 命令 | 内容 | 状態 |
 |---|---|---|---|
-| `ED 23` | `INC24 HL` | 24bitで+1 | 実装済み（GHDL検証済み、実機未検証。HL targetのみ。DD/FD IX/IY targetは未実装） |
-| `ED 2B` | `DEC24 HL` | 24bitで-1 | 実装済み（同上） |
-| `ED 09` / `19` / `29` / `39` | `ADD24 HL, BC/DE/HL/SP` | 24bit加算 | 実装済み（同上。SP operandはMSP24） |
-| `ED 07` / `17` / `27` / `37` | `ADC24 HL, BC/DE/HL/SP` | 24bit桁上げ加算 | 実装済み（同上） |
-| `ED 0F` / `1F` / `2F` / `3F` | `SBC24 HL, BC/DE/HL/SP` | 24bit桁借り減算 | 実装済み（同上） |
-| `ED 3D` | `CP24 HL, DE` | 24bit比較（writebackなし） | 実装済み（同上） |
+| `ED 23` / `DD/FD ED 23` | `INC24 HL/IX/IY` | 24bitで+1 | 実装済み（GHDL検証済み） |
+| `ED 2B` / `DD/FD ED 2B` | `DEC24 HL/IX/IY` | 24bitで-1 | 実装済み（GHDL検証済み） |
+| `ED 09/19/29/39` / `DD/FD ED`同opcode | `ADD24 HL/IX/IY, BC/DE/HL(or IX/IY)/SP` | 24bit加算 | 実装済み（SP operandはMSP24） |
+| `ED 07/17/27/37` / `DD/FD ED`同opcode | `ADC24 HL/IX/IY, BC/DE/HL(or IX/IY)/SP` | 24bit桁上げ加算 | 実装済み |
+| `ED 0F/1F/2F/3F` / `DD/FD ED`同opcode | `SBC24 HL/IX/IY, BC/DE/HL(or IX/IY)/SP` | 24bit桁借り減算 | 実装済み。SUB24はC=0のSBC24で実行 |
+| `ED 3D` | `CP24 HL, DE` | 24bit比較（writebackなし） | 実装済み（HL targetのみ） |
 
 - 実装は[t80.vhd](fpga/G80A/t80.vhd)内の専用の組合せ論理プロセスと、[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Alu24_AddSub`関数（t80_alu.vhdの既存8bit ALUとは完全に独立）で構成されており、Phase7と同様にT80コア共通部分（`t80_mcode.vhd`やレジスタファイルのメインデコード経路）には一切手を加えていません。
 - フラグ: `S`=bit23、`Z`=24bit zero、`H`は変更なし（保持）、`P/V`=24bit符号付きオーバーフロー、`N`=加算系命令で0・減算系命令で1、`C`=24bit carry/borrow。未定義のX/Y（bit3/5）フラグも同様にこの命令群では変更されません（CPU仕様書V8はこれらを規定していないため、保持する設計としています）。
 - `CP24`は書き込みを行わず、フラグのみを更新します（HL24は変更されません）。
-- DD/FDプレフィクスによるIX/IYターゲットの置換は未実装です（Phase7のLD24 HL,IX/IYと同様、二重プレフィクスのデコード拡張が必要なため次フェーズに繰り越し）。DD/FD付きでこれらのopcodeを実行した場合は未定義命令としてNOP扱いになります。
+- DD/FD付きではIX/IYを演算targetとし、pairコードHLも同じIX/IYを参照します。CP24は現時点でHL targetのみです。
 - GHDLテストベンチ: [tb_phase8_alu24.vhd](fpga/G80A/test/tb_phase8_alu24.vhd)（全9ケース、符号付きオーバーフロー・24bit carry/borrow・H保持・MSP24オペランド・CP24の非書き込みを含めて検証済み）。
+- IX/IY targetの代表命令、W境界更新/WTOC、MSP即値ロード、IX/IYのPUSH24/POP24は[V16.1 opcode regression](fpga/G80A/test/tb_v161_opcode_extensions.vhd)でGHDL検証済み（実機未検証）。
+
+---
+
+## 5.1 16bit 境界フラグと WTOC
+
+M1/M2の16bit `INC/DEC BC,DE,HL,IX,IY`は、16bit境界を跨ぐときF.bit5（Y）を更新します。`WTOC`（`ED FE`）はYをCへコピーし、その他のFビットを保持します。SP/MSPとM0は対象外です。
+
+| オペコード | 命令 | 内容 | 状態 |
+|---|---|---|---|
+| `ED FE` | `WTOC` | F.YをF.Cへコピー | 実装済み（GHDL検証済み、実機未検証） |
+
+---
+
+## 5.2 TEST / TEST24
+
+対象レジスタが0かを判定し、Zだけ更新します（ゼロならZ=1、非ゼロならZ=0）。その他のFビットは保持し、SP/MSPは対象外です。M1/M2で実行し、M0ではNOPとして扱います。全10 opcode形式を[`tb_v161_test_m2_sp.vhd`](fpga/G80A/test/tb_v161_test_m2_sp.vhd)でゼロ/非ゼロ双方についてGHDL検証済みです。実機では[M2SPTEST.COM](hardware_test/M2SPTest/README.md)を使用してください（期待値`PASS=2B FAIL=00`、実機結果は未取得）。
+
+| Opcode | 命令 |
+|---|---|
+| `ED D3/D6/D9/DB/DD` | `TEST BC/DE/HL/IX/IY`（16bit） |
+| `ED DE/DF/F5/F6/F7` | `TEST24 BC/DE/HL/IX/IY` |
 
 ---
 
@@ -178,10 +200,9 @@ M0は元のZ80命令として動作し、indexed用の変位を追加消費し�
 かつbankは強制的に00h、M1/M2では24bit wrap（bank境界のcarry/borrowを
 含む）。F・IX/IY・SP/MSPは不変。
 
-**本プロジェクトで初めてのDD/FD+ED二重プレフィクス対応命令**。それ以前の
-全てのZ80X24拡張命令は単一EDプレフィクスのみで完結していた（Phase7の
-`LD24 HL,IX`やPhase9の`PUSH24 IX`等、DD/FD+ED二重プレフィクスが必要な
-命令は全てこの制約により未実装のまま保留されていた）。
+`LeaXY`はLEA.Lで導入したDD/FD+ED二重プレフィクス用のラッチで、現在は
+24bit ALUとPUSH24/POP24 IX/IYにも利用する。`DD/FD ED 26/2E`
+（IX/IY hub転送）は引き続き未実装。
 
 - **実装方式**: 既存の`XY_State`（DD/FD+CB用）とは完全に独立した新規
   ラッチ信号`LeaXY`（[t80.vhd](fpga/G80A/t80.vhd)）を新設。EDプレフィクス
@@ -219,8 +240,8 @@ M0は元のZ80命令として動作し、indexed用の変位を追加消費し�
 | `ED C5` / `C1` | `PUSH24` / `POP24 BC` | 実装済み（GHDL検証済み、実機確認済み。ただし単一物理bank内でのみ。下記「既知の問題」参照） |
 | `ED D5` / `D1` | `PUSH24` / `POP24 DE` | 実装済み（同上） |
 | `ED E5` / `E1` | `PUSH24` / `POP24 HL` | 実装済み（同上） |
-| `DD ED E5` / `E1` | `PUSH24` / `POP24 IX` | 未実装（DD/ED二重プレフィクスの命令デコード拡張が必要、Phase7のLD24 HL,IX/IYと同様の理由で次フェーズに繰り越し） |
-| `FD ED E5` / `E1` | `PUSH24` / `POP24 IY` | 未実装（同上） |
+| `DD ED E5` / `E1` | `PUSH24` / `POP24 IX` | 実装済み（GHDL検証済み。M2、F/W不変） |
+| `FD ED E5` / `E1` | `PUSH24` / `POP24 IY` | 実装済み（同上） |
 
 - PUSH24はMSP24（`bank_msp_r`+`MSP`、Phase7で新設）を1ずつ3回デクリメントしながらBANK→HIGH→LOWの順でメモリへ書き込み、POP24は逆にLOW→HIGH→BANKの順で読み出しながら1ずつ3回インクリメントします。最終的なMSP24はPUSH24で-3、POP24で+3となり、互いに逆操作として往復が可能です。
 - バンクバイトとの繰り上がり/繰り下がりは[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Addr24_Dec`/`Addr24_Inc`（Phase2で追加、Phase9向けに既に用意されていたもの）を使って計算されるため、16bitワードの境界（0000h⇔FFFFh）をまたぐ際にバンクバイトも正しく繰り上がり/繰り下がりします。
@@ -268,11 +289,13 @@ CPU仕様書V8セクション2「MODE」が定義するM2モード（`PC: 24bit`
 | PC24命令フェッチ | M2では`PC24={bank_pc_r,PC}`として、通常の命令フェッチ（オペコードbyte・オペランドbyteの自動インクリメント）が[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Addr24_Inc`経由で24bit演算になり、PCが0xFFFF→0x0000をまたぐ際に`bank_pc_r`が正しく繰り上がる | 実装済み（GHDL検証済み、実機未検証） |
 | `SET_M2`のPC_B挙動 | M0/M1→M2遷移時は`bank_pc_r`を00hへリセットし、M2→M2（既にM2の状態での再実行）では`bank_pc_r`を保持（CPU仕様書V8「SET_M2はM0/M1→M2でPC_B<-00h、M2→M2ではPC_B保持」） | 実装済み（GHDL検証済み、実機未検証） |
 | MSP24アクティブスタック | M2では、既存のZ80標準`PUSH qq`/`POP qq`/`EX (SP),HL/IX/IY`/`CALL`/`CALL cc`/`RET`/`RET cc`/`RST p`が、通常のSPではなくMSP24（`bank_msp_r`+`MSP`）を使うようになる。転送byte数は2byteのまま（bank byte自体はPUSH24/POP24と異なりdataとして転送されない）で、MSP24自体は[t80_pack.vhd](fpga/G80A/t80_pack.vhd)の`Addr24_Dec`/`Addr24_Inc`で64KB境界をまたいで正しく繰り上がり/繰り下がりする | 実装済み（GHDL検証済み、実機未検証） |
+| `INC SP`/`DEC SP` | M2ではSP16を変更せず、MSP24を24bitで増減する。M0/M1ではSP16を従来どおり変更する | 実装済み（新規テストで境界またぎをGHDL検証、実機未検証） |
+| `LD SP,HL`/`LD SP,IX/IY` | M2ではソースの24bit値（word+bank）をMSP24へ転送する。M0/M1ではSP16へwordを転送する | 実装済み（新規テストでHL/IXのbank転送をGHDL検証、実機未検証） |
 
-- 実装は、既存の`aSP`（Set_Addr_To）ケースと、SP用`IncDec_16(2 downto 0)="111"`インクリメント/デクリメント機構の両方に`if mode24_r = "10" then ... (MSP24側) ... else ... (従来のSP) ... end if;`を追加しただけで、[t80_mcode.vhd](fpga/G80A/t80_mcode.vhd)には一切手を加えていません。これにより、`aSP`を使う既存命令（PUSH/POP qq、EX (SP),HL/IX/IY、CALL/CALL cc/RET/RET cc/RST p、および未実装のPhase13 M2割込みが実装されるまで暫定的にこの2byte機構へフォールスルーするNMI/INT(IM2)/RETI/RETN）が自動的にMSP24対応になります。
+- `INC SP`/`DEC SP`は既存のSP用`IncDec_16(2 downto 0)="111"`経路でM2時にMSP24を更新します。スタックメモリアクセスは`aSP`経路を使い、MSP24を参照します。`LD SP,HL/IX/IY`もM2時にMSPのwordとbankを書き換えます。
 - 既存のZ80標準`SP`レジスタ自体はM2実行中も一切変更されません（GHDLテストベンチで`ADD HL,SP`トリックを使い、M2でのPUSH/POP前後でSPが完全に不変であることを確認済み）。
 - 以下はPhase10時点の制約ではなく、後続変更も含めて命令別に参照してください。特に通常CALL/RETおよびV16.1の通常RSTはM2でPC_Bを維持します。通常RSTの最新検証は[通常RST検証記録](verification_data/v161_rst/README.md)を参照してください。
-- 新規追加した割込み関連opcode(`DD/FD ED26/2E`相当の二重プレフィクス、JP.L/CALL.L/RET.L等)は本フェーズの対象外です。M2割込み（IRQ→IVR24、NMI→NVR24、4byte MSP frame）はPhase13の範囲で、現状のNMI/INT(IM2)/RETI/RETNは上記の2byte MSP機構へ暫定的にフォールスルーするのみで、Phase13仕様の4byte frameとは一致しません。
+- 新規追加した割込み関連opcode(`DD/FD ED26/2E`相当の二重プレフィクス、JP.L/CALL.L/RET.L等)は本フェーズの対象外です。M2割込み（IRQ/NMIともIBRを使用、4byte MSP frame）はPhase13の範囲です。
 - GHDLテストベンチ: [tb_phase10_m2_basic.vhd](fpga/G80A/test/tb_phase10_m2_basic.vhd)（SET_M2のPC_Bリセット/保持、PC24の64KB境界またぎ時の繰り上がり、MSP24を使った通常PUSH/POPの2byte転送とSP不変を検証済み）。
 
 ---
@@ -543,7 +566,7 @@ RET.Lで復帰する。M0/M1では2byte NOP。MODE、IBR、F、IFFは不変。
 
 ## 12. 割り込み（M2拡張）
 
-V16.1の分岐先はすべてIBRを使用する。旧IVR/NVRは割込み先として参照しない。
+V16.1の分岐先はすべてIBRを使用する。NVR24は削除済みで、M2 NMIは`{IBR,0066h}`へ分岐する。
 M0/M1のIM0/IM1/IM2/NMIは従来経路を維持する。
 512条件の物理3バンク検証は[IBR割込み記録](verification_data/v161_interrupt/README.md)を参照。
 
@@ -584,7 +607,7 @@ Z80標準割込み処理（IM0/1/2・固定アドレス0066h）のまま変更�
 | `ED 8C` | `RETN.L` | M2用4byte frame復元、復元後IFF1←IFF2 | 実装済み（GHDL検証済み。実機では手動構築フレームによる復元スモークテストのみ実施—IFF1←IFF2復元自体はNMI同様の理由で実機未検証） |
 | `ED 8E`〜`8F` | RESERVED | NOP | ED 8Dは現在RST.L 08H |
 
-### 12.1 実装メモ
+### 12.1 旧実装メモ（履歴）
 
 - **割込みframe構成**: M2での割込み受付時、MSP24を4回decrementしながら
   `MSP+3=MODE, MSP+2=PC_B, MSP+1=PC_H, MSP+0=PC_L`の順（Phase12の
@@ -717,6 +740,23 @@ Phase13完了後、回路規模（LUT/ALU）削減の余地を探るため、[t8
 
 上記4.のみ手動統合の余地が残っているが、タイミング・パス再検証（セレクタのmux段が加算のクリティカルパスに乗る可能性）を伴う相応の実装コストがあるため、**本調査では実装は見送り、知見の記録のみとする**（2026年時点の判断）。
 
+### IX/IY実効アドレス加算器の共有化（2026-10-31）
+
+[t80.vhd](fpga/G80A/t80.vhd)の`(IX/IY+d)`と`LEA.L`は、IX/IYのバンクを先に選択し、共通の`RegBusC`下位16bitと合わせて、1個の24bitアドレス加算器へ入力する構成に変更した。
+通常のインデックスアクセスでは`XY_State`、`LEA.L`ではEDプリフェクス前の選択を保存した`LeaXY`を使用する。
+`d`は符号付き8bit（-128～+127）として既存の`Addr24_AddDisp8`で24bitへ符号拡張する。
+下位16bitとバンクは同じ加算結果から取得し、M1/M2のバンクcarry/borrowと24bit wrapを維持する。
+M0では従来どおり下位16bitでwrapし、`LEA.L`の結果バンクは00hとする。命令タイミング、フラグ、IX/IY本体の更新有無は変更しない。
+
+Gowin V1.9.12.04の合成後ネットリストで、IX/IY別々の24段ALUチェーンが`index_addr24`の1本へ統合されたことを確認した。
+CPU単体の合成集計は4251→4278 LUT（+27）、192→152 ALU（-40）。
+全体の配置配線後は17983→17970 Logic（-13）、15759→15789 LUT（+30）、1870→1827 ALU（-43）で、Logic表示は87%のまま。
+CLSは9817→9725（95%→94%）。LUT単独の削減ではなく、Logic総数の小幅削減となった。
+配置配線・ビットストリーム生成は成功し、`clock_54m`のActual Fmaxは60.920MHz（制約54MHz）。
+ただし設計全体のタイミングレポートにはsetup/hold違反が残っており、全パスのタイミング達成を意味しない。
+GHDLのPhase2アドレス演算、Phase3実効アドレス、LEA.Lと、M2SPTEST COMのCPUモード×WAIT有無4条件はPASS。実機未検証。
+indexed16/indexed24回帰も全960条件PASS（IX/IY、M0/M1/M2、通常/Fast Z80、読出し/書込み、符号付き変位、WAIT有無）。
+
 ---
 
 ## 16. 周辺CPU動作（Phase15）監査メモ
@@ -730,7 +770,7 @@ Phase13完了後、回路規模（LUT/ALU）削減の余地を探るため、[t8
 | BUSREQ/BUSACK | 本プロジェクトの実機ビルドでは不使用（[top.v](fpga/top.v)で`BUSRQ_n`を定数1に固定配線、`BUSAK_n`は未接続）。T80コア内のBUSREQ/BUSACK自体のロジックも無改変で、`mode24_r`やbankレジスタを一切参照しない。24bit固有の懸念なし | [top.v](fpga/top.v)の`BUSRQ_n(1)`/`BUSAK_n( )`配線 |
 | R register | リフレッシュカウンタのインクリメントは、本プロジェクトの新機能とは無関係な（既存の）T80 `Mode`ジェネリック（`Mode<2`）でのみゲートされており、`mode24_r`は一切関与しない。影響なし | [t80.vhd](fpga/G80A/t80.vhd)のリフレッシュ処理ブロック（`if Mode < 2 then ... R(6 downto 0) <= R(6 downto 0) + 1;`） |
 | IRQ/NMI受付タイミング | `NMICycle`/`IntCycle`の確定はNMI_s/INT_s/IntE_FF1/Prefixのみで決まり`mode24_r`やHalt_FFには依存しないため、HALT中・非HALT中を問わず同一の受付タイミングでPhase13のM2割込み機構へ正しく到達する | [t80.vhd](fpga/G80A/t80.vhd)メインステートマシンのNMICycle/IntCycle確定ロジック |
-| prefix fetch | DD/FD+CB継続のMCycle=110/111バグは既にPhase11で発見・修正済み（[T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)参照）。LEA.L以外のDD/FD+ED二重プレフィクス命令は意図的に未実装（NOP扱い、ロードマップ原則7「未定義/未実装opcodeはNOPとして処理する」どおり）であり、これはPhase15の監査対象となる不具合ではなくスコープ外の機能拡張課題 | 上記T80バグレポート、本一覧3章/6章の二重プレフィクス制限の注記 |
+| prefix fetch | DD/FD+CB継続のMCycle=110/111バグは既にPhase11で発見・修正済み（[T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md](doc/jpn/T80コア内部に残っていた潜在バグ_Phase11-12での発見と修正.md)参照）。DD/FD+EDはLEA.L、24bit ALU、PUSH24/POP24 IX/IYを実装済み。未実装opcodeはNOP扱い（ロードマップ原則7）で、Phase15監査のスコープ外。 | 上記T80バグレポート、本一覧3章/5章/6章 |
 | refresh動作 | リフレッシュサイクル中の`A_Bank_r`強制00hリセット（既存・無改変コード）は、[top.v](fpga/top.v)側で旧来のMSXバス調停（`mapper_req`/`megarom_req`、`bus_rfsh_n`でゲート）・新設の拡張メモリSD-RAM要求（`cpu_sdram_req`、同じく`bus_rfsh_n`でゲート）の両方が、リフレッシュサイクル中のアドレスには一切反応しないことを確認したため無害 | [top.v](fpga/top.v)の`cpu_sdram_req_r <= (... && bus_rfsh_n == 1) ...`、既存`mapper_req3`等の同様のゲート |
 
 ### 新規検証

@@ -1,6 +1,6 @@
 --
 -- Phase9 self-checking testbench: PUSH24/POP24 stack instructions
--- (MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 11 "Phase 9";
+-- (doc/jpn/OLD/MSX_T80_24bit化_実装手順_V2_2026-10-05.md, section 11 "Phase 9";
 --  MSX_T80_24bit化_CPU仕様書_V8_2026-10-05.md, section 9 "Stack")
 --
 -- Instantiates the real T80 core (fpga/G80A/t80.vhd) and runs a small hand
@@ -50,10 +50,9 @@
 --     value (T3B)
 --   - F (flags) register is completely unaffected by PUSH24/POP24 (T4)
 --
--- NOT covered by this testbench (deferred, same scope limitation as
--- Phase7's LD24 HL,IX/IY - see AVAILABLE_INSTRUCTIONS.md): DD/FD ED E1/E5
--- (PUSH24/POP24 IX/IY), which require dual DD/FD+ED prefix decoding not
--- yet supported by this core's prefix state machine.
+-- DD/FD ED E1/E5 (PUSH24/POP24 IX/IY) are covered by
+-- tb_v161_opcode_extensions.vhd, which also exercises the newly supported
+-- DD/FD+ED index-target dispatch.
 --
 -- Run with GHDL:
 --   ghdl -a --std=08 ../t80_pack.vhd ../t80_mcode.vhd ../t80_alu.vhd ../t80_reg.vhd ../t80.vhd tb_phase9_push24_pop24.vhd
@@ -99,7 +98,6 @@ architecture sim of tb_phase9_push24_pop24 is
     signal bank_pc  : std_logic_vector(7 downto 0);
     signal bank_msp : std_logic_vector(7 downto 0);
     signal bank_int : std_logic_vector(7 downto 0);
-    signal bank_nvr : std_logic_vector(7 downto 0);
     signal bank_rst : std_logic_vector(7 downto 0);
     signal A_Bank   : std_logic_vector(7 downto 0);
     signal MC       : std_logic_vector(2 downto 0);
@@ -225,7 +223,6 @@ begin
             bank_pc => bank_pc,
             bank_msp => bank_msp,
             bank_int => bank_int,
-            bank_nvr => bank_nvr,
             bank_rst => bank_rst,
             A_Bank => A_Bank,
             MC => MC,
